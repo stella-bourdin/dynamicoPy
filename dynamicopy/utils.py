@@ -144,10 +144,7 @@ def select_box_indices(var, idx_lat_min, idx_lat_max, idx_lon_min=None, idx_lon_
     """
 
     # TODO : Traiter le cas où idx_lon_min>idx_lon_max
-    assert(idx_lon_min < idx_lon_max,
-           "Cette possibilité n'est pas encore implémentée")
 
-    # Masks
     lat_mask = np.array([False] * np.shape(var)[lat_axis])
     lat_mask[idx_lat_min:idx_lat_max] = True
     var_cut_lat = apply_mask_axis(var, lat_mask, lat_axis)
@@ -157,6 +154,51 @@ def select_box_indices(var, idx_lat_min, idx_lat_max, idx_lon_min=None, idx_lon_
     var_box = apply_mask_axis(var_cut_lat, lon_mask, lon_axis)
 
     return var_box
+
+
+def select_box_lonlat(lon, lat, var, lat_min, lat_max, lon_min=None, lon_max=None, lon_axis=-1, lat_axis=-2):
+    """Extract data in a box from a field. The box is defined by its lon/lat coordinates
+
+    Parameters
+    ----------
+    lon : 1D np.ndarray
+        The longitude coordinate
+    lat : 1D np.ndarray
+        The latitude coordinate
+    var : np.ndarray
+        The field from which to extract the box
+    lat_min : float
+        The minimum latitude of the box
+    lat_max : float
+        The maximum latitude of the box
+    lon_min : float, optional
+        The minimum longitude of the box, by default None
+    lon_max : float, optional
+        The maximum longitude of the box, by default None
+    lat_axis : int, optional
+        latitude axis in var, by default -2
+    lon_axis : int, optional
+        longitude axis in var, by default -1
+
+    Returns
+    -------
+    3 np.ndarrays
+        longitude coordinate of the box, latitude coordinate of the box, field in the box.
+    """
+
+    lat_mask = (lat > lat_min) & (lat < lat_max)
+    lat_box = lat[lat_mask]
+    var_cut_lat = apply_mask_axis(var, lat_mask, lat_axis)
+
+    if not ((lon_min == None) | (lon_max == None)):
+        lon_mask = (lon > lon_min) & (lon < lon_max)
+        lon_box = lon[lon_mask]
+        var_box = apply_mask_axis(var_cut_lat, lon_mask, lon_axis)
+    else:
+        lon_box = lon
+        var_box = var_cut_lat
+
+    return lon_box, lat_box, var_box
 
 
 if __name__ == "__main__":
