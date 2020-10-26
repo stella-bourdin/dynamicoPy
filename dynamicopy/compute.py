@@ -79,6 +79,47 @@ def compute_vort(u, v, lat, lon):
 
     return lon_vort, lat_vort, W
 
+
+def compute_grad(T, lat, lon):
+    """Compute the gradient of a 2D field.
+
+    Parameters
+    ----------
+    T : 2D np.ndarray
+        The field on which to compute the gradient
+    lat : 1D np.ndarray
+        latitude coordinate of the field
+    lon : 1D np.ndarray
+        longitude coordinate of the field
+
+    Returns
+    -------
+    4 np.ndarrays
+        longitude and latitude coordinates of the following x and y coordinates of the gradient.
+    """
+    dlon = lon[1] - lon[0]  # resolution in longitude in deg
+    dlat = lat[1] - lat[0]  # resolution in latitude in deg
+    R = 6371000            # Earth radius
+    dy = R * dlat * np.pi / 180  #
+
+    Gx = np.zeros([len(lat)-1, len(lon)-1])
+    Gy = np.zeros([len(lat)-1, len(lon)-1])
+    for i in range(len(lon)-1):  # i index of longitude
+        for j in range(len(lat)-1):  # j index of latitude
+            # Compute dx geometrically
+            lat_rad = lat[j]*np.pi/180  # Current latitude in rad
+            # radius of the current longitude circle
+            r = np.sin(np.pi/2 - abs(lat_rad))*R
+            dx = r * dlon * np.pi / 180
+
+            Gx[j, i] = (T[j+1, i] - T[j, i])/dx
+            Gy[j, i] = (T[j, i+1] - T[j, i])/dy
+
+    lat_G = np.array([(lat[j+1] + lat[j])/2 for j in range(len(lat) - 1)])
+    lon_G = np.array([(lon[i+1] + lon[i])/2 for i in range(len(lon) - 1)])
+
+    return lon_G, lat_G, np.array(Gx), np.array(Gy)
+
 ### ========================================== ###
 ###         Geographical computations          ###
 ### ========================================== ###
