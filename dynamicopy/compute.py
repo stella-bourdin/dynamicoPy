@@ -80,6 +80,48 @@ def compute_vort(u, v, lat, lon):
     return lon_vort, lat_vort, W
 
 
+def compute_stretching(u, v, lat, lon):
+    """Compute stretching deformation from the horizontal velocity fields
+
+    ! So far, handles only 2D fields.
+
+    Parameters
+    ----------
+    u : np.ndarray
+        zonal wind field
+    v : np.ndarrays
+        meridional wind field
+    lat : 1D np.ndarray
+        latitude coordinate of the fields
+    lon : 1D np.ndarray
+        longitude coordinate of the field
+
+    Returns
+    -------
+    3 np.ndarrays
+        longitude, latitude and stretching field
+    """
+
+    dlon = lon[1] - lon[0]  # resolution in longitude in deg
+    dlat = lat[1] - lat[0]  # resolution in latitude in deg
+    R = 6371000            # Earth radius
+    dy = R * dlat * np.pi / 180  # Vertical size of a cell
+    # Horizontal size of a cell depending on latitude
+    lat_rad = lat * np.pi/180  # Latitudes in rad
+    r = np.sin(np.pi/2 - abs(lat_rad)) * R
+    dx = r * dlon * np.pi / 180
+    dx = np.transpose([(dx[1:] + dx[:-1])/2] * (len(lon) - 1))
+
+    # Compute lat and lon corresponding to the E matrix
+    lat_E = (lat[:-1] + lat[1:]) / 2
+    lon_E = (lon[:-1] + lon[1:]) / 2
+
+    E = np.zeros([len(lat)-1, len(lon)-1])  # Initialization of the matrix
+    E = (u[:-1, 1:]-u[:-1, :-1]) * 1/dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1/dy
+
+    return lon_E, lat_E, E
+
+
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
 
@@ -201,9 +243,10 @@ hemisphericMean = hemispheric_mean
 if __name__ == "__main__":
 
     import dynamicopy.ncload as ncl
-    sp = ncl.var_load("sp", "data_tests/sp.nc")
-    lat = ncl.var_load("latitude", "data_tests/sp.nc")
-    lat -= 17
+    u = ncl.var_load("u10", "data_tests/u10.nc")[0]
+    v = ncl.varLoad("v10", "data_tests/v10.nc")[0]
+    lat = ncl.var_load("latitude", "data_tests/u10.nc")
+    lon = ncl.varLoad("longitude", "data_tests/u10.nc")
 
-    print(np.shape(sp))
-    print(np.shape(hemispheric_mean(sp, lat, -2)[1]))
+    lon_w, lat_w, vort = compute_vort(u, v, lat, lon)
+    lon_E, lat_E, E = compute_vort(u, v, lat, lon)
