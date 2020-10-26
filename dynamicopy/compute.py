@@ -6,6 +6,10 @@
 import numpy as np
 from dynamicopy import utils
 
+### ==================================== ###
+###         Derivated variables          ###
+### ==================================== ###
+
 
 def omega2w(omega, p, T):
     """Convert omega (?) to w (vertical velocity)
@@ -30,6 +34,54 @@ def omega2w(omega, p, T):
     rho = p/(R_gas * T)
     w = - omega / (rho*g)
     return w
+
+# -- TODO -- Handle anyD velocity field.
+
+
+def compute_vort(u, v, lat, lon):
+    """Compute vorticity from the horizontal velocity fields
+
+    ! So far, handles only 2D fields.
+
+    Parameters
+    ----------
+    u : np.ndarray
+        zonal wind field
+    v : np.ndarrays
+        meridional wind field
+    lat : 1D np.ndarray
+        latitude coordinate of the fields
+    lon : 1D np.ndarray
+        longitude coordinate of the field
+
+    Returns
+    -------
+    3 np.ndarrays
+        longitude, latitude and vorticity field
+    """
+
+    dlon = lon[1] - lon[0]  # resolution in longitude in deg
+    dlat = lat[1] - lat[0]  # resolution in latitude in deg
+    R = 6371000            # Earth radius
+    dy = R * dlat * np.pi / 180  # Vertical size of a cell
+    # Horizontal size of a cell depending on latitude
+    lat_rad = lat * np.pi/180  # Latitudes in rad
+    r = np.sin(np.pi/2 - abs(lat_rad)) * R
+    dx = r * dlon * np.pi / 180
+    dx = np.transpose([(dx[1:] + dx[:-1])/2] * (len(lon) - 1))
+
+    # Compute lat and lon corresponding to the vort matrix
+    lat_vort = (lat[:-1] + lat[1:]) / 2
+    lon_vort = (lon[:-1] + lon[1:]) / 2
+
+    W = np.zeros([len(lat)-1, len(lon)-1])  # Initialization of the matrix
+    W = (v[:-1, 1:]-v[:-1, :-1]) * 1/dx[:] - (u[1:, :-1] - u[:-1, :-1]) * 1/dy
+
+    return lon_vort, lat_vort, W
+
+### ========================================== ###
+###         Geographical computations          ###
+### ========================================== ###
 
 
 def hemispheric_mean(var, lat, axis=-1, neg=False):
