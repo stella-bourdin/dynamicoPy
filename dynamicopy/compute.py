@@ -164,6 +164,26 @@ def compute_shearing(u, v, lat, lon):
     return lon_F, lat_F, F
 
 
+def compute_ObukoWeiss(vort, E, F):
+    """Compute the Obuko-Weiss Parameter
+
+    Parameters
+    ----------
+    vort : np.ndarray
+        Vorticity field
+    E : np.ndarray
+        Stretching deformation field
+    F : np.ndarray
+        Shearing deformation field
+
+    Returns
+    -------
+    np.ndarray
+        The Obuko-Weiss (OW) parameter field
+    """
+    return vort ** 2 - (E ** 2 + F ** 2)
+
+
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
 
@@ -293,3 +313,4 @@ if __name__ == "__main__":
     lon_w, lat_w, vort = compute_vort(u, v, lat, lon)
     lon_E, lat_E, E = compute_stretching(u, v, lat, lon)
     lon_F, lat_F, F = compute_shearing(u, v, lat, lon)
+    OW = compute_ObukoWeiss(vort, E, F)
