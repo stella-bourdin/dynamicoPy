@@ -201,6 +201,35 @@ def select_box_lonlat(lon, lat, var, lat_min, lat_max, lon_min=None, lon_max=Non
     return lon_box, lat_box, var_box
 
 
+def select_basin(lon, lat, var, basin, lon_axis=-1, lat_axis=-2):
+    """Extract basin from a global field, from basin defined as in basins.py.
+
+    Parameters
+    ----------
+    lon : 1D np.ndarray
+        Longitude coordinate
+    lat : 1D np.ndarray
+        Latitude coordinate
+    var : np.ndarray
+        The field from which we extract the basin
+    basin : 1D list
+        Definition of the basin as [[lon_min, lon_max], [lat_min, lat_max]]
+    lat_axis : int, optional
+        latitude axis in var, by default -2
+    lon_axis : int, optional
+        longitude axis in var, by default -1
+
+    Returns
+    -------
+    3 np.ndarrays
+        longitude coordinate of the basin, latitude coordinate of the basin, field in the basin.
+    """
+    [[lon_min, lon_max], [lat_min, lat_max]] = basin
+    lon_basin, lat_basin, var_basin = select_box_lonlat(
+        lon, lat, var, lat_min, lat_max, lon_min, lon_max, lon_axis, lat_axis)
+    return lon_basin, lat_basin, var_basin
+
+
 if __name__ == "__main__":
 
     import dynamicopy.ncload as ncl
