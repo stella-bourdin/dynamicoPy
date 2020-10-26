@@ -120,6 +120,35 @@ def compute_grad(T, lat, lon):
 
     return lon_G, lat_G, np.array(Gx), np.array(Gy)
 
+
+def compute_EKE(u, v):  # Probably deserves optimization if useful later.
+    """Compute Eddy Kinetic Energy from u and v fields. 
+
+    Parameters
+    ----------
+    u : np.ndarray
+        zonal wind field
+    v : np.ndarray
+        meridional wind field
+
+    Returns
+    -------
+    np.ndarray
+        EKE field
+    """
+
+    shape = np.shape(u)
+    nlon = shape[-1]
+    U_zonal = np.mean(u, -1)
+    V_zonal = np.mean(v, -1)
+    U_zonal_lon = np.transpose([np.transpose(U_zonal) for i in range(nlon)])
+    V_zonal_lon = np.transpose([np.transpose(V_zonal) for i in range(nlon)])
+
+    EKE = 0.5 * (np.multiply(u-U_zonal_lon, u-U_zonal_lon) +
+                 np.multiply(v-V_zonal_lon, v-V_zonal_lon))
+
+    return EKE
+
 ### ========================================== ###
 ###         Geographical computations          ###
 ### ========================================== ###
