@@ -184,6 +184,54 @@ def compute_ObukoWeiss(vort, E, F):
     return vort ** 2 - (E ** 2 + F ** 2)
 
 
+def compute_ObukoWeiss_norm(vort, E, F):
+    """Compute the normalized Obuko-Weiss Parameter
+
+    Parameters
+    ----------
+    vort : np.ndarray
+        Vorticity field
+    E : np.ndarray
+        Stretching deformation field
+    F : np.ndarray
+        Shearing deformation field
+
+    Returns
+    -------
+    np.ndarray
+        The normalized Obuko-Weiss (OW) parameter field
+    """
+    OW = compute_ObukoWeiss(vort, E, F)
+    return OW / vort ** 2
+
+
+def compute_Coriolis_param(lat):
+    """Compute the coriolis parameter for a given latitude (array)
+
+    Parameters
+    ----------
+    lat : float
+        latitude (can also be a np.ndarrays of latitudes)
+
+    Returns
+    -------
+    float
+        Coriolis parameter
+    """
+    W = 7.2921e-5  # Rotation rate of the Earth
+    phi = lat * np.pi / 180
+    return 2 * W * np.sin(phi)
+
+
+def compute_OWZ(vort, E, F, lat):
+    OW_n = compute_ObukoWeiss_norm(vort, E, F)
+    f = compute_Coriolis_param(lat)
+    shape = np.shape(vort)
+    f = np.transpose(
+        np.array(list(f) * shape[1]).reshape([shape[1], shape[0]]))
+    return np.sign(f) * (vort + f) * np.maximum(OW_n, np.zeros(np.shape(OW_n)))
+
+
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
 
@@ -314,3 +362,4 @@ if __name__ == "__main__":
     lon_E, lat_E, E = compute_stretching(u, v, lat, lon)
     lon_F, lat_F, F = compute_shearing(u, v, lat, lon)
     OW = compute_ObukoWeiss(vort, E, F)
+    OW_n = compute_ObukoWeiss_norm(vort, E, F)
