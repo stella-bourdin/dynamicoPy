@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Oceanic basins are defined with tables [[lon_min, lon_max], [lat_min, lat_max]]
