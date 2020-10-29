@@ -13,6 +13,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 # Ne peut pas fonctionner avec des subplots de la même façon que lon_lat_plot car on ne peut pas changer la projection d'un ax existant. Voire pour faire une fonction supplémentaire pour gérer ça ?
+# Actuellement, pour utiliser des subplots, les créer avec plt.subplots(a, b, subplot_kw = {'projection':ccrs.Robinson()})
 
 
 def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=TwoSlopeNorm(vcenter=0), smooth=False, projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
@@ -86,7 +87,7 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
     return None
 
 
-def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
+def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False, link=False, linecolor='k', linewidth=1):
     """Plot points on a map.
 
     Parameters
@@ -111,6 +112,12 @@ def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projec
         if True, displays the coastlines, by default True
     grid : bool, optional
         if True, displays gridlines, by default False
+    link : bool, optional
+        if True, displays lines (or trajectories) instead of points, by default False
+    linecolor : str, optional
+        color of the line, by default 'k'
+    linewidth : float, optional
+        width of the line, by default 1
 
     Returns
     -------
@@ -129,6 +136,10 @@ def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projec
     if grid:
         ax.gridlines()
     ax.scatter(lons, lats, transform=ccrs.PlateCarree(), s=size, c=color)
+    if link:
+        ax.plot(lons, lats, transform=ccrs.PlateCarree(),
+                c=linecolor, linewidth=linewidth)
+
     ax.set_title(title)
 
     return None
