@@ -145,6 +145,15 @@ def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projec
     return None
 
 
+zooms = {"NI": ccrs.NearsidePerspective(70, 20, 35785831/2),
+         "SI": ccrs.NearsidePerspective(70, -20, 35785831/2),
+         "AUS": ccrs.NearsidePerspective(135, -20, 35785831/2),
+         "WNP": ccrs.NearsidePerspective(150, 20, 35785831/2),
+         "SP": ccrs.NearsidePerspective(200, -20, 35785831/2),
+         "ENP": ccrs.NearsidePerspective(240, 20, 35785831/2),
+         "ATL": ccrs.NearsidePerspective(280, 20, 35785831/2)}
+
+
 if __name__ == "__main__":
 
     import dynamicopy.ncload as ncl
