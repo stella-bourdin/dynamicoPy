@@ -12,8 +12,10 @@ from matplotlib.axes import Axes
 from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
+# Ne peut pas fonctionner avec des subplots de la même façon que lon_lat_plot car on ne peut pas changer la projection d'un ax existant. Voire pour faire une fonction supplémentaire pour gérer ça ?
 
-def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplots(), title='', cmap="bwr", colorbar_label='', norm=TwoSlopeNorm(vcenter=0), smooth=False, projection=ccrs.Robinson(), set_global=False):
+
+def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=TwoSlopeNorm(vcenter=0), smooth=False, projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
     """Plot a 2D map of the data with cartopy.
 
     Parameters
@@ -29,7 +31,7 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplot
     lat_axis : int, optional
         axis on latitude in var, by default -2
     fig_ax : [type], optional
-        [description], by default plt.subplots()
+        [description], by default None
     title : str, optional
         title of the plot, by default ''
     cmap : str, optional
@@ -44,6 +46,10 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplot
         projection for the display, by default ccrs.Robinson()
     set_global : bool, optional
         if True, forces to plot the full globe, by default False
+    coastlines : bool, optional
+        if True, displays the coastlines, by default True
+    grid : bool, optional
+        if True, displays gridlines, by default False
 
     Returns
     -------
@@ -54,11 +60,17 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplot
     var2D = var2d(var, lon_axis, lat_axis)
 
     # Plotting
-    fig, ax = fig_ax
-    ax = plt.axes(projection=projection)
+    if fig_ax == None:
+        fig = plt.figure()
+        ax = plt.axes(projection=projection)
+    else:
+        fig, ax = fig_ax
     if set_global:
         ax.set_global()
-    ax.coastlines()
+    if coastlines:
+        ax.coastlines()
+    if grid:
+        ax.gridlines(crs=projection)
 
     if not smooth:
         C = ax.pcolormesh(lon, lat, var2D, cmap=cmap,
@@ -74,6 +86,54 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplot
     return None
 
 
+def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
+    """Plot points on a map.
+
+    Parameters
+    ----------
+    lons : 1D np.ndarray
+        longitudes of the points
+    lats : 1D np.ndarray
+        latitudes of the points
+    fig_ax : [type], optional
+        [description], by default None
+    color : str, optional
+        color of the points, can also be a 1D list of the same length than the data, by default 'k'
+    size : float, optional
+        size of the points, by default 1
+    title : str, optional
+        title of the plot, by default ''
+    projection : cartopy.crs projection, optional
+        projection for the display, by default ccrs.Robinson()
+    set_global : bool, optional
+        if True, forces to plot the full globe, by default False
+    coastlines : bool, optional
+        if True, displays the coastlines, by default True
+    grid : bool, optional
+        if True, displays gridlines, by default False
+
+    Returns
+    -------
+    None
+        Plots the points in ax
+    """
+    if fig_ax == None:
+        fig = plt.figure()
+        ax = plt.axes(projection=projection)
+    else:
+        fig, ax = fig_ax
+    if set_global:
+        ax.set_global()
+    if coastlines:
+        ax.coastlines()
+    if grid:
+        ax.gridlines()
+    ax.scatter(lons, lats, transform=ccrs.PlateCarree(), s=size, c=color)
+    ax.set_title(title)
+
+    return None
+
+
 if __name__ == "__main__":
 
     import dynamicopy.ncload as ncl
@@ -81,10 +141,10 @@ if __name__ == "__main__":
     v = ncl.varLoad("v10", "data_tests/v10.nc")[0]
     lat = ncl.var_load("latitude", "data_tests/u10.nc")
     lon = ncl.varLoad("longitude", "data_tests/u10.nc")
-    #fig, axs = plt.subplots(2)
-    lon_lat_plot_map(lon, lat, u, lon_axis=-1, lat_axis=-2,  # fig_ax=(fig, axs[0]),
-                     smooth=False, colorbar_label="Velocity (m/s)")
-    plt.figure()
-    lon_lat_plot_map(lon, lat, u, lon_axis=-1, lat_axis=-2,  # fig_ax=(fig, axs[1]),
-                     smooth=True, colorbar_label="Velocity (m/s)")
+    # fig, axs = plt.subplots(2)
+    # lon_lat_plot_map(lon, lat, u, lon_axis=-1, lat_axis=-2,  # fig_ax=(fig, axs[0]),
+    #                 smooth=False, colorbar_label="Velocity (m/s)")
+    # plt.figure()
+    # lon_lat_plot_map(lon, lat, u, lon_axis=-1, lat_axis=-2,  # fig_ax=(fig, axs[1]),
+    #                 smooth = True, colorbar_label = "Velocity (m/s)")
     # plt.show()
