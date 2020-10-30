@@ -2,9 +2,6 @@
 
 # Computation tools to manipulate atmospheric variables.
 
-import numpy as np
-from dynamicopy import utils
-
 ### ==================================== ###
 ###         Derivated variables          ###
 ### ==================================== ###
@@ -350,15 +347,4 @@ def hemispheric_mean(var, lat, axis=-1, neg=False):
 hemisphericMean = hemispheric_mean
 
 if __name__ == "__main__":
-
-    import dynamicopy.ncload as ncl
-    u = ncl.var_load("u10", "data_tests/u10.nc")[0]
-    v = ncl.varLoad("v10", "data_tests/v10.nc")[0]
-    lat = ncl.var_load("latitude", "data_tests/u10.nc")
-    lon = ncl.varLoad("longitude", "data_tests/u10.nc")
-
-    lon_w, lat_w, vort = compute_vort(u, v, lat, lon)
-    lon_E, lat_E, E = compute_stretching(u, v, lat, lon)
-    lon_F, lat_F, F = compute_shearing(u, v, lat, lon)
-    OW = compute_ObukoWeiss(vort, E, F)
-    OW_n = compute_ObukoWeiss_norm(vort, E, F)
+    pass

@@ -2,12 +2,10 @@
 
 # Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
 
-import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
-import numpy as np
 
 
-def var2d(var, lon_axis=-1, lat_axis=-2):
+def _var2d(var, lon_axis=-1, lat_axis=-2):
     """Returns the 2D field average over dimensions that are not latitude or longitude
 
     Parameters
@@ -91,15 +89,4 @@ lonLatPlot = lon_lat_plot
 
 
 if __name__ == "__main__":
-
-    import dynamicopy.ncload as ncl
-    u = ncl.var_load("u10", "data_tests/u10.nc")  # [0]
-    v = ncl.varLoad("v10", "data_tests/v10.nc")[0]
-    lat = ncl.var_load("latitude", "data_tests/u10.nc")
-    lon = ncl.varLoad("longitude", "data_tests/u10.nc")
-    fig, axs = plt.subplots(2)
-    lon_lat_plot(lon, lat, u, lon_axis=-1, lat_axis=-2, fig_ax=(fig, axs[0]),
-                 smooth=False, colorbar_label="Velocity (m/s)")
-    lon_lat_plot(lon, lat, u, lon_axis=-1, lat_axis=-2, fig_ax=(fig, axs[1]),
-                 smooth=True, colorbar_label="Velocity (m/s)")
-    # plt.show()
+    pass

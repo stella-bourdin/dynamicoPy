@@ -2,11 +2,8 @@
 
 # Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
 
-import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
-import numpy as np
-import cartopy.crs as ccrs
-from plot import var2d
+from .plot import _var2d
 
 from matplotlib.axes import Axes
 from cartopy.mpl.geoaxes import GeoAxes
@@ -128,7 +125,7 @@ def scatterplot_map(lons, lats, fig_ax=None, color='k', size=1, title='', projec
         fig = plt.figure()
         ax = plt.axes(projection=projection)
     else:
-        fig, ax = fig_ax
+        ax = fig_ax[1]
     if set_global:
         ax.set_global()
     if coastlines:
@@ -155,16 +152,4 @@ zooms = {"NI": ccrs.NearsidePerspective(70, 20, 35785831/2),
 
 
 if __name__ == "__main__":
-
-    import dynamicopy.ncload as ncl
-    u = ncl.var_load("u10", "data_tests/u10.nc")  # [0]
-    v = ncl.varLoad("v10", "data_tests/v10.nc")[0]
-    lat = ncl.var_load("latitude", "data_tests/u10.nc")
-    lon = ncl.varLoad("longitude", "data_tests/u10.nc")
-    # fig, axs = plt.subplots(2)
-    # lon_lat_plot_map(lon, lat, u, lon_axis=-1, lat_axis=-2,  # fig_ax=(fig, axs[0]),
-    #                 smooth=False, colorbar_label="Velocity (m/s)")
-    # plt.figure()
-    # lon_lat_plot_map(lon, lat, u, lon_axis=-1, lat_axis=-2,  # fig_ax=(fig, axs[1]),
-    #                 smooth = True, colorbar_label = "Velocity (m/s)")
-    # plt.show()
+    pass
