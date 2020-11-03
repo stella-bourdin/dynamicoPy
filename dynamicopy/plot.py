@@ -2,6 +2,8 @@
 
 # Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
 
+import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 
 

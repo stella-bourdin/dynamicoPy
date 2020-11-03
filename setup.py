@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="dynamicopy",
-    version="0.2.1",
+    version="0.2.2",
     author="Stella Bourdin",
     author_email="stella.bourdin@lsce.ipsl.fr",
     description="A set of tool to use and analyse netCDF data",
@@ -32,5 +32,4 @@ setuptools.setup(
 # To upload to PyPI:
 # 1 / Check that twine is up-to-date `pip install --user --upgrade twine`
 # 2 / Upload with `python -m twine upload --repository pypi dist/*`
-# 
-
+#

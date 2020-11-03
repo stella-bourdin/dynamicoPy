@@ -3,6 +3,7 @@
 # Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
 
 from matplotlib.colors import TwoSlopeNorm
+import cartopy.crs as ccrs
 from .plot import _var2d
 
 from matplotlib.axes import Axes
