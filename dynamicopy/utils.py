@@ -3,7 +3,6 @@
 # Utilitary functions to use inside the module
 
 import numpy as np
-from utils_geo import *
 
 ### ======================================================= ###
 ###          Utilitary data manipulation functions          ###
