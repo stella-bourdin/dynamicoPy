@@ -1,6 +1,3 @@
-import numpy as np
-import matplotlib as plt
-from netCDF4 import Dataset
 
 # If any private function or specific import is defined in a module, remove '*' and list the functions.
 from .utils import idx_closest, sign_change_detect

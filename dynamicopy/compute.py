@@ -2,6 +2,9 @@
 
 # Computation tools to manipulate atmospheric variables.
 
+import numpy as np
+from .utils_geo import get_south, get_north, apply_mask_axis
+
 ### ==================================== ###
 ###         Derivated variables          ###
 ### ==================================== ###
@@ -323,15 +326,15 @@ def hemispheric_mean(var, lat, axis=-1, neg=False):
     Two np.ndarrays
         The latitude array and the hemispheric mean
     """
-    lat_south, var_south = utils.get_south(var, lat, axis, flip=True)
-    lat_north, var_north = utils.get_north(var, lat, axis)
+    lat_south, var_south = get_south(var, lat, axis, flip=True)
+    lat_north, var_north = get_north(var, lat, axis)
 
     common_lat = [l for l in abs(lat_south) if l in lat_north]
     mask_south = [-l in common_lat for l in lat_south]
     mask_north = [l in common_lat for l in lat_north]
 
-    var_south = utils.apply_mask_axis(var_south, mask_south, axis)
-    var_north = utils.apply_mask_axis(var_north, mask_north, axis)
+    var_south = apply_mask_axis(var_south, mask_south, axis)
+    var_north = apply_mask_axis(var_north, mask_north, axis)
 
     if neg:
         sign = -1

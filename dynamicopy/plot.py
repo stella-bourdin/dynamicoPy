@@ -70,7 +70,7 @@ def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplots(),
         Plots the map in ax
     """
     # Obtain 2D variable to plot
-    var2D = var2d(var, lon_axis, lat_axis)
+    var2D = _var2d(var, lon_axis, lat_axis)
 
     # Plotting
     fig, ax = fig_ax

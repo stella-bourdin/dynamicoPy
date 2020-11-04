@@ -3,6 +3,9 @@
 # Tools to load variables from a NetCDF File.
 # Note : I strongly advice using nco and cdo to pre-process file instead of python. (e.g. concatenation)
 
+from netCDF4 import Dataset
+import numpy as np
+
 
 def var_load(varname, file_path, group=None, subgroup=None, silent=True):
     """ Loads a variable from a netCDF file.
@@ -72,9 +75,4 @@ def get_lon_lat(file_path, lon_name='lon', lat_name='lat'):
 
 
 if __name__ == "__main__":
-    file = "data_tests/sp.nc"
-    sp = var_load("sp", file)
-    lon, lat = get_lon_lat(file, 'longitude', 'latitude')
-    lon_bis, lat_bis = getLonLat(file, 'longitude', 'latitude')
-
-    print(lon, lat, sp)
+    pass

@@ -2,6 +2,8 @@
 
 # Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
 
+import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import cartopy.crs as ccrs
 from .plot import _var2d
@@ -56,7 +58,7 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
         Plots the map in ax
     """
     # Obtain 2D variable to plot
-    var2D = var2d(var, lon_axis, lat_axis)
+    var2D = _var2d(var, lon_axis, lat_axis)
 
     # Plotting
     if fig_ax == None:
