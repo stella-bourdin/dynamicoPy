@@ -4,7 +4,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
 import cartopy.crs as ccrs
 from .plot import _var2d
 
@@ -16,7 +15,7 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 # Actuellement, pour utiliser des subplots, les créer avec plt.subplots(a, b, subplot_kw = {'projection':ccrs.Robinson()})
 
 
-def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=TwoSlopeNorm(vcenter=0), smooth=False, projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
+def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=None, smooth=False, projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
     """Plot a 2D map of the data with cartopy.
 
     Parameters
@@ -75,7 +74,7 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
 
     if not smooth:
         C = ax.pcolormesh(lon, lat, var2D, cmap=cmap,
-                          norm=norm, transform=ccrs.PlateCarree())
+                          norm=norm, transform=ccrs.PlateCarree(), shading = "nearest")
     else:
         C = ax.contourf(lon, lat, var2D, cmap=cmap, norm=norm,
                         transform=ccrs.PlateCarree())
