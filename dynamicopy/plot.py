@@ -35,7 +35,7 @@ def _var2d(var, lon_axis=-1, lat_axis=-2):
     return np.mean(var, axis=tuple(axes_avg))
 
 
-def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplots(), title='', cmap="bwr", colorbar_label='', norm=None, smooth=False):
+def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=None, smooth=False):
     """Plot a 2D map of the data.
 
     Parameters
@@ -72,9 +72,13 @@ def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=plt.subplots(),
     var2D = _var2d(var, lon_axis, lat_axis)
 
     # Plotting
-    fig, ax = fig_ax
+    if fig_ax == None :
+        fig, ax = plt.subplots()
+    else :
+        fig, ax = fig_ax
+
     if not smooth:
-        C = ax.pcolormesh(lon, lat, var2D, cmap=cmap, norm=norm)
+        C = ax.pcolormesh(lon, lat, var2D, cmap=cmap, norm=norm, shading = "nearest")
     else:
         C = ax.contourf(lon, lat, var2D, cmap=cmap, norm=norm)
     fig.colorbar(C, ax=ax, label=colorbar_label,)
