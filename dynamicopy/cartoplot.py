@@ -59,6 +59,12 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
     # Obtain 2D variable to plot
     var2D = _var2d(var, lon_axis, lat_axis)
 
+    # Truncate if latitude coordinates array go too far
+    mask = ~((lat > 88) | (lat < -88))
+    var2D = apply_mask_axis(var2D, mask, axis=lat_axis)
+    lat = lat[mask]
+    if any(mask == False) : print("Warning, some values too close to the pole(s) were not displayed.")
+
     # Plotting
     if fig_ax == None:
         fig = plt.figure()
