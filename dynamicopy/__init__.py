@@ -12,4 +12,4 @@ try:
     from .cartoplot import lon_lat_plot_map, scatterplot_map, zooms
 except ImportError:
     print("Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
-    Please install cartopy if you wish to use it.")
+    Please install cartopy if you wish to use it. Other dynamicopy modules are imported.")
