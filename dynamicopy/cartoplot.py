@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from .plot import _var2d
-from .utils_geo import apply_mask_axis
 
 from matplotlib.axes import Axes
 from cartopy.mpl.geoaxes import GeoAxes
@@ -81,12 +80,11 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
 
     if not smooth:
         C = ax.pcolormesh(lon, lat, var2D, cmap=cmap,
-                          norm=norm, transform=ccrs.PlateCarree(),
-                          shading = "nearest")
+                          norm=norm, transform=ccrs.PlateCarree(), shading = "nearest")
     else:
         C = ax.contourf(lon, lat, var2D, cmap=cmap, norm=norm,
                         transform=ccrs.PlateCarree())
-    fig.colorbar(C, ax=ax, label=colorbar_label)
+    fig.colorbar(C, ax=ax, label=colorbar_label,)
     ax.set_ylabel("Latitude (°)")
     ax.set_xlabel("Longitude (°)")
     ax.set_title(title)
