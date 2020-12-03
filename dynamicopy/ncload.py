@@ -73,6 +73,62 @@ def get_lon_lat(file_path, lon_name='lon', lat_name='lat'):
 
     return np.array(lon), np.array(lat)
 
+def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', lat_name='latitude'):
+    """ Loads a field from a limit.nc file (LMDZ standard structure)
+
+    Parameters
+    ----------
+    varname : str
+        Name of the variable to load in the file
+    limit_file : str
+        The path (relative or absolute) to the limit.nc file;
+    lon_name : str, optional
+        name of the longitude coordinate in the file (default 'longitude');
+    lat_name : str, optional
+        name of the latitude coordinate in the file (default 'latitute');
+
+    Returns
+    -------
+    list of np.ndarray (lon, lat, var)
+        The field reshaped in lon/lat coordinates and the corresponding coordinate arrays;
+    """
+
+    lon = var_load(lon_name, limit_file)
+    lat = var_load(lat_name, limit_file)
+    var = var_load(varname, limit_file)
+
+    lat_dim_no_pole = len(np.unique(lat)) - 2
+    lon_dim = len(np.unique(lon))
+
+    if (len(np.shape(var)) == 1) :
+        var_north_pole = var[0]
+        var_south_pole = var[-1]
+        var_no_pole = var[1:-1]
+
+        var_no_pole_reshape = np.reshape(var_no_pole, [lat_dim_no_pole, lon_dim])
+        var_north_pole_reshape = [[var_north_pole] * lon_dim]
+        var_south_pole_reshape = [[var_south_pole] * lon_dim]
+        var_reshape = np.concatenate([var_north_pole_reshape, var_no_pole_reshape, var_south_pole_reshape], 0)
+
+    elif (len(np.shape(var)) == 2) :
+        var_north_pole = var[:,0]
+        var_south_pole = var[:,-1]
+        var_no_pole = var[:,1:-1]
+
+        var_no_pole_reshape = [np.reshape(var_no_pole[i], [lat_dim_no_pole, lon_dim]) for i in range(len(var))]
+        var_north_pole_reshape = [[[var_north_pole[i]] * lon_dim] for i in range(len(var))]
+        var_south_pole_reshape = [[[var_south_pole[i]] * lon_dim] for i in range(len(var))]
+        var_reshape = np.concatenate([var_north_pole_reshape, var_no_pole_reshape, var_south_pole_reshape], 1)
+
+    else :
+        print("Problem with the variable dimensions")
+
+    lat_reshape = np.flip(np.unique(lat))
+    lon_reshape = np.unique(lon)
+
+    return lon_reshape, lat_reshape, var_reshape
+
+
 
 if __name__ == "__main__":
     pass
