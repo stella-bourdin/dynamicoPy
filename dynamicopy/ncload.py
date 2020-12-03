@@ -128,7 +128,35 @@ def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', la
 
     return lon_reshape, lat_reshape, var_reshape
 
+def change_limit(newfield, fieldname, limit_file='limit.nc'):
+    """ Function to change a field in a limit.nc file (LMDZ standard structure)
 
+    Parameters
+    ----------
+    newfield : np.ndarray
+        2D or 3D field corresponding to the new values for a limit variable.
+    fieldname : np.ndarray
+        name of the field to change.
+    limit_file : str
+        The path (relative or absolute) to the limit.nc file;
+
+    Returns
+    -------
+    """
+    north_pole = np.transpose([np.mean(newfield[:,0], -1)])
+    south_pole = np.transpose([np.mean(newfield[:,-1], -1)])
+    if len(np.shape(newfield)) == 3 : # If time dimension
+        newfield_flat = [newfield[t, 1:-1].flatten() for t in range(len(newfield))]
+    else :
+        newfield_flat = newfield[1:-1].flatten()
+
+    newfield_flat = np.concatenate([north_pole, newfield_flat, south_pole], 1)
+
+    f_in = Dataset(limit_file, 'a')
+    f_in.variables[fieldname][:]=newfield_flat
+    f_in.close()
+
+    return None
 
 if __name__ == "__main__":
     pass
