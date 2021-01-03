@@ -4,7 +4,7 @@ from .utils import idx_closest, sign_change_detect
 from .utils_geo import *
 from .ncload import var_load, get_lon_lat
 from .compute import *
-from .plot import lon_lat_plot
+from .plot import lon_lat_plot, zonal_plot
 from .basins import *
 
 try:

@@ -86,10 +86,62 @@ def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='',
     ax.set_xlabel("Longitude (°)")
     ax.set_title(title)
 
-    # To-Do : Be able to set level when smoothed or even for pcolormesh (Check what I did for the matrix in my article)
     return None
 
+def zonal_plot(lat, lev, var, lat_axis = -1, lev_axis = -2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=None, smooth=False):
+    """Plot a 2D map of the data.
 
+    Parameters
+    ----------
+    lat : 1D np.ndarray
+        latitude coordinate
+    lev : 1D np.ndarray
+        pressure coordinate in Pa
+    var : np.ndarray
+        field to plot
+    lon_axis : int, optional
+        axis of longitude in var, by default -1
+    lat_axis : int, optional
+        axis of latitude in var, by default -2
+    fig_ax : (matplotlib.figure.Figure, matplotlib.axes._subplots.AxesSubplot), optional
+        2-tuple of fig and ax for the plot, by default plt.subplots()
+    title : str, optional
+        title of the plot, by default ''
+    cmap : str, optional
+        color palette, by default "bwr"
+    colorbar_label : str, optional
+        label of the colorbar, by default ''
+    norm : matplotlib.colors.<any>Norm, optional
+        normalization for the colormap, by default None
+    smooth : bool, optional
+        if True, contourf is used instead of pcolormesh, by default False
+
+    Returns
+    -------
+    None
+        Plots the map in ax
+    """
+
+    # Obtain 2D variable to plot
+    var2D = _var2d(var, lat_axis, lev_axis)
+
+    # Plotting
+    if fig_ax == None :
+        fig, ax = plt.subplots(figsize = [10, 5])
+    else :
+        fig, ax = fig_ax
+
+    if not smooth:
+        C = ax.pcolormesh(lat, lev/100, var2D, cmap=cmap, norm=norm, shading = "nearest")
+    else:
+        C = ax.contourf(lat, lev/100, var2D, cmap=cmap, norm=norm)
+    fig.colorbar(C, ax=ax, label=colorbar_label,)
+    ax.set_ylim(np.max(lev/100), np.min(lev/100))
+    ax.set_ylabel("Pressure / hPa")
+    ax.set_xlabel("Latitude / °")
+    ax.set_title(title)
+
+    return None
 
 if __name__ == "__main__":
     pass
