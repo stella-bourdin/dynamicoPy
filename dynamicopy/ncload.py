@@ -122,6 +122,7 @@ def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', la
 
     else :
         print("Problem with the variable dimensions")
+        return None
 
     lat_reshape = np.flip(np.unique(lat))
     lon_reshape = np.unique(lon)

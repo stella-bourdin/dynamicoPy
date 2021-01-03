@@ -2,10 +2,11 @@
 
 # Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
 
-import numpy as np
+# import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from .plot import _var2d
+from .utils_geo import apply_mask_axis
 
 from matplotlib.axes import Axes
 from cartopy.mpl.geoaxes import GeoAxes
