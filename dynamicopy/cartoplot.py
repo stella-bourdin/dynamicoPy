@@ -16,7 +16,9 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 # Actuellement, pour utiliser des subplots, les créer avec plt.subplots(a, b, subplot_kw = {'projection':ccrs.Robinson()})
 
 
-def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", colorbar_label='', norm=None, smooth=False, projection=ccrs.Robinson(), set_global=False, coastlines=True, grid=False):
+def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", \
+                     colorbar_label='', norm=None, smooth=False, projection=ccrs.Robinson(), \
+                     set_global=False, coastlines=True, grid=False, savefig = False, filename = 'saved_fig.png'):
     """Plot a 2D map of the data with cartopy.
 
     Parameters
@@ -51,6 +53,10 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
         if True, displays the coastlines, by default True
     grid : bool, optional
         if True, displays gridlines, by default False
+    savefig : bool, optional
+        if True, prints the figure in the file specified with filename, by default False
+    filename : str, optional
+        File in which the figure will be saved if savefig is True, by default 'saved_fig.png'
 
     Returns
     -------
@@ -89,6 +95,10 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
     ax.set_ylabel("Latitude (°)")
     ax.set_xlabel("Longitude (°)")
     ax.set_title(title)
+
+    if savefig:
+        print("Saving figure as" + filename)
+        fig.savefig(filename)
 
     return None
 
