@@ -148,10 +148,10 @@ def change_limit(newfield, fieldname, limit_file='limit.nc'):
     south_pole = np.transpose([np.mean(newfield[:,-1], -1)])
     if len(np.shape(newfield)) == 3 : # If time dimension
         newfield_flat = [newfield[t, 1:-1].flatten() for t in range(len(newfield))]
+        newfield_flat = np.concatenate([north_pole, newfield_flat, south_pole], 1)
     else :
         newfield_flat = newfield[1:-1].flatten()
-
-    newfield_flat = np.concatenate([north_pole, newfield_flat, south_pole], 1)
+        newfield_flat = np.concatenate([north_pole, newfield_flat, south_pole])
 
     f_in = Dataset(limit_file, 'a')
     f_in.variables[fieldname][:]=newfield_flat
