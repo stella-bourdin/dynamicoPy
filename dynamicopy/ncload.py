@@ -159,5 +159,28 @@ def change_limit(newfield, fieldname, limit_file='limit.nc'):
 
     return None
 
+def change_start(newfield, fieldname, start_file='start.nc'):
+    """ Function to change a field in a start.nc file (LMDZ standard structure)
+
+    Parameters
+    ----------
+    newfield : np.ndarray
+        2D field corresponding to the new values for a limit variable.
+    fieldname : np.ndarray
+        name of the field to change.
+    start_file : str
+        The path (relative or absolute) to the start.nc file;
+
+    Returns
+    -------
+    """
+
+    f_in = Dataset(start_file, 'a')
+    f_in.variables[fieldname][:,:]=newfield
+    f_in.close()
+
+    return None
+
+
 if __name__ == "__main__":
     pass
