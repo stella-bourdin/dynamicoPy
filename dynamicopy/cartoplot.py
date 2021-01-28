@@ -42,7 +42,9 @@ def lon_lat_plot_map(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title
     colorbar_label : str, optional
         label to be shown beside the colorbar, by default ''
     norm : matplotlib.colors.<any>Norm, optional
-        normalization of the colormap, by default TwoSlopeNorm(vcenter=0)
+        normalization for the colormap, by default None
+        Example : with `import matplotlib.colors as c` in header of your script
+            * For centering diverging colormap : c.DivergingNorm(vcenter = 0.0)
     smooth : bool, optional
         if True, contourf is used instead of pcolormesh, by default False
     projection : cartopy.crs projection, optional

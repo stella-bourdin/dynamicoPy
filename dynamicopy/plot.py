@@ -61,6 +61,8 @@ def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='',
         label of the colorbar, by default ''
     norm : matplotlib.colors.<any>Norm, optional
         normalization for the colormap, by default None
+        Example : with `import matplotlib.colors as c` in header of your script
+            * For centering diverging colormap : c.DivergingNorm(vcenter = 0.0)
     smooth : bool, optional
         if True, contourf is used instead of pcolormesh, by default False
     savefig : bool, optional
@@ -123,6 +125,8 @@ def zonal_plot(lat, lev, var, lat_axis = -1, lev_axis = -2, fig_ax=None, title='
         label of the colorbar, by default ''
     norm : matplotlib.colors.<any>Norm, optional
         normalization for the colormap, by default None
+        Example : with `import matplotlib.colors as c` in header of your script
+            * For centering diverging colormap : c.DivergingNorm(vcenter = 0.0)
     smooth : bool, optional
         if True, contourf is used instead of pcolormesh, by default False
     savefig : bool, optional
