@@ -25,6 +25,9 @@ setuptools.setup(
     include_package_data=True,
 )
 
+# Black formatting:
+# `python -m black <directory or file(s)>
+
 # To generate the distribution:
 # 1 / Check that wheel is up to date with `pip install --user --upgrade setuptools wheel`
 # 2 / Run `python setup.py sdist bdist_wheel`

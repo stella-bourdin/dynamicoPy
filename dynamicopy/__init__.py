@@ -9,7 +9,7 @@ from .cyclones import *
 
 try:
     import cartopy.crs as ccrs
-    from .cartoplot import lon_lat_plot_map, scatterplot_map, zooms
+    from .cartoplot import *
 except ImportError:
     print(
         "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
