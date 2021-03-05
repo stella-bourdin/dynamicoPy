@@ -41,7 +41,7 @@ def sign_change_detect(A):
         The index of the first value whose sign is different from the sign of the first value.
     """
     sign = np.sign(A)
-    change = (sign != sign[0])
+    change = sign != sign[0]
     return np.min(np.where(change == True))
 
 

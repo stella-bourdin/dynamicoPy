@@ -33,7 +33,7 @@ def apply_mask_axis(var, mask, axis=-1):
         axis = L + axis
     axes = np.arange(L)
     axes[0] = axis
-    axes[1:axis+1] -= 1
+    axes[1 : axis + 1] -= 1
     var_t = np.transpose(var, axes)
 
     # Apply the mask
@@ -41,11 +41,12 @@ def apply_mask_axis(var, mask, axis=-1):
 
     # Reverse the transposition
     axes = np.arange(L)
-    axes[0:axis] = axes[1:axis+1]
+    axes[0:axis] = axes[1 : axis + 1]
     axes[axis] = 0
     var_cut = np.transpose(var_t_cut, axes)
 
     return var_cut
+
 
 # ------------- North/South division -------------#
 
@@ -57,8 +58,8 @@ def get_south(var, lat, axis=-2, flip=False):
     ----------
     var : np.ndarray
         The field whose southern part we want
-    lat : np.ndarray        
-        latitude coordinate 
+    lat : np.ndarray
+        latitude coordinate
     axis : int, optional
         latitude axis in var, by default -2
     flip : bool, option
@@ -70,7 +71,7 @@ def get_south(var, lat, axis=-2, flip=False):
         Southern part of the field and the corrsponding latitude coordinate array
     """
 
-    mask = lat <= 0.
+    mask = lat <= 0.0
     lat_south = lat[mask]
 
     var_south = apply_mask_axis(var, mask, axis)
@@ -89,8 +90,8 @@ def get_north(var, lat, axis=-2, flip=False):
     ----------
     var : np.ndarray
         The field whose northern part we want
-    lat : np.ndarray        
-        latitude coordinate 
+    lat : np.ndarray
+        latitude coordinate
     axis : int, optional
         latitude axis in var, by default -2
     flip : bool, option
@@ -103,7 +104,7 @@ def get_north(var, lat, axis=-2, flip=False):
         northern part of the field and the corrsponding latitude coordinate array
     """
 
-    mask = lat >= 0.
+    mask = lat >= 0.0
     lat_north = lat[mask]
 
     var_north = apply_mask_axis(var, mask, axis)
@@ -114,10 +115,19 @@ def get_north(var, lat, axis=-2, flip=False):
 
     return lat_north, var_north
 
+
 # -------       Basin selection     -------- #
 
 
-def select_box_indices(var, idx_lat_min, idx_lat_max, idx_lon_min=None, idx_lon_max=None, lat_axis=-2, lon_axis=-1):
+def select_box_indices(
+    var,
+    idx_lat_min,
+    idx_lat_max,
+    idx_lon_min=None,
+    idx_lon_max=None,
+    lat_axis=-2,
+    lon_axis=-1,
+):
     """Extract data in a box from a field. The box is defined by its indices.
 
     Parameters
@@ -125,7 +135,7 @@ def select_box_indices(var, idx_lat_min, idx_lat_max, idx_lon_min=None, idx_lon_
     var : np.ndarray
         The field in which we exract the box
     idx_lat_min : int >= 0
-        index of the minimum latitude   
+        index of the minimum latitude
     idx_lat_max : int >= 0
         index of the maximum latitude
     idx_lon_min : int >= 0, optional
@@ -156,7 +166,17 @@ def select_box_indices(var, idx_lat_min, idx_lat_max, idx_lon_min=None, idx_lon_
     return var_box
 
 
-def select_box_lonlat(lon, lat, var, lat_min, lat_max, lon_min=None, lon_max=None, lon_axis=-1, lat_axis=-2):
+def select_box_lonlat(
+    lon,
+    lat,
+    var,
+    lat_min,
+    lat_max,
+    lon_min=None,
+    lon_max=None,
+    lon_axis=-1,
+    lat_axis=-2,
+):
     """Extract data in a box from a field. The box is defined by its lon/lat coordinates
 
     Parameters
@@ -226,14 +246,16 @@ def select_basin(lon, lat, var, basin, lon_axis=-1, lat_axis=-2):
     """
     [[lon_min, lon_max], [lat_min, lat_max]] = basin
     lon_basin, lat_basin, var_basin = select_box_lonlat(
-        lon, lat, var, lat_min, lat_max, lon_min, lon_max, lon_axis, lat_axis)
+        lon, lat, var, lat_min, lat_max, lon_min, lon_max, lon_axis, lat_axis
+    )
     return lon_basin, lat_basin, var_basin
+
 
 # -------       Application of land_mask     -------- #
 
 
 def remove_land(var, land_sea_mask, land_value=0.0):
-    """Remove land from a field. 
+    """Remove land from a field.
 
     Parameters
     ----------
@@ -258,6 +280,7 @@ def remove_land(var, land_sea_mask, land_value=0.0):
 if __name__ == "__main__":
 
     import dynamicopy.ncload as ncl
+
     sp = ncl.var_load("sp", "data_tests/sp.nc")
     lat = ncl.var_load("latitude", "data_tests/sp.nc")
     lon = ncl.var_load("longitude", "data_tests/sp.nc")

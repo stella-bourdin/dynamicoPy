@@ -8,7 +8,7 @@ import numpy as np
 
 
 def var_load(varname, file_path, group=None, subgroup=None, silent=True):
-    """ Loads a variable from a netCDF file.
+    """Loads a variable from a netCDF file.
 
     Parameters
     ----------
@@ -43,13 +43,13 @@ def var_load(varname, file_path, group=None, subgroup=None, silent=True):
             var = f_in.groups[group].groups[subgroup].variables[varname][:]
     f_in.close()
 
-    if not(silent):
-        print("Variable dimensions: "+str(np.shape(var)))
+    if not (silent):
+        print("Variable dimensions: " + str(np.shape(var)))
     return np.array(var)
 
 
-def get_lon_lat(file_path, lon_name='lon', lat_name='lat'):
-    """ Loads longitude and latitude coordinates from a netCDF file
+def get_lon_lat(file_path, lon_name="lon", lat_name="lat"):
+    """Loads longitude and latitude coordinates from a netCDF file
 
     Parameters
     ----------
@@ -73,8 +73,11 @@ def get_lon_lat(file_path, lon_name='lon', lat_name='lat'):
 
     return np.array(lon), np.array(lat)
 
-def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', lat_name='latitude'):
-    """ Loads a field from a limit.nc file (LMDZ standard structure)
+
+def var_load_from_limit(
+    varname, limit_file="limit.nc", lon_name="longitude", lat_name="latitude"
+):
+    """Loads a field from a limit.nc file (LMDZ standard structure)
 
     Parameters
     ----------
@@ -100,7 +103,7 @@ def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', la
     lat_dim_no_pole = len(np.unique(lat)) - 2
     lon_dim = len(np.unique(lon))
 
-    if (len(np.shape(var)) == 1) :
+    if len(np.shape(var)) == 1:
         var_north_pole = var[0]
         var_south_pole = var[-1]
         var_no_pole = var[1:-1]
@@ -108,19 +111,30 @@ def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', la
         var_no_pole_reshape = np.reshape(var_no_pole, [lat_dim_no_pole, lon_dim])
         var_north_pole_reshape = [[var_north_pole] * lon_dim]
         var_south_pole_reshape = [[var_south_pole] * lon_dim]
-        var_reshape = np.concatenate([var_north_pole_reshape, var_no_pole_reshape, var_south_pole_reshape], 0)
+        var_reshape = np.concatenate(
+            [var_north_pole_reshape, var_no_pole_reshape, var_south_pole_reshape], 0
+        )
 
-    elif (len(np.shape(var)) == 2) :
-        var_north_pole = var[:,0]
-        var_south_pole = var[:,-1]
-        var_no_pole = var[:,1:-1]
+    elif len(np.shape(var)) == 2:
+        var_north_pole = var[:, 0]
+        var_south_pole = var[:, -1]
+        var_no_pole = var[:, 1:-1]
 
-        var_no_pole_reshape = [np.reshape(var_no_pole[i], [lat_dim_no_pole, lon_dim]) for i in range(len(var))]
-        var_north_pole_reshape = [[[var_north_pole[i]] * lon_dim] for i in range(len(var))]
-        var_south_pole_reshape = [[[var_south_pole[i]] * lon_dim] for i in range(len(var))]
-        var_reshape = np.concatenate([var_north_pole_reshape, var_no_pole_reshape, var_south_pole_reshape], 1)
+        var_no_pole_reshape = [
+            np.reshape(var_no_pole[i], [lat_dim_no_pole, lon_dim])
+            for i in range(len(var))
+        ]
+        var_north_pole_reshape = [
+            [[var_north_pole[i]] * lon_dim] for i in range(len(var))
+        ]
+        var_south_pole_reshape = [
+            [[var_south_pole[i]] * lon_dim] for i in range(len(var))
+        ]
+        var_reshape = np.concatenate(
+            [var_north_pole_reshape, var_no_pole_reshape, var_south_pole_reshape], 1
+        )
 
-    else :
+    else:
         print("Problem with the variable dimensions")
         return None
 
@@ -129,8 +143,9 @@ def var_load_from_limit(varname, limit_file='limit.nc', lon_name='longitude', la
 
     return lon_reshape, lat_reshape, var_reshape
 
-def change_limit(newfield, fieldname, limit_file='limit.nc'):
-    """ Function to change a field in a limit.nc file (LMDZ standard structure)
+
+def change_limit(newfield, fieldname, limit_file="limit.nc"):
+    """Function to change a field in a limit.nc file (LMDZ standard structure)
 
     Parameters
     ----------
@@ -144,23 +159,24 @@ def change_limit(newfield, fieldname, limit_file='limit.nc'):
     Returns
     -------
     """
-    north_pole = np.transpose([np.mean(newfield[:,0], -1)])
-    south_pole = np.transpose([np.mean(newfield[:,-1], -1)])
-    if len(np.shape(newfield)) == 3 : # If time dimension
+    north_pole = np.transpose([np.mean(newfield[:, 0], -1)])
+    south_pole = np.transpose([np.mean(newfield[:, -1], -1)])
+    if len(np.shape(newfield)) == 3:  # If time dimension
         newfield_flat = [newfield[t, 1:-1].flatten() for t in range(len(newfield))]
         newfield_flat = np.concatenate([north_pole, newfield_flat, south_pole], 1)
-    else :
+    else:
         newfield_flat = newfield[1:-1].flatten()
         newfield_flat = np.concatenate([north_pole, newfield_flat, south_pole])
 
-    f_in = Dataset(limit_file, 'a')
-    f_in.variables[fieldname][:]=newfield_flat
+    f_in = Dataset(limit_file, "a")
+    f_in.variables[fieldname][:] = newfield_flat
     f_in.close()
 
     return None
 
-def change_start(newfield, fieldname, start_file='start.nc'):
-    """ Function to change a field in a start.nc file (LMDZ standard structure)
+
+def change_start(newfield, fieldname, start_file="start.nc"):
+    """Function to change a field in a start.nc file (LMDZ standard structure)
 
     Parameters
     ----------
@@ -175,8 +191,8 @@ def change_start(newfield, fieldname, start_file='start.nc'):
     -------
     """
 
-    f_in = Dataset(start_file, 'a')
-    f_in.variables[fieldname][:,:]=newfield
+    f_in = Dataset(start_file, "a")
+    f_in.variables[fieldname][:, :] = newfield
     f_in.close()
 
     return None

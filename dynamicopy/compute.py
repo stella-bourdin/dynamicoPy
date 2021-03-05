@@ -30,9 +30,10 @@ def omega2w(omega, p, T):
     omega, p, T = np.array(omega), np.array(p), np.array(T)
     R_gas = 287.058
     g = 9.80665
-    rho = p/(R_gas * T)
-    w = - omega / (rho*g)
+    rho = p / (R_gas * T)
+    w = -omega / (rho * g)
     return w
+
 
 # -- TODO -- Handle anyD velocity field.
 
@@ -61,20 +62,20 @@ def compute_vort(u, v, lat, lon):
 
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000            # Earth radius
+    R = 6371000  # Earth radius
     dy = R * dlat * np.pi / 180  # Vertical size of a cell
     # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi/180  # Latitudes in rad
-    r = np.sin(np.pi/2 - abs(lat_rad)) * R
+    lat_rad = lat * np.pi / 180  # Latitudes in rad
+    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
     dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1])/2] * (len(lon) - 1))
+    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
 
     # Compute lat and lon corresponding to the vort matrix
     lat_vort = (lat[:-1] + lat[1:]) / 2
     lon_vort = (lon[:-1] + lon[1:]) / 2
 
-    W = np.zeros([len(lat)-1, len(lon)-1])  # Initialization of the matrix
-    W = (v[:-1, 1:]-v[:-1, :-1]) * 1/dx[:] - (u[1:, :-1] - u[:-1, :-1]) * 1/dy
+    W = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    W = (v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] - (u[1:, :-1] - u[:-1, :-1]) * 1 / dy
 
     return lon_vort, lat_vort, W
 
@@ -103,20 +104,20 @@ def compute_stretching(u, v, lat, lon):
 
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000            # Earth radius
+    R = 6371000  # Earth radius
     dy = R * dlat * np.pi / 180  # Vertical size of a cell
     # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi/180  # Latitudes in rad
-    r = np.sin(np.pi/2 - abs(lat_rad)) * R
+    lat_rad = lat * np.pi / 180  # Latitudes in rad
+    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
     dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1])/2] * (len(lon) - 1))
+    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
 
     # Compute lat and lon corresponding to the E matrix
     lat_E = (lat[:-1] + lat[1:]) / 2
     lon_E = (lon[:-1] + lon[1:]) / 2
 
-    E = np.zeros([len(lat)-1, len(lon)-1])  # Initialization of the matrix
-    E = (u[:-1, 1:]-u[:-1, :-1]) * 1/dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1/dy
+    E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy
 
     return lon_E, lat_E, E
 
@@ -145,20 +146,20 @@ def compute_shearing(u, v, lat, lon):
 
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000            # Earth radius
+    R = 6371000  # Earth radius
     dy = R * dlat * np.pi / 180  # Vertical size of a cell
     # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi/180  # Latitudes in rad
-    r = np.sin(np.pi/2 - abs(lat_rad)) * R
+    lat_rad = lat * np.pi / 180  # Latitudes in rad
+    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
     dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1])/2] * (len(lon) - 1))
+    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
 
     # Compute lat and lon corresponding to the F matrix
     lat_F = (lat[:-1] + lat[1:]) / 2
     lon_F = (lon[:-1] + lon[1:]) / 2
 
-    F = np.zeros([len(lat)-1, len(lon)-1])  # Initialization of the matrix
-    F = (v[:-1, 1:]-v[:-1, :-1]) * 1/dx[:] + (u[1:, :-1] - u[:-1, :-1]) * 1/dy
+    F = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    F = (v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] + (u[1:, :-1] - u[:-1, :-1]) * 1 / dy
 
     return lon_F, lat_F, F
 
@@ -226,8 +227,7 @@ def compute_OWZ(vort, E, F, lat):
     OW_n = compute_ObukoWeiss_norm(vort, E, F)
     f = compute_Coriolis_param(lat)
     shape = np.shape(vort)
-    f = np.transpose(
-        np.array(list(f) * shape[1]).reshape([shape[1], shape[0]]))
+    f = np.transpose(np.array(list(f) * shape[1]).reshape([shape[1], shape[0]]))
     return np.sign(f) * (vort + f) * np.maximum(OW_n, np.zeros(np.shape(OW_n)))
 
 
@@ -250,30 +250,30 @@ def compute_grad(T, lat, lon):
     """
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000            # Earth radius
+    R = 6371000  # Earth radius
     dy = R * dlat * np.pi / 180  #
 
-    Gx = np.zeros([len(lat)-1, len(lon)-1])
-    Gy = np.zeros([len(lat)-1, len(lon)-1])
-    for i in range(len(lon)-1):  # i index of longitude
-        for j in range(len(lat)-1):  # j index of latitude
+    Gx = np.zeros([len(lat) - 1, len(lon) - 1])
+    Gy = np.zeros([len(lat) - 1, len(lon) - 1])
+    for i in range(len(lon) - 1):  # i index of longitude
+        for j in range(len(lat) - 1):  # j index of latitude
             # Compute dx geometrically
-            lat_rad = lat[j]*np.pi/180  # Current latitude in rad
+            lat_rad = lat[j] * np.pi / 180  # Current latitude in rad
             # radius of the current longitude circle
-            r = np.sin(np.pi/2 - abs(lat_rad))*R
+            r = np.sin(np.pi / 2 - abs(lat_rad)) * R
             dx = r * dlon * np.pi / 180
 
-            Gx[j, i] = (T[j+1, i] - T[j, i])/dx
-            Gy[j, i] = (T[j, i+1] - T[j, i])/dy
+            Gx[j, i] = (T[j + 1, i] - T[j, i]) / dx
+            Gy[j, i] = (T[j, i + 1] - T[j, i]) / dy
 
-    lat_G = np.array([(lat[j+1] + lat[j])/2 for j in range(len(lat) - 1)])
-    lon_G = np.array([(lon[i+1] + lon[i])/2 for i in range(len(lon) - 1)])
+    lat_G = np.array([(lat[j + 1] + lat[j]) / 2 for j in range(len(lat) - 1)])
+    lon_G = np.array([(lon[i + 1] + lon[i]) / 2 for i in range(len(lon) - 1)])
 
     return lon_G, lat_G, np.array(Gx), np.array(Gy)
 
 
 def compute_EKE(u, v):  # Probably deserves optimization if useful later.
-    """Compute Eddy Kinetic Energy from u and v fields. 
+    """Compute Eddy Kinetic Energy from u and v fields.
 
     Parameters
     ----------
@@ -295,10 +295,13 @@ def compute_EKE(u, v):  # Probably deserves optimization if useful later.
     U_zonal_lon = np.transpose([np.transpose(U_zonal) for i in range(nlon)])
     V_zonal_lon = np.transpose([np.transpose(V_zonal) for i in range(nlon)])
 
-    EKE = 0.5 * (np.multiply(u-U_zonal_lon, u-U_zonal_lon) +
-                 np.multiply(v-V_zonal_lon, v-V_zonal_lon))
+    EKE = 0.5 * (
+        np.multiply(u - U_zonal_lon, u - U_zonal_lon)
+        + np.multiply(v - V_zonal_lon, v - V_zonal_lon)
+    )
 
     return EKE
+
 
 ### ========================================== ###
 ###         Geographical computations          ###
@@ -341,7 +344,7 @@ def hemispheric_mean(var, lat, axis=-1, neg=False):
     else:
         sign = +1
 
-    hemispheric_mean = var_north + sign*var_south
+    hemispheric_mean = var_north + sign * var_south
 
     return common_lat, hemispheric_mean
 

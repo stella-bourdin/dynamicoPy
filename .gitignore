@@ -2,6 +2,6 @@ build
 dist
 __pycache__
 *.pyc
-data_tests
+tests/
 .vscode/
 dynamicopy.egg-info/

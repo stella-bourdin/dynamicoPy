@@ -35,8 +35,21 @@ def _var2d(var, lon_axis=-1, lat_axis=-2):
     return np.mean(var, axis=tuple(axes_avg))
 
 
-def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='', cmap="bwr", \
-                 colorbar_label='', norm=None, smooth=False, savefig = False, filename = 'saved_fig.png'):
+def lon_lat_plot(
+    lon,
+    lat,
+    var,
+    lon_axis=-1,
+    lat_axis=-2,
+    fig_ax=None,
+    title="",
+    cmap="bwr",
+    colorbar_label="",
+    norm=None,
+    smooth=False,
+    savefig=False,
+    filename="saved_fig.png",
+):
     """Plot a 2D map of the data.
 
     Parameters
@@ -79,16 +92,20 @@ def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='',
     var2D = _var2d(var, lon_axis, lat_axis)
 
     # Plotting
-    if fig_ax == None :
+    if fig_ax == None:
         fig, ax = plt.subplots()
-    else :
+    else:
         fig, ax = fig_ax
 
     if not smooth:
-        C = ax.pcolormesh(lon, lat, var2D, cmap=cmap, norm=norm, shading = "nearest")
+        C = ax.pcolormesh(lon, lat, var2D, cmap=cmap, norm=norm, shading="nearest")
     else:
         C = ax.contourf(lon, lat, var2D, cmap=cmap, norm=norm)
-    fig.colorbar(C, ax=ax, label=colorbar_label,)
+    fig.colorbar(
+        C,
+        ax=ax,
+        label=colorbar_label,
+    )
     ax.set_ylabel("Latitude (°)")
     ax.set_xlabel("Longitude (°)")
     ax.set_title(title)
@@ -99,8 +116,22 @@ def lon_lat_plot(lon, lat, var, lon_axis=-1, lat_axis=-2, fig_ax=None, title='',
 
     return None
 
-def zonal_plot(lat, lev, var, lat_axis = -1, lev_axis = -2, fig_ax=None, title='', cmap="bwr", \
-               colorbar_label='', norm=None, smooth=False, savefig = False, filename = 'saved_fig.png'):
+
+def zonal_plot(
+    lat,
+    lev,
+    var,
+    lat_axis=-1,
+    lev_axis=-2,
+    fig_ax=None,
+    title="",
+    cmap="bwr",
+    colorbar_label="",
+    norm=None,
+    smooth=False,
+    savefig=False,
+    filename="saved_fig.png",
+):
     """Plot a 2D map of the data.
 
     Parameters
@@ -144,26 +175,33 @@ def zonal_plot(lat, lev, var, lat_axis = -1, lev_axis = -2, fig_ax=None, title='
     var2D = _var2d(var, lat_axis, lev_axis)
 
     # Plotting
-    if fig_ax == None :
-        fig, ax = plt.subplots(figsize = [10, 5])
-    else :
+    if fig_ax == None:
+        fig, ax = plt.subplots(figsize=[10, 5])
+    else:
         fig, ax = fig_ax
 
     if not smooth:
-        C = ax.pcolormesh(lat, lev/100, var2D, cmap=cmap, norm=norm, shading = "nearest")
+        C = ax.pcolormesh(
+            lat, lev / 100, var2D, cmap=cmap, norm=norm, shading="nearest"
+        )
     else:
-        C = ax.contourf(lat, lev/100, var2D, cmap=cmap, norm=norm)
-    fig.colorbar(C, ax=ax, label=colorbar_label,)
-    ax.set_ylim(np.max(lev/100), np.min(lev/100))
+        C = ax.contourf(lat, lev / 100, var2D, cmap=cmap, norm=norm)
+    fig.colorbar(
+        C,
+        ax=ax,
+        label=colorbar_label,
+    )
+    ax.set_ylim(np.max(lev / 100), np.min(lev / 100))
     ax.set_ylabel("Pressure / hPa")
     ax.set_xlabel("Latitude / °")
     ax.set_title(title)
 
-    if savefig :
+    if savefig:
         print("Saving figure as" + filename)
         fig.savefig(filename)
 
     return None
+
 
 if __name__ == "__main__":
     pass
