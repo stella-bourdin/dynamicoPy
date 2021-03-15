@@ -3,12 +3,16 @@ import numpy as np
 from datetime import datetime
 
 
-def load_ibtracs(season=None):
-    tracks = pd.read_csv("data/ibtracs_1980-2020_simplified.csv")
+def load_ibtracs(season=None, file=None, pos_lon=True):
+    if file == None:
+        tracks = pd.read_csv("data/ibtracs_1980-2020_simplified.csv")
+    else:
+        tracks = pd.read_csv(file)
     if season != None:
         tracks = tracks[tracks.SEASON == season]
     tracks["time"] = tracks.ISO_TIME.astype(np.datetime64)
-    tracks.loc[tracks.LON < 0, "LON"] = tracks.loc[tracks.LON < 0, "LON"] + 360
+    if pos_lon:
+        tracks.loc[tracks.LON < 0, "LON"] = tracks.loc[tracks.LON < 0, "LON"] + 360
     tracks = tracks[tracks.USA_SSHS >= 0].rename(
         columns={
             "SID": "track_id",
@@ -24,7 +28,7 @@ def load_ibtracs(season=None):
     return tracks
 
 
-def load_TEtracks(file="tests/tracks_ERA5.csv"):
+def load_TEtracks(file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True):
     df = pd.read_csv(file)
     df = df.rename(columns={c: c[1:] for c in df.columns[1:]})
     df["hemisphere"] = np.where(df.lat > 0, "N", "S")
@@ -35,8 +39,9 @@ def load_TEtracks(file="tests/tracks_ERA5.csv"):
         rsuffix="season",
     ).rename(columns={"yearseason": "season"})
     df["basin"] = [get_basin(df.lon[i], df.lat[i]) for i in range(len(df))]
-    df["sshs_wind"] = [sshs_from_wind(df.wind[i]) for i in range(len(df))]
-    df["sshs_pres"] = [sshs_from_pres(df.slp[i] / 100) for i in range(len(df))]
+    if compute_sshs:
+        df["sshs_wind"] = [sshs_from_wind(df.wind[i]) for i in range(len(df))]
+        df["sshs_pres"] = [sshs_from_pres(df.slp[i] / 100) for i in range(len(df))]
     df["time"] = (
         df["year"].astype(str)
         + "-"
@@ -47,6 +52,8 @@ def load_TEtracks(file="tests/tracks_ERA5.csv"):
         + df["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
+    if pos_lon:
+        df.loc[df.lon < 0, "lon"] = df.loc[df.lon < 0, "lon"] + 360
     return df
 
 

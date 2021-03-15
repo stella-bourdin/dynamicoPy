@@ -221,6 +221,7 @@ def plot_tracks(
     projection=ccrs.Robinson(central_longitude=180.0),
     intensity_col="wind",
     fig_ax=None,
+    figsize=[10, 15],
     cmap="RdYlGn_r",
     draw_lines=True,
 ):
@@ -248,7 +249,7 @@ def plot_tracks(
 
     # Plotting
     if fig_ax == None:
-        fig = plt.figure()
+        fig = plt.figure(figsize=figsize)
         ax = plt.axes(projection=projection)
         ax.coastlines()
         ax.gridlines(draw_labels=True)
