@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 from .utils_geo import get_south, get_north, apply_mask_axis
 
+
 ### ==================================== ###
 ###         Derivated variables          ###
 ### ==================================== ###
@@ -80,7 +81,8 @@ def compute_vort(u, v, lat, lon):
 
     return lon_vort, lat_vort, W
 
-def get_dx_dy(lon, lat) :
+
+def get_dx_dy(lon, lat):
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
     R = 6371000  # Earth radius
@@ -92,128 +94,129 @@ def get_dx_dy(lon, lat) :
     dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
     return dx, dy
 
-def compute_stretching_xr(xarray, u_name = 'u', v_name = 'v', lon_name = 'longitude', lat_name = 'latitude'):
+
+def compute_stretching_xr(
+    xarray, u_name="u", v_name="v", lon_name="longitude", lat_name="latitude"
+):
     """Compute stretching deformation (E) from the horizontal velocity fields
 
-    ! So far, handles only 2D fields.
-
     Parameters
     ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
+    xarray : xr.Dataset
+        Dataset containing zonal and meridional wind in m/s
+    u_name, v_name, lon_name, lat_name : str
+        Names of variables in xarray, respectively zonal wind, meridional wind, longitude and latitude
 
     Returns
     -------
-    3 np.ndarrays
-        longitude, latitude and stretching field
+    E : xr.Dataset
+        Stretching deformation in s-1
     """
 
-    xarray = xarray.rename({lat_name:'lat', lon_name:'lon', u_name:'u', v_name:'v'}).squeeze()
+    xarray = xarray.rename(
+        {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
+    ).squeeze()
 
     dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
 
     u = xarray.u
     v = xarray.v
-    E = (u.sel(lat=lat[:-1],lon=lon[1:]).values - u.sel(lat=lat[:-1],lon=lon[:-1]).values) * 1 / dx[:] - \
-                    (v.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])) * 1 / dy
-    E = xr.DataArray(E).interp_like(xarray, kwargs = {'fill_value':'extrapolate'})
-    E.attrs['units'] = 's-1'
+    E = (
+        u.sel(lat=lat[:-1], lon=lon[1:]).values
+        - u.sel(lat=lat[:-1], lon=lon[:-1]).values
+    ) * 1 / dx[:] - (
+        v.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])
+    ) * 1 / dy
+    E = xr.DataArray(E).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
+    E.attrs["units"] = "s-1"
+    E = E.rename({"lat": lat_name, "lon": lon_name, "u": u_name, "v": v_name})
     return E
 
-def compute_shearing_xr(xarray, u_name = 'u', v_name = 'v', lon_name = 'longitude', lat_name = 'latitude'):
-    """Compute shearing deformation (F) from the horizontal velocity fields
 
-    ! So far, handles only 2D fields.
+def compute_shearing_xr(
+    xarray, u_name="u", v_name="v", lon_name="longitude", lat_name="latitude"
+):
+    """Compute shearing deformation (F) from the horizontal velocity fields
 
     Parameters
     ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
+    xarray : xr.Dataset
+        Dataset containing zonal and meridional wind in m/s
+    u_name, v_name, lon_name, lat_name : str
+        Names of variables in xarray, respectively zonal wind, meridional wind, longitude and latitude
 
     Returns
     -------
-    3 np.ndarrays
-        longitude, latitude and stretching field
+    F : xr.Dataset
+        Shearing deformation in s-1
     """
 
-    xarray = xarray.rename({lat_name:'lat', lon_name:'lon', u_name:'u', v_name:'v'}).squeeze()
+    xarray = xarray.rename(
+        {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
+    ).squeeze()
 
     dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
 
     u = xarray.u
     v = xarray.v
-    F = (v.sel(lat=lat[:-1],lon=lon[1:]).values - u.sel(lat=lat[:-1],lon=lon[:-1]).values) * 1 / dx[:] - \
-                    (u.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])) * 1 / dy
-    F = xr.DataArray(F).interp_like(xarray, kwargs = {'fill_value':'extrapolate'})
-    F.attrs['units'] = 's-1'
+    F = (
+        v.sel(lat=lat[:-1], lon=lon[1:]).values
+        - u.sel(lat=lat[:-1], lon=lon[:-1]).values
+    ) * 1 / dx[:] - (
+        u.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])
+    ) * 1 / dy
+    F = xr.DataArray(F).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
+    F.attrs["units"] = "s-1"
+    F = F.rename({"lat": lat_name, "lon": lon_name, "u": u_name, "v": v_name})
     return F
 
-def compute_ObukoWeiss_xr(vort, E, F):
-    """Compute the Obuko-Weiss Parameter.
-    Values are converted from s-1 to hr-1 then from hr-2 to s-2 to too low values computations.
-
-    Parameters
-    ----------
-    vort : np.ndarray
-        Vorticity field
-    E : np.ndarray
-        Stretching deformation field
-    F : np.ndarray
-        Shearing deformation field
-
-    Returns
-    -------
-    np.ndarray
-        The Obuko-Weiss (OW) parameter field
-    """
-
-    OW = (vort*3600) ** 2 - ((E*3600) ** 2 + (F*3600) ** 2) / (3600 ** 2)
-    OW.attrs['units'] = 's-2'
-    return OW
 
 def compute_ObukoWeiss_norm_xr(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
 
     Parameters
     ----------
-    vort : np.ndarray
+    vort : xr.Dataset
         Vorticity field
-    E : np.ndarray
+    E : xr.Dataset
         Stretching deformation field
-    F : np.ndarray
+    F : xr.Dataset
         Shearing deformation field
 
     Returns
     -------
-    np.ndarray
-        The normalized Obuko-Weiss (OW) parameter field
+    xr.Dataset
+        Normalized Obuko_Weiss parameter field
     """
-    OW = compute_ObukoWeiss_xr(vort, E, F)
-    OW_n = OW * (3600 ** 2) / (vort * 3600) ** 2
-    OW_n.attrs['units'] = '1'
+    OW_n = 1 - ((E * 3600) ** 2 + (F * 3600) ** 2) / ((vo * 3600) ** 2)
+    OW_n.attrs["units"] = "1"
     return OW_n
 
-def compute_OWZ_xr(vort, E, F, lat_name = 'latitude'):
-    """ Fonctionne avec vo, E, F 3D"""
+
+def compute_OWZ_xr(vort, E, F, lat_name="latitude"):
+    """Compute the Obuko-Weiss-Zeta Parameter (See Tory et al. 2013)
+
+    Parameters
+    ----------
+    vort : xr.Dataset
+        Vorticity field
+    E : xr.Dataset
+        Stretching deformation field
+    F : xr.Dataset
+        Shearing deformation field
+
+    Returns
+    -------
+    xr.Dataset
+        OWZ field
+    """
     OW_n = compute_ObukoWeiss_norm_xr(vort, E, F)
     f = compute_Coriolis_param(OW_n[lat_name])
-    shape = np.shape(vort)
     zeros = xr.zeros_like(OW_n)
     OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
-    OWZ.attrs['units'] = 'S-1'
+    OWZ.attrs["units"] = "S-1"
     return OWZ
+
 
 def compute_stretching(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
@@ -237,8 +240,10 @@ def compute_stretching(u, v, lat, lon):
         longitude, latitude and stretching field
     """
 
-    if type(lon) != np.ndarray : lon = lon.values;
-    if type(lat) != np.ndarray : lat = lat.values;
+    if type(lon) != np.ndarray:
+        lon = lon.values
+    if type(lat) != np.ndarray:
+        lat = lat.values
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
     R = 6371000  # Earth radius
@@ -253,12 +258,15 @@ def compute_stretching(u, v, lat, lon):
     lat_E = (lat[:-1] + lat[1:]) / 2
     lon_E = (lon[:-1] + lon[1:]) / 2
 
-    #E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
-    if type(u) != np.ndarray : u = u.values;
-    if type(v) != np.ndarray : v = v.values;
+    # E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    if type(u) != np.ndarray:
+        u = u.values
+    if type(v) != np.ndarray:
+        v = v.values
     E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy
 
     return lon_E, lat_E, E
+
 
 def compute_shearing(u, v, lat, lon):
     """Compute shearing deformation (F) from the horizontal velocity fields
@@ -301,6 +309,7 @@ def compute_shearing(u, v, lat, lon):
 
     return lon_F, lat_F, F
 
+
 def compute_ObukoWeiss(vort, E, F):
     """Compute the Obuko-Weiss Parameter
 
@@ -319,6 +328,7 @@ def compute_ObukoWeiss(vort, E, F):
         The Obuko-Weiss (OW) parameter field
     """
     return vort ** 2 - (E ** 2 + F ** 2)
+
 
 def compute_ObukoWeiss_norm(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
@@ -340,6 +350,7 @@ def compute_ObukoWeiss_norm(vort, E, F):
     OW = compute_ObukoWeiss(vort, E, F)
     return OW / vort ** 2
 
+
 def compute_Coriolis_param(lat):
     """Compute the coriolis parameter for a given latitude (array)
 
@@ -357,12 +368,14 @@ def compute_Coriolis_param(lat):
     phi = lat * np.pi / 180
     return 2 * W * np.sin(phi)
 
+
 def compute_OWZ(vort, E, F, lat):
     OW_n = compute_ObukoWeiss_norm(vort, E, F)
     f = compute_Coriolis_param(lat)
     shape = np.shape(vort)
     f = np.transpose(np.array(list(f) * shape[1]).reshape([shape[1], shape[0]]))
     return np.sign(f) * (vort + f) * np.maximum(OW_n, np.zeros(np.shape(OW_n)))
+
 
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
@@ -403,6 +416,7 @@ def compute_grad(T, lat, lon):
     lon_G = np.array([(lon[i + 1] + lon[i]) / 2 for i in range(len(lon) - 1)])
 
     return lon_G, lat_G, np.array(Gx), np.array(Gy)
+
 
 def compute_EKE(u, v):  # Probably deserves optimization if useful later.
     """Compute Eddy Kinetic Energy from u and v fields.
