@@ -121,7 +121,7 @@ def compute_stretching_xr(xarray, u_name = 'u', v_name = 'v', lon_name = 'longit
     u = xarray[u_name].values
     v = xarray[v_name].values
     E = xr.DataArray((u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy,
-                     dims=(lat_name, lon_name), coords = {lat_name:lat_E,lon_name:lon_E})
+                     dims=(lat_name, lon_name), coords = {lat_name:lat_E,lon_name:lon_E}, attrs={'units':'s-1'})
 
     return E.interp_like(xarray, kwargs = {'fill_value':'extrapolate'})
 
@@ -166,9 +166,64 @@ def compute_shearing_xr(xarray, u_name = 'u', v_name = 'v', lon_name = 'longitud
     u = xarray[u_name].values
     v = xarray[v_name].values
     F = xr.DataArray((v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] + (u[1:, :-1] - u[:-1, :-1]) * 1 / dy,
-                     dims=(lat_name, lon_name), coords = {lat_name:lat_E,lon_name:lon_E})
+                     dims=(lat_name, lon_name), coords = {lat_name:lat_F,lon_name:lon_F}, attrs={'units':'s-1'})
 
     return F.interp_like(xarray, kwargs = {'fill_value':'extrapolate'})
+
+def compute_ObukoWeiss_xr(vort, E, F):
+    """Compute the Obuko-Weiss Parameter.
+    Values are converted from s-1 to hr-1 then from hr-2 to s-2 to too low values computations.
+
+    Parameters
+    ----------
+    vort : np.ndarray
+        Vorticity field
+    E : np.ndarray
+        Stretching deformation field
+    F : np.ndarray
+        Shearing deformation field
+
+    Returns
+    -------
+    np.ndarray
+        The Obuko-Weiss (OW) parameter field
+    """
+
+    OW = (vort*3600) ** 2 - ((E*3600) ** 2 + (F*3600) ** 2) / (3600 ** 2)
+    OW.attrs['units'] = 's-2'
+    return OW
+
+def compute_ObukoWeiss_norm_xr(vort, E, F):
+    """Compute the normalized Obuko-Weiss Parameter
+
+    Parameters
+    ----------
+    vort : np.ndarray
+        Vorticity field
+    E : np.ndarray
+        Stretching deformation field
+    F : np.ndarray
+        Shearing deformation field
+
+    Returns
+    -------
+    np.ndarray
+        The normalized Obuko-Weiss (OW) parameter field
+    """
+    OW = compute_ObukoWeiss_xr(vort, E, F)
+    OW_n = OW * (3600 ** 2) / (vort * 3600) ** 2
+    OW_n.attrs['units'] = '1'
+    return OW_n
+
+def compute_OWZ_xr(vort, E, F, lat_name = 'latitude'):
+    """ Fonctionne avec vo, E, F 3D"""
+    OW_n = compute_ObukoWeiss_norm_xr(vort, E, F)
+    f = compute_Coriolis_param(OW_n[lat_name])
+    shape = np.shape(vort)
+    zeros = xr.zeros_like(OW_n)
+    OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
+    OWZ.attrs['units'] = 'S-1'
+    return OWZ
 
 def compute_stretching(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
@@ -275,7 +330,6 @@ def compute_ObukoWeiss(vort, E, F):
     """
     return vort ** 2 - (E ** 2 + F ** 2)
 
-
 def compute_ObukoWeiss_norm(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
 
@@ -296,7 +350,6 @@ def compute_ObukoWeiss_norm(vort, E, F):
     OW = compute_ObukoWeiss(vort, E, F)
     return OW / vort ** 2
 
-
 def compute_Coriolis_param(lat):
     """Compute the coriolis parameter for a given latitude (array)
 
@@ -314,14 +367,12 @@ def compute_Coriolis_param(lat):
     phi = lat * np.pi / 180
     return 2 * W * np.sin(phi)
 
-
 def compute_OWZ(vort, E, F, lat):
     OW_n = compute_ObukoWeiss_norm(vort, E, F)
     f = compute_Coriolis_param(lat)
     shape = np.shape(vort)
     f = np.transpose(np.array(list(f) * shape[1]).reshape([shape[1], shape[0]]))
     return np.sign(f) * (vort + f) * np.maximum(OW_n, np.zeros(np.shape(OW_n)))
-
 
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
@@ -362,7 +413,6 @@ def compute_grad(T, lat, lon):
     lon_G = np.array([(lon[i + 1] + lon[i]) / 2 for i in range(len(lon) - 1)])
 
     return lon_G, lat_G, np.array(Gx), np.array(Gy)
-
 
 def compute_EKE(u, v):  # Probably deserves optimization if useful later.
     """Compute Eddy Kinetic Energy from u and v fields.
