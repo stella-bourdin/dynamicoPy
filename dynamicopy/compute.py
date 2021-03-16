@@ -81,7 +81,7 @@ def compute_vort(u, v, lat, lon):
 
 
 def compute_stretching(u, v, lat, lon):
-    """Compute stretching deformation from the horizontal velocity fields
+    """Compute stretching deformation (E) from the horizontal velocity fields
 
     ! So far, handles only 2D fields.
 
@@ -116,7 +116,9 @@ def compute_stretching(u, v, lat, lon):
     lat_E = (lat[:-1] + lat[1:]) / 2
     lon_E = (lon[:-1] + lon[1:]) / 2
 
-    E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    #E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    if type(u) != np.ndarray : u = u.values;
+    if type(v) != np.ndarray : v = v.values;
     E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy
 
     return lon_E, lat_E, E
