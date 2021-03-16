@@ -79,6 +79,50 @@ def compute_vort(u, v, lat, lon):
 
     return lon_vort, lat_vort, W
 
+def compute_stretching_xr(xarray, u_name = 'u', v_name = 'v', lon_name = 'longitude', lat_name = 'latitude'):
+    """Compute stretching deformation (E) from the horizontal velocity fields
+
+    ! So far, handles only 2D fields.
+
+    Parameters
+    ----------
+    u : np.ndarray
+        zonal wind field
+    v : np.ndarrays
+        meridional wind field
+    lat : 1D np.ndarray
+        latitude coordinate of the fields
+    lon : 1D np.ndarray
+        longitude coordinate of the field
+
+    Returns
+    -------
+    3 np.ndarrays
+        longitude, latitude and stretching field
+    """
+
+    lon = xarray[lon_name].values
+    lat = xarray[lat_name].values
+    dlon = lon[1] - lon[0]  # resolution in longitude in deg
+    dlat = lat[1] - lat[0]  # resolution in latitude in deg
+    R = 6371000  # Earth radius
+    dy = R * dlat * np.pi / 180  # Vertical size of a cell
+    # Horizontal size of a cell depending on latitude
+    lat_rad = lat * np.pi / 180  # Latitudes in rad
+    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
+    dx = r * dlon * np.pi / 180
+    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
+
+    # Compute lat and lon corresponding to the E matrix
+    lat_E = (lat[:-1] + lat[1:]) / 2
+    lon_E = (lon[:-1] + lon[1:]) / 2
+
+    #E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
+    u = xarray[u_name].values
+    v = xarray[v_name].values
+    E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy
+
+    return xr.DataArray(E, dims=(lat_name, lon_name), coords = {lat_name:lat_E,lon_name:lon_E})
 
 def compute_stretching(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
@@ -102,6 +146,8 @@ def compute_stretching(u, v, lat, lon):
         longitude, latitude and stretching field
     """
 
+    if type(lon) != np.ndarray : lon = lon.values;
+    if type(lat) != np.ndarray : lat = lat.values;
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
     R = 6371000  # Earth radius
