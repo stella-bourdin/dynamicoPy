@@ -96,7 +96,7 @@ def get_dx_dy(lon, lat):
 
 
 def compute_stretching_xr(
-    xarray, u_name="u", v_name="v", lon_name="longitude", lat_name="latitude"
+    xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"
 ):
     """Compute stretching deformation (E) from the horizontal velocity fields
 
@@ -117,6 +117,7 @@ def compute_stretching_xr(
         {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
     ).squeeze()
 
+    lon, lat = xarray.lon.values, xarray.lat.values
     dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
 
     u = xarray.u
@@ -129,12 +130,12 @@ def compute_stretching_xr(
     ) * 1 / dy
     E = xr.DataArray(E).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
     E.attrs["units"] = "s-1"
-    E = E.rename({"lat": lat_name, "lon": lon_name, "u": u_name, "v": v_name})
+    E = E.rename({"lat": lat_name, "lon": lon_name})
     return E
 
 
 def compute_shearing_xr(
-    xarray, u_name="u", v_name="v", lon_name="longitude", lat_name="latitude"
+    xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"
 ):
     """Compute shearing deformation (F) from the horizontal velocity fields
 
@@ -155,6 +156,7 @@ def compute_shearing_xr(
         {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
     ).squeeze()
 
+    lon, lat = xarray.lon.values, xarray.lat.values
     dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
 
     u = xarray.u
@@ -167,7 +169,7 @@ def compute_shearing_xr(
     ) * 1 / dy
     F = xr.DataArray(F).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
     F.attrs["units"] = "s-1"
-    F = F.rename({"lat": lat_name, "lon": lon_name, "u": u_name, "v": v_name})
+    F = F.rename({"lat": lat_name, "lon": lon_name})
     return F
 
 
@@ -188,12 +190,12 @@ def compute_ObukoWeiss_norm_xr(vort, E, F):
     xr.Dataset
         Normalized Obuko_Weiss parameter field
     """
-    OW_n = 1 - ((E * 3600) ** 2 + (F * 3600) ** 2) / ((vo * 3600) ** 2)
+    OW_n = 1 - ((E * 3600) ** 2 + (F * 3600) ** 2) / ((vort * 3600) ** 2)
     OW_n.attrs["units"] = "1"
     return OW_n
 
 
-def compute_OWZ_xr(vort, E, F, lat_name="latitude"):
+def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     """Compute the Obuko-Weiss-Zeta Parameter (See Tory et al. 2013)
 
     Parameters
@@ -214,9 +216,26 @@ def compute_OWZ_xr(vort, E, F, lat_name="latitude"):
     f = compute_Coriolis_param(OW_n[lat_name])
     zeros = xr.zeros_like(OW_n)
     OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
-    OWZ.attrs["units"] = "S-1"
+    OWZ.attrs["units"] = "s-1"
     return OWZ
 
+def compute_OWZ_from_files(u_file, v_file, vo_file=None, u_name="u", v_name="v", vo_name="vo", lon_name="longitude", lat_name="latitude"):
+    if vo_file == None :
+        #TODO : Implémenter compute_vort_xr et remplir cette partie pour calculer vo à partir de u et v
+        pass
+    else :
+        vo = xr.open_dataset(vo_file).squeeze()
+    u = xr.open_dataset(u_file).squeeze()
+    v = xr.open_dataset(v_file).squeeze()
+    wind = xr.merge([u,v])
+    wind = wind.rename({u_name:'u', v_name:'v', lon_name:'lon', lat_name:'lat'})
+    vo = vo.rename({vo_name:'vo', lon_name:'lon', lat_name:'lat'})
+
+    E = compute_stretching_xr(wind)
+    F = compute_shearing_xr(wind)
+    OWZ = compute_OWZ_xr(vo, E, F)
+    OWZ = OWZ.rename({'lat':lat_name, 'lon':lon_name})
+    return OWZ
 
 def compute_stretching(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
