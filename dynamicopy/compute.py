@@ -134,9 +134,7 @@ def compute_stretching_xr(
     return E
 
 
-def compute_shearing_xr(
-    xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"
-):
+def compute_shearing_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"):
     """Compute shearing deformation (F) from the horizontal velocity fields
 
     Parameters
@@ -219,7 +217,18 @@ def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     OWZ.attrs["units"] = "s-1"
     return OWZ
 
-def compute_OWZ_from_files(u_file, v_file, vo_file=None, OWZ_file=None, u_name="u", v_name="v", vo_name="vo", lon_name="longitude", lat_name="latitude"):
+
+def compute_OWZ_from_files(
+    u_file,
+    v_file,
+    vo_file=None,
+    OWZ_file=None,
+    u_name="u",
+    v_name="v",
+    vo_name="vo",
+    lon_name="longitude",
+    lat_name="latitude",
+):
     """
 
     Parameters
@@ -238,23 +247,25 @@ def compute_OWZ_from_files(u_file, v_file, vo_file=None, OWZ_file=None, u_name="
     OWZ : xr.Dataset
         OWZ field
     """
-    if vo_file == None :
-        #TODO : Implémenter compute_vort_xr et remplir cette partie pour calculer vo à partir de u et v
+    if vo_file == None:
+        # TODO : Implémenter compute_vort_xr et remplir cette partie pour calculer vo à partir de u et v
         pass
-    else :
+    else:
         vo = xr.open_dataset(vo_file).squeeze()
     u = xr.open_dataset(u_file).squeeze()
     v = xr.open_dataset(v_file).squeeze()
-    wind = xr.merge([u,v])
-    wind = wind.rename({u_name:'u', v_name:'v', lon_name:'lon', lat_name:'lat'})
-    vo = vo.rename({vo_name:'vo', lon_name:'lon', lat_name:'lat'})
+    wind = xr.merge([u, v])
+    wind = wind.rename({u_name: "u", v_name: "v", lon_name: "lon", lat_name: "lat"})
+    vo = vo.rename({vo_name: "vo", lon_name: "lon", lat_name: "lat"})
 
     E = compute_stretching_xr(wind)
     F = compute_shearing_xr(wind)
     OWZ = compute_OWZ_xr(vo, E, F)
-    OWZ = OWZ.rename({'lat':lat_name, 'lon':lon_name})
-    if OWZ_file != None : OWZ.to_netcdf(OWZ_file)
+    OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name})
+    if OWZ_file != None:
+        OWZ.to_netcdf(OWZ_file)
     return OWZ
+
 
 def compute_stretching(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
