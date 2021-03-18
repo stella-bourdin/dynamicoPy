@@ -215,7 +215,7 @@ def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     zeros = xr.zeros_like(OW_n)
     OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
     OWZ.attrs["units"] = "s-1"
-    OWZ.rename({'vo':'owz'})
+    OWZ = OWZ.rename({'vo':'owz'})
     return OWZ
 
 
@@ -266,6 +266,7 @@ def compute_OWZ_from_files(
     F = compute_shearing_xr(wind)
     OWZ = compute_OWZ_xr(vo, E, F)
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
+    OWZ['owz'] = OWZ.owz.astype(np.float32)
     if OWZ_file != None:
         OWZ.to_netcdf(OWZ_file)
     return OWZ
