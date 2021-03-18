@@ -215,6 +215,7 @@ def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     zeros = xr.zeros_like(OW_n)
     OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
     OWZ.attrs["units"] = "s-1"
+    OWZ.rename({'vo':'owz'})
     return OWZ
 
 
@@ -223,6 +224,7 @@ def compute_OWZ_from_files(
     v_file,
     vo_file=None,
     OWZ_file=None,
+    owz_name='owz',
     u_name="u",
     v_name="v",
     vo_name="vo",
@@ -237,8 +239,10 @@ def compute_OWZ_from_files(
         Paths to the respective files containing zonal and meridional wind field
     vo_file : str
         Path to the file containing the vorticity field. To be implemented : If None, compute vorticity from u and v.
-    OWZ_file :
+    OWZ_file : str
         Path to which the OWZ field will be written. If None, not saved.
+    owz_name : str
+        Name of the owz to be written i the file if applicable.
     u_name, v_name, vo_name, lon_name, lat_name : str
         Names of zonal wind, meridional wind, vorticity, longitude, latitude respectively in the files.
 
@@ -261,7 +265,7 @@ def compute_OWZ_from_files(
     E = compute_stretching_xr(wind)
     F = compute_shearing_xr(wind)
     OWZ = compute_OWZ_xr(vo, E, F)
-    OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name})
+    OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     if OWZ_file != None:
         OWZ.to_netcdf(OWZ_file)
     return OWZ
