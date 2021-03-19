@@ -268,7 +268,7 @@ def compute_OWZ_from_files(
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     OWZ['owz'] = OWZ.owz.astype(np.float32)
     if OWZ_file != None:
-        OWZ.to_netcdf(OWZ_file)
+        OWZ.to_netcdf(OWZ_file, format="NETCDF4_CLASSIC")
     return OWZ
 
 
