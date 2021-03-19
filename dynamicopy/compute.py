@@ -267,6 +267,9 @@ def compute_OWZ_from_files(
     OWZ = compute_OWZ_xr(vo, E, F)
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     OWZ['owz'] = OWZ.owz.astype(np.float32)
+    OWZ = OWZ*3600
+    OWZ['owz'] = OWZ.owz + np.random.rand(*np.shape(OWZ.owz)) / 10
+    #OWZ[OWZ == 0]
     if OWZ_file != None:
         OWZ.to_netcdf(OWZ_file, format="NETCDF4_CLASSIC", encoding={'owz':{'_FillValue':9.96921e+36, 'missing_value':9.96921e+36, 'units':'s**-1'}})
     return OWZ
