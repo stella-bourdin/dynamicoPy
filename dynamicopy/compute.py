@@ -273,7 +273,8 @@ def compute_OWZ_from_files(
 
     OWZ = compute_OWZ_xr(vo, E, F)
     alts = compute_alts_xr(vo, E, F)
-    OWZ = xr.merge([OWZ, alts])
+    OW_n = compute_ObukoWeiss_norm_xr(vo, E, F).rename({'vo':'OW_n'})
+    OWZ = xr.merge([OWZ, alts, OW_n])
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     for n in OWZ.data_vars :
         OWZ[n] = OWZ[n].astype(np.float32)
