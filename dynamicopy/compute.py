@@ -170,6 +170,27 @@ def compute_shearing_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name
     F = F.rename({"lat": lat_name, "lon": lon_name})
     return F
 
+def compute_ObukoWeiss_xr(vort, E, F):
+    """Compute the normalized Obuko-Weiss Parameter
+
+    Parameters
+    ----------
+    vort : xr.Dataset
+        Vorticity field
+    E : xr.Dataset
+        Stretching deformation field
+    F : xr.Dataset
+        Shearing deformation field
+
+    Returns
+    -------
+    xr.Dataset
+        Obuko_Weiss parameter field
+    """
+    OW = ((vort * 3600) ** 2) - ((E * 3600) ** 2 + (F * 3600) ** 2)
+    OW.attrs["units"] = "1"
+    OW = OW.rename({'vo':'ow'})
+    return OW
 
 def compute_ObukoWeiss_norm_xr(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
@@ -217,12 +238,6 @@ def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     OWZ.attrs["units"] = "s-1"
     OWZ = OWZ.rename({'vo':'owz'})
     return OWZ
-
-def compute_alts_xr(vo, E, F) :
-    alt1 = (((E * 3600) ** 2 + (F * 3600) ** 2) / ((vo * 3600) ** 2)).rename({'vo':'alt1'})
-    alt2 = (((vo * 3600) ** 2) / ((E * 3600) ** 2 + (F * 3600) ** 2)).rename({'vo':'alt2'})
-    alt3 = (((vo * 3600) ** 2) - ((E * 3600) ** 2 + (F * 3600) ** 2)).rename({'vo':'alt3'})
-    return xr.merge([alt1, alt2, alt3])
 
 
 def compute_OWZ_from_files(
@@ -272,9 +287,8 @@ def compute_OWZ_from_files(
     F = compute_shearing_xr(wind)
 
     OWZ = compute_OWZ_xr(vo, E, F)
-    alts = compute_alts_xr(vo, E, F)
-    OW_n = compute_ObukoWeiss_norm_xr(vo, E, F).rename({'vo':'OW_n'})
-    OWZ = xr.merge([OWZ, alts, OW_n])
+    OW = compute_ObukoWeiss_xr(vo, E, F)
+    OWZ = xr.merge([OWZ, OW])
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     for n in OWZ.data_vars :
         OWZ[n] = OWZ[n].astype(np.float32)
