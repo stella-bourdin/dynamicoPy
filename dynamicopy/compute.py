@@ -218,6 +218,12 @@ def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     OWZ = OWZ.rename({'vo':'owz'})
     return OWZ
 
+def compute_alts_xr(vo, E, F) :
+    alt1 = (((E * 3600) ** 2 + (F * 3600) ** 2) / ((vo * 3600) ** 2)).rename({'vo':'alt1'})
+    alt2 = (((vo * 3600) ** 2) / ((E * 3600) ** 2 + (F * 3600) ** 2)).rename({'vo':'alt2'})
+    alt3 = (((vo * 3600) ** 2) - ((E * 3600) ** 2 + (F * 3600) ** 2)).rename({'vo':'alt3'})
+    return xr.merge([alt1, alt2, alt3])
+
 
 def compute_OWZ_from_files(
     u_file,
@@ -264,14 +270,16 @@ def compute_OWZ_from_files(
 
     E = compute_stretching_xr(wind)
     F = compute_shearing_xr(wind)
+
     OWZ = compute_OWZ_xr(vo, E, F)
+    alts = compute_alts_xr(vo, E, F)
+    OWZ = xr.merge([OWZ, alts])
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
-    OWZ['owz'] = OWZ.owz.astype(np.float32)
-    OWZ = OWZ*3600
-    OWZ['owz'] = OWZ.owz + np.random.rand(*np.shape(OWZ.owz)) / 10
-    #OWZ[OWZ == 0]
+    for n in OWZ.data_vars :
+        OWZ[n] = OWZ[n].astype(np.float32)
+
     if OWZ_file != None:
-        OWZ.to_netcdf(OWZ_file, format="NETCDF4_CLASSIC", encoding={'owz':{'_FillValue':9.96921e+36, 'missing_value':9.96921e+36, 'units':'s**-1'}})
+        OWZ.to_netcdf(OWZ_file, format="NETCDF4_CLASSIC")
     return OWZ
 
 
