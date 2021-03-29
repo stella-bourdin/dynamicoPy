@@ -287,8 +287,6 @@ def compute_OWZ_from_files(
     F = compute_shearing_xr(wind)
 
     OWZ = compute_OWZ_xr(vo, E, F)
-    OW = compute_ObukoWeiss_xr(vo, E, F)
-    OWZ = xr.merge([OWZ, OW])
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     for n in OWZ.data_vars :
         OWZ[n] = OWZ[n].astype(np.float32)
