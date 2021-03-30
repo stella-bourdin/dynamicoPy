@@ -28,7 +28,7 @@ def load_ibtracs(season=None, file=None, pos_lon=True):
     return tracks
 
 
-def load_TEtracks(file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True):
+def load_TEtracks(file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True, surf_wind_col='wind'):
     df = pd.read_csv(file)
     df = df.rename(columns={c: c[1:] for c in df.columns[1:]})
     df["hemisphere"] = np.where(df.lat > 0, "N", "S")
@@ -40,7 +40,7 @@ def load_TEtracks(file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True)
     ).rename(columns={"yearseason": "season"})
     df["basin"] = [get_basin(df.lon[i], df.lat[i]) for i in range(len(df))]
     if compute_sshs:
-        df["sshs_wind"] = [sshs_from_wind(df.wind[i]) for i in range(len(df))]
+        df["sshs_wind"] = [sshs_from_wind(df[surf_wind_col][i]) for i in range(len(df))]
         df["sshs_pres"] = [sshs_from_pres(df.slp[i] / 100) for i in range(len(df))]
     df["time"] = (
         df["year"].astype(str)
