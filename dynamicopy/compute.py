@@ -94,6 +94,43 @@ def get_dx_dy(lon, lat):
     dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
     return dx, dy
 
+def compute_vort_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"):
+    """Compute vorticity from the horizontal velocity fields
+
+    Parameters
+    ----------
+    xarray : xr.Dataset
+        Dataset containing zonal and meridional wind in m/s
+    u_name, v_name, lon_name, lat_name : str
+        Names of variables in xarray, respectively zonal wind, meridional wind, longitude and latitude
+
+    Returns
+    -------
+    vo : xr.Dataset
+        Vorticity in s-1
+    """
+
+    xarray = xarray.rename(
+        {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
+    ).squeeze()
+
+    lon, lat = xarray.lon.values, xarray.lat.values
+    dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
+
+    u = xarray.u
+    v = xarray.v
+
+    vo = (
+        v.sel(lat=lat[:-1], lon=lon[1:]).values
+        - v.sel(lat=lat[:-1], lon=lon[:-1]).values
+    ) * 1 / dx[:] - (
+        u.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])
+    ) * 1 / dy
+    vo = xr.DataArray(vo).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
+    vo.attrs["units"] = "s-1"
+    vo = vo.rename({"lat": lat_name, "lon": lon_name})
+    vo = vo.to_dataset(name = 'vo')
+    return vo
 
 def compute_stretching_xr(
     xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"
@@ -126,7 +163,7 @@ def compute_stretching_xr(
         u.sel(lat=lat[:-1], lon=lon[1:]).values
         - u.sel(lat=lat[:-1], lon=lon[:-1]).values
     ) * 1 / dx[:] - (
-        v.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])
+        v.sel(lat=lat[1:], lon=lon[:-1]).values - v.sel(lat=lat[:-1], lon=lon[:-1])
     ) * 1 / dy
     E = xr.DataArray(E).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
     E.attrs["units"] = "s-1"
@@ -244,7 +281,7 @@ def compute_OWZ_from_files(
     u_file,
     v_file,
     vo_file=None,
-    OWZ_file=None,
+    owz_file=None,
     owz_name='owz',
     u_name="u",
     v_name="v",
@@ -272,16 +309,15 @@ def compute_OWZ_from_files(
     OWZ : xr.Dataset
         OWZ field
     """
-    if vo_file == None:
-        # TODO : Implémenter compute_vort_xr et remplir cette partie pour calculer vo à partir de u et v
-        pass
-    else:
-        vo = xr.open_dataset(vo_file).squeeze()
     u = xr.open_dataset(u_file).squeeze()
     v = xr.open_dataset(v_file).squeeze()
     wind = xr.merge([u, v])
     wind = wind.rename({u_name: "u", v_name: "v", lon_name: "lon", lat_name: "lat"})
-    vo = vo.rename({vo_name: "vo", lon_name: "lon", lat_name: "lat"})
+    if vo_file == None:
+        vo = compute_vort_xr(wind)
+    else:
+        vo = xr.open_dataset(vo_file).squeeze()
+        vo = vo.rename({vo_name: "vo", lon_name: "lon", lat_name: "lat"})
 
     E = compute_stretching_xr(wind)
     F = compute_shearing_xr(wind)
@@ -290,8 +326,8 @@ def compute_OWZ_from_files(
     OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
     for n in OWZ.data_vars :
         OWZ[n] = OWZ[n].astype(np.float32)
-    if OWZ_file != None:
-        OWZ.to_netcdf(OWZ_file, format="NETCDF4_CLASSIC")
+    if owz_file != None:
+        OWZ.to_netcdf(owz_file, format="NETCDF4_CLASSIC")
     return OWZ
 
 
