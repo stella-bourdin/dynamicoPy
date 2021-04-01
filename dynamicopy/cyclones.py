@@ -189,7 +189,7 @@ def match_tracks(tracks1, tracks2, name1='algo', name2='ib', maxd=8):
     matches=pd.DataFrame()
     for id in tracks1.track_id.unique():
         matches = matches.append(find_match(id,tracks1,tracks2, maxd=maxd).assign(id_detected=id))
-    matches.rename(columns={'id_ref':'id_'+name2, 'id_detected':'id_'+name1})
+    matches = matches.rename(columns={'id_ref':'id_'+name2, 'id_detected':'id_'+name1})
     return matches
 
 if __name__ == "__main__":
