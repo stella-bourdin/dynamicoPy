@@ -28,7 +28,9 @@ def load_ibtracs(season=None, file=None, pos_lon=True):
     return tracks
 
 
-def load_TEtracks(file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True, surf_wind_col='wind'):
+def load_TEtracks(
+    file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True, surf_wind_col="wind"
+):
     df = pd.read_csv(file)
     df = df.rename(columns={c: c[1:] for c in df.columns[1:]})
     df["hemisphere"] = np.where(df.lat > 0, "N", "S")
@@ -56,6 +58,43 @@ def load_TEtracks(file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True,
         df.loc[df.lon < 0, "lon"] = df.loc[df.lon < 0, "lon"] + 360
     return df
 
+def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new"):
+    f = open(file)
+    tracks = pd.DataFrame()
+    line0 = f.readline()
+    line1 = f.readline()
+    line2 = f.readline()
+    nb_tracks = int(line2.split()[1])
+    for line in f:
+        if line.startswith('TRACK_ID'):
+            track_id = int(line.split()[1])
+        elif line.startswith('POINT_NUM'):
+            pass
+        else:
+            time_step = line.split()[0]
+            lon = float(line.split()[1])
+            lat = float(line.split()[2])
+            data = line.split()[3:]
+            tracks = tracks.append(pd.DataFrame(
+                {'track_id': [track_id], 'time_step': [time_step], 'lon': [lon], 'lat': [lat], 'data': [data]}))
+    f.close()
+    tracks["year"] = tracks.time_step.str[:4]
+    tracks["month"] = tracks.time_step.str[4:6]
+    tracks["day"] = tracks.time_step.str[6:8]
+    tracks["hour"] = tracks.time_step.str[8:]
+    tracks["time"] = (
+        tracks["year"].astype(str)
+        + "-"
+        + tracks["month"].astype(str)
+        + "-"
+        + tracks["day"].astype(str)
+        + " "
+        + tracks["hour"].astype(str)
+        + ":00"
+    ).astype(np.datetime64)
+    tracks["basin"] = [get_basin(tracks.lon[i], tracks.lat[i]) for i in range(len(tracks))]
+
+    return tracks
 
 def sshs_from_wind(wind):
     if wind <= 60 / 3.6:
@@ -185,12 +224,18 @@ def find_match(id_detected, df_detected, df_ref, mindays=1, maxd=4):
         return pd.DataFrame({"id_ref": [np.nan], "dist": [np.nan], "temp": [np.nan]})
     return matches[matches.dist == matches.dist.min()]
 
-def match_tracks(tracks1, tracks2, name1='algo', name2='ib', maxd=8):
-    matches=pd.DataFrame()
+
+def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8):
+    matches = pd.DataFrame()
     for id in tracks1.track_id.unique():
-        matches = matches.append(find_match(id,tracks1,tracks2, maxd=maxd).assign(id_detected=id))
-    matches = matches.rename(columns={'id_ref':'id_'+name2, 'id_detected':'id_'+name1})
+        matches = matches.append(
+            find_match(id, tracks1, tracks2, maxd=maxd).assign(id_detected=id)
+        )
+    matches = matches.rename(
+        columns={"id_ref": "id_" + name2, "id_detected": "id_" + name1}
+    )
     return matches
+
 
 if __name__ == "__main__":
     ib = load_ibtracs(1996)

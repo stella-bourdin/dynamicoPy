@@ -37,7 +37,7 @@ def omega2w(omega, p, T):
     return w
 
 
-# -- TODO -- Handle anyD velocity field.
+# -- NODO -- Handle anyD velocity field. -> Done with xr now
 
 
 def compute_vort(u, v, lat, lon):
@@ -94,6 +94,7 @@ def get_dx_dy(lon, lat):
     dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
     return dx, dy
 
+
 def compute_vort_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"):
     """Compute vorticity from the horizontal velocity fields
 
@@ -129,8 +130,9 @@ def compute_vort_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name="la
     vo = xr.DataArray(vo).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
     vo.attrs["units"] = "s-1"
     vo = vo.rename({"lat": lat_name, "lon": lon_name})
-    vo = vo.to_dataset(name = 'vo')
+    vo = vo.to_dataset(name="vo")
     return vo
+
 
 def compute_stretching_xr(
     xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"
@@ -207,6 +209,7 @@ def compute_shearing_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name
     F = F.rename({"lat": lat_name, "lon": lon_name})
     return F
 
+
 def compute_ObukoWeiss_xr(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
 
@@ -226,8 +229,9 @@ def compute_ObukoWeiss_xr(vort, E, F):
     """
     OW = ((vort * 3600) ** 2) - ((E * 3600) ** 2 + (F * 3600) ** 2)
     OW.attrs["units"] = "1"
-    OW = OW.rename({'vo':'ow'})
+    OW = OW.rename({"vo": "ow"})
     return OW
+
 
 def compute_ObukoWeiss_norm_xr(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
@@ -273,7 +277,7 @@ def compute_OWZ_xr(vort, E, F, lat_name="lat"):
     zeros = xr.zeros_like(OW_n)
     OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
     OWZ.attrs["units"] = "s-1"
-    OWZ = OWZ.rename({'vo':'owz'})
+    OWZ = OWZ.rename({"vo": "owz"})
     return OWZ
 
 
@@ -282,7 +286,7 @@ def compute_OWZ_from_files(
     v_file,
     vo_file=None,
     owz_file=None,
-    owz_name='owz',
+    owz_name="owz",
     u_name="u",
     v_name="v",
     vo_name="vo",
@@ -323,8 +327,8 @@ def compute_OWZ_from_files(
     F = compute_shearing_xr(wind)
 
     OWZ = compute_OWZ_xr(vo, E, F)
-    OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, 'owz':owz_name})
-    for n in OWZ.data_vars :
+    OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, "owz": owz_name})
+    for n in OWZ.data_vars:
         OWZ[n] = OWZ[n].astype(np.float32)
     if owz_file != None:
         OWZ.to_netcdf(owz_file, format="NETCDF4_CLASSIC")
