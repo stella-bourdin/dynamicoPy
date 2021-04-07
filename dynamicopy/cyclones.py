@@ -3,48 +3,49 @@ import numpy as np
 from datetime import datetime
 
 
-def load_ibtracs(season=None, file=None, pos_lon=True):
-    if file == None:
-        tracks = pd.read_csv("data/ibtracs_1980-2020_simplified.csv")
-    else:
-        tracks = pd.read_csv(file)
+def load_ibtracs(
+    season=None, file="data/ibtracs_1980-2020_simplified.csv", pos_lon=True
+):
+    tracks = pd.read_csv(file, keep_default_na=False)
     if season != None:
         tracks = tracks[tracks.SEASON == season]
     tracks["time"] = tracks.ISO_TIME.astype(np.datetime64)
     if pos_lon:
         tracks.loc[tracks.LON < 0, "LON"] = tracks.loc[tracks.LON < 0, "LON"] + 360
-    tracks = tracks[tracks.USA_SSHS >= 0].rename(
-        columns={
-            "SID": "track_id",
-            "SEASON": "season",
-            "BASIN": "basin",
-            "USA_SSHS": "sshs",
-            "LAT": "lat",
-            "LON": "lon",
-            "PRES": "slp",
-            "WIND": "wind",
-        }
+    tracks["USA_SSHS"] = pd.to_numeric(tracks.USA_SSHS)
+    tracks = (
+        tracks[tracks.USA_SSHS >= 0]
+        .rename(columns={col: col.lower() for col in tracks.columns})
+        .rename(columns={"usa_sshs": "sshs", "sid": "track_id"})
+        .drop(columns="season")
     )
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks = add_season(tracks)
     return tracks
 
 
 def load_TEtracks(
-    file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True, surf_wind_col="wind", slp_col='slp'
+    file="tests/tracks_ERA5.csv",
+    compute_sshs=True,
+    pos_lon=True,
+    surf_wind_col="wind",
+    slp_col="slp",
 ):
     tracks = pd.read_csv(file)
     tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    # Get season
-    tracks = tracks.join(
-        tracks.groupby("track_id")["year"].mean().astype(int),
-        on="track_id",
-        rsuffix="season",
-    ).rename(columns={"yearseason": "season"})
-    tracks["basin"] = [get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))]
+    tracks = add_season(tracks)
+    tracks["basin"] = [
+        get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
+    ]
     tracks[slp_col] /= 100
     if compute_sshs:
-        tracks["sshs_wind"] = [sshs_from_wind(tracks[surf_wind_col][i]) for i in range(len(tracks))]
-        tracks["sshs_pres"] = [sshs_from_pres(tracks[slp_col][i]) for i in range(len(tracks))]
+        tracks["sshs_wind"] = [
+            sshs_from_wind(tracks[surf_wind_col][i]) for i in range(len(tracks))
+        ]
+        tracks["sshs_pres"] = [
+            sshs_from_pres(tracks[slp_col][i]) for i in range(len(tracks))
+        ]
     tracks["time"] = (
         tracks["year"].astype(str)
         + "-"
@@ -59,10 +60,43 @@ def load_TEtracks(
         tracks.loc[tracks.lon < 0, "lon"] = tracks.loc[tracks.lon < 0, "lon"] + 360
     return tracks
 
-def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
-                     data_vars = ['vor_tracked', 'lon1', 'lat1', 'vor850', 'lon2', 'lat2', 'vor700', 'lon3', 'lat3', 'vor600',
-                                  'lon4', 'lat4', 'vor500', 'lon5', 'lat5', 'vor400', 'lon6', 'lat6', 'vor300',
-                                  'lon7', 'lat7', 'vor200', 'lon8', 'lat8', 'slp', 'lon9', 'lat9', 'wind925', 'lon10', 'lat10', 'wind10']):
+
+def load_TRACKtracks(
+    file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
+    data_vars=[
+        "vor_tracked",
+        "lon1",
+        "lat1",
+        "vor850",
+        "lon2",
+        "lat2",
+        "vor700",
+        "lon3",
+        "lat3",
+        "vor600",
+        "lon4",
+        "lat4",
+        "vor500",
+        "lon5",
+        "lat5",
+        "vor400",
+        "lon6",
+        "lat6",
+        "vor300",
+        "lon7",
+        "lat7",
+        "vor200",
+        "lon8",
+        "lat8",
+        "slp",
+        "lon9",
+        "lat9",
+        "wind925",
+        "lon10",
+        "lat10",
+        "wind10",
+    ],
+):
     f = open(file)
     tracks = pd.DataFrame()
     line0 = f.readline()
@@ -70,27 +104,35 @@ def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_ad
     line2 = f.readline()
     nb_tracks = int(line2.split()[1])
     for line in f:
-        if line.startswith('TRACK_ID'):
+        if line.startswith("TRACK_ID"):
             track_id = int(line.split()[1])
-        elif line.startswith('POINT_NUM'):
+        elif line.startswith("POINT_NUM"):
             pass
         else:
             time_step = line.split()[0]
             lon = float(line.split()[1])
             lat = float(line.split()[2])
             data = line.split()[3:]
-            mask = (np.array(data) == '&')
+            mask = np.array(data) == "&"
             data = np.array(data)[~mask]
-            data = pd.DataFrame([data], columns=data_vars)
-            tracks = tracks.append(pd.DataFrame(
-                {'track_id': [track_id], 'time_step': [time_step], 'lon': [lon], 'lat': [lat]}).join(data))
+            data = pd.DataFrame([data], columns=data_vars[: len(data)])
+            tracks = tracks.append(
+                pd.DataFrame(
+                    {
+                        "track_id": [track_id],
+                        "time_step": [time_step],
+                        "lon": [lon],
+                        "lat": [lat],
+                    }
+                ).join(data)
+            )
     f.close()
     SH = tracks.lat.mean() < 0
     tracks["year"] = tracks.time_step.str[:4].astype(int)
     tracks["month"] = tracks.time_step.str[-6:-4]
     tracks["day"] = tracks.time_step.str[-4:-2]
     tracks["hour"] = tracks.time_step.str[-2:]
-    if SH :
+    if SH:
         tracks.loc[tracks.month.astype(int) <= 6, "year"] += 1
     tracks["time"] = (
         tracks["year"].astype(str)
@@ -102,13 +144,12 @@ def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_ad
         + tracks["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
-    tracks["basin"] = [get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))]
-    tracks = tracks.join(
-        tracks.groupby("track_id")["year"].mean().astype(int),
-        on="track_id",
-        rsuffix="season",
-    ).rename(columns={"yearseason": "season"})
+    tracks["basin"] = [
+        get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
+    ]
+    tracks = add_season(tracks)
     return tracks
+
 
 def sshs_from_wind(wind):
     if wind <= 60 / 3.6:
@@ -169,6 +210,30 @@ def get_basin(lon, lat):
             return "SP"
         else:
             return "SA"
+
+
+def add_season(tracks, hemi_col="hemisphere", yr_col="year", mth_col="month"):
+    NH = tracks[tracks[hemi_col] == "N"]
+    NH = NH.join(
+        NH.groupby("track_id")[yr_col].mean().astype(int),
+        on="track_id",
+        rsuffix="season",
+    ).rename(columns={yr_col + "season": "season"})
+
+    SH = tracks[tracks[hemi_col] == "S"]
+    track_dates = SH.groupby("track_id")[[yr_col, mth_col]].mean().astype(int)
+    for row in track_dates.itertuples():
+        if row.month <= 6:
+            track_dates.loc[row.Index, "season"] = (
+                str(row.year - 1) + "-" + str(row.year)
+            )
+        if row.month >= 7:
+            track_dates.loc[row.Index, "season"] = (
+                str(row.year) + "-" + str(row.year + 1)
+            )
+    SH = SH.join(track_dates["season"], on="track_id")
+
+    return NH.append(SH)
 
 
 def to_dt(t):
@@ -252,9 +317,4 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8):
 
 
 if __name__ == "__main__":
-    ib = load_ibtracs(1996)
-    tracks = load_TEtracks()
-    matches = pd.DataFrame()
-    for id in tracks.track_id.unique():
-        matches = matches.append(find_match(id, tracks, ib, maxd=7).assign(id_era=id))
-    matches = matches[~matches.id_ref.isnull()]
+    pass

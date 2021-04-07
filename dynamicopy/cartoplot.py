@@ -218,9 +218,7 @@ def plot_tracks(
     lat_col="lat",
     id_col="track_id",
     id=None,
-    projection=ccrs.PlateCarree(
-        central_longitude=180.0
-    ),
+    projection=ccrs.PlateCarree(central_longitude=180.0),
     intensity_col="wind",
     fig_ax=None,
     figsize=[10, 15],
