@@ -218,9 +218,9 @@ def plot_tracks(
     lat_col="lat",
     id_col="track_id",
     id=None,
-    projection=ccrs.Robinson(
+    projection=ccrs.PlateCarree(
         central_longitude=180.0
-    ),  # TODO : Problème avec cette projection et le fait de draw_labels
+    ),
     intensity_col="wind",
     fig_ax=None,
     figsize=[10, 15],

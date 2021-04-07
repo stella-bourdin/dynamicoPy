@@ -29,36 +29,40 @@ def load_ibtracs(season=None, file=None, pos_lon=True):
 
 
 def load_TEtracks(
-    file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True, surf_wind_col="wind"
+    file="tests/tracks_ERA5.csv", compute_sshs=True, pos_lon=True, surf_wind_col="wind", slp_col='slp'
 ):
-    df = pd.read_csv(file)
-    df = df.rename(columns={c: c[1:] for c in df.columns[1:]})
-    df["hemisphere"] = np.where(df.lat > 0, "N", "S")
+    tracks = pd.read_csv(file)
+    tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     # Get season
-    df = df.join(
-        df.groupby("track_id")["year"].mean().astype(int),
+    tracks = tracks.join(
+        tracks.groupby("track_id")["year"].mean().astype(int),
         on="track_id",
         rsuffix="season",
     ).rename(columns={"yearseason": "season"})
-    df["basin"] = [get_basin(df.lon[i], df.lat[i]) for i in range(len(df))]
+    tracks["basin"] = [get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))]
+    tracks[slp_col] /= 100
     if compute_sshs:
-        df["sshs_wind"] = [sshs_from_wind(df[surf_wind_col][i]) for i in range(len(df))]
-        df["sshs_pres"] = [sshs_from_pres(df.slp[i] / 100) for i in range(len(df))]
-    df["time"] = (
-        df["year"].astype(str)
+        tracks["sshs_wind"] = [sshs_from_wind(tracks[surf_wind_col][i]) for i in range(len(tracks))]
+        tracks["sshs_pres"] = [sshs_from_pres(tracks[slp_col][i]) for i in range(len(tracks))]
+    tracks["time"] = (
+        tracks["year"].astype(str)
         + "-"
-        + df["month"].astype(str)
+        + tracks["month"].astype(str)
         + "-"
-        + df["day"].astype(str)
+        + tracks["day"].astype(str)
         + " "
-        + df["hour"].astype(str)
+        + tracks["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
     if pos_lon:
-        df.loc[df.lon < 0, "lon"] = df.loc[df.lon < 0, "lon"] + 360
-    return df
+        tracks.loc[tracks.lon < 0, "lon"] = tracks.loc[tracks.lon < 0, "lon"] + 360
+    return tracks
 
-def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new"):
+def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
+                     data_vars = ['vor_tracked', 'lon1', 'lat1', 'vor850', 'lon2', 'lat2', 'vor700', 'lon3', 'lat3', 'vor600',
+                                  'lon4', 'lat4', 'vor500', 'lon5', 'lat5', 'vor400', 'lon6', 'lat6', 'vor300',
+                                  'lon7', 'lat7', 'vor200', 'lon8', 'lat8', 'slp', 'lon9', 'lat9', 'wind925', 'lon10', 'lat10', 'wind10']):
     f = open(file)
     tracks = pd.DataFrame()
     line0 = f.readline()
@@ -75,13 +79,19 @@ def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_ad
             lon = float(line.split()[1])
             lat = float(line.split()[2])
             data = line.split()[3:]
+            mask = (np.array(data) == '&')
+            data = np.array(data)[~mask]
+            data = pd.DataFrame([data], columns=data_vars)
             tracks = tracks.append(pd.DataFrame(
-                {'track_id': [track_id], 'time_step': [time_step], 'lon': [lon], 'lat': [lat], 'data': [data]}))
+                {'track_id': [track_id], 'time_step': [time_step], 'lon': [lon], 'lat': [lat]}).join(data))
     f.close()
-    tracks["year"] = tracks.time_step.str[:4]
-    tracks["month"] = tracks.time_step.str[4:6]
-    tracks["day"] = tracks.time_step.str[6:8]
-    tracks["hour"] = tracks.time_step.str[8:]
+    SH = tracks.lat.mean() < 0
+    tracks["year"] = tracks.time_step.str[:4].astype(int)
+    tracks["month"] = tracks.time_step.str[-6:-4]
+    tracks["day"] = tracks.time_step.str[-4:-2]
+    tracks["hour"] = tracks.time_step.str[-2:]
+    if SH :
+        tracks.loc[tracks.month.astype(int) <= 6, "year"] += 1
     tracks["time"] = (
         tracks["year"].astype(str)
         + "-"
@@ -92,8 +102,12 @@ def load_TRACKtracks(file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_ad
         + tracks["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
-    tracks["basin"] = [get_basin(tracks.lon[i], tracks.lat[i]) for i in range(len(tracks))]
-
+    tracks["basin"] = [get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))]
+    tracks = tracks.join(
+        tracks.groupby("track_id")["year"].mean().astype(int),
+        on="track_id",
+        rsuffix="season",
+    ).rename(columns={"yearseason": "season"})
     return tracks
 
 def sshs_from_wind(wind):
@@ -167,14 +181,14 @@ def to_dt(t):
 def compute_dist(
     id_detected,
     id_ref,
-    df_detected,
-    df_ref,
+    tracks_detected,
+    tracks_ref,
 ):
     """
     returns : mean distance, number of matching time steps.
     """
-    c_d = df_detected[(df_detected.track_id == id_detected)]
-    c_ref = df_ref[(df_ref.track_id == id_ref)]
+    c_d = tracks_detected[(tracks_detected.track_id == id_detected)]
+    c_ref = tracks_ref[(tracks_ref.track_id == id_ref)]
     t_d = to_dt(c_d.time)
     t_ref = to_dt(c_ref.time)
     mask_d = [t in t_ref for t in t_d]
@@ -191,14 +205,14 @@ def compute_dist(
         return -1, 0
 
 
-def find_match(id_detected, df_detected, df_ref, mindays=1, maxd=4):
+def find_match(id_detected, tracks_detected, tracks_ref, mindays=1, maxd=4):
     """
 
     Parameters
     ----------
     id_detected
-    df_detected
-    df_ref
+    tracks_detected
+    tracks_ref
     mindays
     maxd
 
@@ -206,15 +220,15 @@ def find_match(id_detected, df_detected, df_ref, mindays=1, maxd=4):
     -------
 
     """
-    c = df_detected[(df_detected.track_id == id_detected)]
-    candidates = df_ref[
-        (df_ref.time >= c.time.min()) & (df_ref.time <= c.time.max())
+    c = tracks_detected[(tracks_detected.track_id == id_detected)]
+    candidates = tracks_ref[
+        (tracks_ref.time >= c.time.min()) & (tracks_ref.time <= c.time.max())
     ].track_id.unique()
     if len(candidates) < 1:
         return pd.DataFrame({"id_ref": [np.nan], "dist": [np.nan], "temp": [np.nan]})
     matches = pd.DataFrame()
     for candidate in candidates:
-        dist, temp = compute_dist(id_detected, candidate, df_detected, df_ref)
+        dist, temp = compute_dist(id_detected, candidate, tracks_detected, tracks_ref)
         matches = matches.append(
             pd.DataFrame({"id_ref": [candidate], "dist": [dist], "temp": [temp]})
         )
