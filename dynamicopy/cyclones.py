@@ -19,6 +19,7 @@ def load_ibtracs(
         .rename(columns={"usa_sshs": "sshs", "sid": "track_id"})
         .drop(columns="season")
     )
+    tracks['basin'] = tracks.basin.replace('EP', 'ENP').replace('WP', 'WNP')
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks = add_season(tracks)
     return tracks
