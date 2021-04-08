@@ -148,6 +148,7 @@ def load_TRACKtracks(
         + tracks["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks["basin"] = [
         get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
     ]
