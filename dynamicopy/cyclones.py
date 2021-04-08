@@ -37,9 +37,7 @@ def load_TEtracks(
     tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks = add_season(tracks)
-    tracks["basin"] = [
-        get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
-    ]
+    tracks["basin"] = tracks.apply(lambda row: get_basin(row.lon, row.lat), axis =1)
     tracks[slp_col] /= 100
     if compute_sshs:
         tracks["sshs_wind"] = [
@@ -354,7 +352,13 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8):
 
 
 if __name__ == "__main__":
-    import os
-    print(os.getcwd())
-    tracks = load_TRACKtracks(file="../tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new")
-    print(tracks)
+    ibtracs_file = '../data/ibtracs_1980-2020_simplified.csv'
+    ib = load_ibtracs(file=ibtracs_file)
+    ib = ib[ib.year == 1980]
+
+    UZ_tracks_file = '../tests/tracks_ERA5.csv'
+    UZ = load_TEtracks(UZ_tracks_file, surf_wind_col='wind10')
+    UZ = UZ[UZ.year == 1980]
+
+    matches_UZ = match_tracks(UZ, ib, 'UZ', 'ib')
+    print(matches_UZ)
