@@ -152,7 +152,7 @@ def load_TRACKtracks(
         tracks["hemisphere"] = "S"
         tracks = add_season(tracks, hemisphere="S")
     else :
-        track['hemisphere'] = 'N'
+        tracks['hemisphere'] = 'N'
         tracks = add_season(tracks, hemisphere="N")
     tracks["basin"] = [
         get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
