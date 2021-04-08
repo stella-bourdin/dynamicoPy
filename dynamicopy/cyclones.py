@@ -133,11 +133,11 @@ def load_TRACKtracks(
     f.close()
     SH = tracks.lat.mean() < 0
     tracks["year"] = tracks.time_step.str[:4].astype(int)
-    tracks["month"] = tracks.time_step.str[-6:-4]
-    tracks["day"] = tracks.time_step.str[-4:-2]
-    tracks["hour"] = tracks.time_step.str[-2:]
+    tracks["month"] = tracks.time_step.str[-6:-4].astype(int)
+    tracks["day"] = tracks.time_step.str[-4:-2].astype(int)
+    tracks["hour"] = tracks.time_step.str[-2:].astype(int)
     if SH:
-        tracks.loc[tracks.month.astype(int) <= 6, "year"] += 1
+        tracks.loc[tracks.month <= 6, "year"] += 1
     tracks["time"] = (
         tracks["year"].astype(str)
         + "-"
@@ -322,4 +322,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8):
 
 
 if __name__ == "__main__":
-    pass
+    import os
+    print(os.getcwd())
+    tracks = load_TRACKtracks(file="../tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new")
+    print(tracks)
