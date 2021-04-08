@@ -16,7 +16,7 @@ def load_ibtracs(
     tracks = (
         tracks[tracks.USA_SSHS >= 0]
         .rename(columns={col: col.lower() for col in tracks.columns})
-        .rename(columns={"usa_sshs": "sshs", "sid": "track_id"})
+        .rename(columns={"usa_sshs": "sshs", "sid": "track_id", "pres":"slp"})
         .drop(columns="season")
     )
     tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
