@@ -277,35 +277,8 @@ def to_dt(t):
         [datetime.utcfromtimestamp(t) if not np.isnan(t) else np.nan for t in ts]
     )
 
-
-def compute_dist(
-    id_detected,
-    id_ref,
-    tracks_detected,
-    tracks_ref,
-):
-    """
-    returns : mean distance, number of matching time steps.
-    """
-    c_d = tracks_detected[(tracks_detected.track_id == id_detected)]
-    c_ref = tracks_ref[(tracks_ref.track_id == id_ref)]
-    t_d = to_dt(c_d.time)
-    t_ref = to_dt(c_ref.time)
-    mask_d = [t in t_ref for t in t_d]
-    mask_ref = [t in t_d for t in t_ref]
-    if np.sum(mask_d) > 0:
-        path_d = c_d[["lat", "lon"]][mask_d]
-        path_ref = c_ref[["lat", "lon"]][mask_ref]
-        d = [
-            np.sqrt((c[0][0] - c[1][0]) ** 2 + (c[0][1] - c[1][1]) ** 2)
-            for c in zip(path_d.values, path_ref.values)
-        ]
-        return np.mean(d), np.sum(mask_d)
-    else:
-        return -1, 0
-
-
-def find_match(id_detected, tracks_detected, tracks_ref, mindays=1, maxd=4):
+# Supprimer ?
+def find_match(tc_detected, tracks_ref, mindays=1, maxd=4):
     """
 
     Parameters
@@ -320,15 +293,17 @@ def find_match(id_detected, tracks_detected, tracks_ref, mindays=1, maxd=4):
     -------
 
     """
-    c = tracks_detected[(tracks_detected.track_id == id_detected)]
     candidates = tracks_ref[
-        (tracks_ref.time >= c.time.min()) & (tracks_ref.time <= c.time.max())
+        (tracks_ref.time >= tc_detected.time.min()) & (tracks_ref.time <= tc_detected.time.max())
     ].track_id.unique()
     if len(candidates) < 1:
         return pd.DataFrame({"id_ref": [np.nan], "dist": [np.nan], "temp": [np.nan]})
     matches = pd.DataFrame()
     for candidate in candidates:
-        dist, temp = compute_dist(id_detected, candidate, tracks_detected, tracks_ref)
+        tc_candidate = tracks_ref[(tracks_ref.track_id == candidate)][['lon', 'lat', 'time']]
+        merged = pd.merge(tc_detected, tc_candidate, on='time')
+        dist = np.mean(merged.apply(lambda row: np.sqrt((row.lon_x - row.lon_y)** 2 + (row.lat_x - row.lat_y)**2), axis = 1)) # Compute distance
+        temp = len(merged)
         matches = matches.append(
             pd.DataFrame({"id_ref": [candidate], "dist": [dist], "temp": [temp]})
         )
@@ -339,26 +314,27 @@ def find_match(id_detected, tracks_detected, tracks_ref, mindays=1, maxd=4):
     return matches[matches.dist == matches.dist.min()]
 
 
-def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8):
-    matches = pd.DataFrame()
-    for id in tracks1.track_id.unique():
-        matches = matches.append(
-            find_match(id, tracks1, tracks2, maxd=maxd).assign(id_detected=id)
-        )
-    matches = matches.rename(
-        columns={"id_ref": "id_" + name2, "id_detected": "id_" + name1}
-    )
+def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
+    tracks1, tracks2 = tracks1[['track_id', 'lon', 'lat', 'time']], tracks2[['track_id', 'lon', 'lat', 'time']]
+    merged = pd.merge(tracks1, tracks2, on='time')
+    merged['dist'] = merged.apply(lambda row: np.sqrt((row.lon_x - row.lon_y) ** 2 + (row.lat_x - row.lat_y) ** 2),
+                                  axis=1)
+    dist = merged.groupby(['track_id_x', 'track_id_y'])[['dist']].mean()
+    temp = merged.groupby(['track_id_x', 'track_id_y'])[['dist']].count().rename(columns={'dist': 'temp'})
+    matches = dist.join(temp)
+    matches = matches[(matches.dist < maxd) & (matches.temp > mindays*4)]
+    matches = matches.loc[matches.groupby('track_id_x')['dist'].idxmin()].reset_index().rename(columns={'track_id_x':'track_id_'+name1, 'track_id_y':'track_id_'+name2})
     return matches
 
 
 if __name__ == "__main__":
     ibtracs_file = '../data/ibtracs_1980-2020_simplified.csv'
     ib = load_ibtracs(file=ibtracs_file)
-    ib = ib[ib.year == 1980]
+    #ib = ib[ib.year == 1980]
 
     UZ_tracks_file = '../tests/tracks_ERA5.csv'
     UZ = load_TEtracks(UZ_tracks_file, surf_wind_col='wind10')
-    UZ = UZ[UZ.year == 1980]
+    #UZ = UZ[UZ.year == 1980]
 
     matches_UZ = match_tracks(UZ, ib, 'UZ', 'ib')
     print(matches_UZ)
