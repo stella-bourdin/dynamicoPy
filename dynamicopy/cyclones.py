@@ -22,6 +22,7 @@ def load_ibtracs(
     tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks = add_season(tracks)
+    tracks["wind"] = pd.to_numeric(tracks.wind)
     return tracks
 
 
@@ -107,29 +108,44 @@ def load_TRACKtracks(
     line1 = f.readline()
     line2 = f.readline()
     nb_tracks = int(line2.split()[1])
+    c=0
+    track_id=0
+    time_step = []
+    lon = []
+    lat = []
+    data = [[]]
     for line in f:
         if line.startswith("TRACK_ID"):
-            track_id = int(line.split()[1])
-        elif line.startswith("POINT_NUM"):
-            pass
-        else:
-            time_step = line.split()[0]
-            lon = float(line.split()[1])
-            lat = float(line.split()[2])
-            data = line.split()[3:]
-            mask = np.array(data) == "&"
-            data = np.array(data)[~mask]
-            data = pd.DataFrame([data], columns=data_vars[: len(data)])
+            data = pd.DataFrame(np.array(data), columns=data_vars[:np.shape(np.array(data))[1]])
             tracks = tracks.append(
+                ## <- This part is taking a long time. Idea: Replace with a list and transform into pandas in the end ?
                 pd.DataFrame(
                     {
-                        "track_id": [track_id],
-                        "time_step": [time_step],
-                        "lon": [lon],
-                        "lat": [lat],
+                        "track_id": [track_id] * len(time_step),
+                        "time_step": time_step,
+                        "lon": lon,
+                        "lat": lat,
                     }
                 ).join(data)
             )
+            c+=1
+            season = line.split()[-1][:-6]
+            track_id = season + '-' + str(c)
+            time_step = []
+            lon=[]
+            lat=[]
+            data=[]
+
+        elif line.startswith("POINT_NUM"):
+            pass
+        else:
+            time_step.append(line.split()[0])
+            lon.append(float(line.split()[1]))
+            lat.append(float(line.split()[2]))
+            rest = line.split()[3:]
+            mask = np.array(rest) == "&"
+            data.append(np.array(rest)[~mask])
+
     f.close()
     SH = tracks.lat.mean() < 0
     tracks["year"] = tracks.time_step.str[:4].astype(int)
