@@ -252,7 +252,7 @@ def plot_tracks(
         fig = plt.figure(figsize=figsize)
         ax = plt.axes(projection=projection)
         ax.coastlines()
-        ax.gridlines(draw_labels=True)
+        ax.gridlines(draw_labels=False)
         ax.add_feature(cartopy.feature.OCEAN, zorder=0, facecolor="azure")
         ax.add_feature(cartopy.feature.LAND, zorder=0, edgecolor="black")
     else:
