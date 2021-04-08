@@ -334,7 +334,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     temp = merged.groupby(['track_id_x', 'track_id_y'])[['dist']].count().rename(columns={'dist': 'temp'})
     matches = dist.join(temp)
     matches = matches[(matches.dist < maxd) & (matches.temp > mindays*4)]
-    matches = matches.loc[matches.groupby('track_id_x')['dist'].idxmin()].reset_index().rename(columns={'track_id_x':'track_id_'+name1, 'track_id_y':'track_id_'+name2})
+    matches = matches.loc[matches.groupby('track_id_x')['dist'].idxmin()].reset_index().rename(columns={'track_id_x':'id_'+name1, 'track_id_y':'id_'+name2})
     return matches
 
 
