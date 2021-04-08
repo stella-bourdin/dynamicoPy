@@ -148,11 +148,15 @@ def load_TRACKtracks(
         + tracks["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
-    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    if SH :
+        tracks["hemisphere"] = "S"
+        tracks = add_season(tracks, hemisphere="S")
+    else :
+        track['hemisphere'] = 'N'
+        tracks = add_season(tracks, hemisphere="N")
     tracks["basin"] = [
         get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
     ]
-    tracks = add_season(tracks)
     return tracks
 
 
@@ -217,26 +221,38 @@ def get_basin(lon, lat):
             return "SA"
 
 
-def add_season(tracks, hemi_col="hemisphere", yr_col="year", mth_col="month"):
-    NH = tracks[tracks[hemi_col] == "N"]
-    NH = NH.join(
-        NH.groupby("track_id")[yr_col].mean().astype(int),
-        on="track_id",
-        rsuffix="season",
-    ).rename(columns={yr_col + "season": "season"})
+def add_season(tracks, hemisphere = 'both', hemi_col="hemisphere", yr_col="year", mth_col="month"):
+    if (hemisphere == 'both') :
+        NH = tracks[tracks[hemi_col] == "N"]
+        SH = tracks[tracks[hemi_col] == "S"]
+    elif hemisphere == 'N' :
+        NH = tracks
+        SH = pd.DataFrame()
+    elif hemisphere == 'S' :
+        NH = pd.DataFrame()
+        SH = tracks
 
-    SH = tracks[tracks[hemi_col] == "S"]
-    track_dates = SH.groupby("track_id")[[yr_col, mth_col]].mean().astype(int)
-    for row in track_dates.itertuples():
-        if row.month <= 6:
-            track_dates.loc[row.Index, "season"] = (
-                str(row.year - 1) + "-" + str(row.year)
-            )
-        if row.month >= 7:
-            track_dates.loc[row.Index, "season"] = (
-                str(row.year) + "-" + str(row.year + 1)
-            )
-    SH = SH.join(track_dates["season"], on="track_id")
+    if len(NH)>0 :
+        NH = NH.join(
+            NH.groupby("track_id")[yr_col].mean().astype(int),
+            on="track_id",
+            rsuffix="season",
+        ).rename(columns={yr_col + "season": "season"})
+
+    if len(SH)>0 :
+        track_dates = SH.groupby("track_id")[[yr_col, mth_col]].mean().astype(int)
+        for row in track_dates.itertuples():
+            if row.month <= 6:
+                track_dates.loc[row.Index, "season"] = (
+                    str(row.year - 1) + "-" + str(row.year)
+                )
+            if row.month >= 7:
+                track_dates.loc[row.Index, "season"] = (
+                    str(row.year) + "-" + str(row.year + 1)
+                )
+        SH = SH.join(track_dates["season"], on="track_id")
+
+
 
     return NH.append(SH)
 
