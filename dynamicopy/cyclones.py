@@ -6,7 +6,7 @@ from datetime import datetime
 def load_ibtracs(
     season=None, file="data/ibtracs_1980-2020_simplified.csv", pos_lon=True
 ):
-    tracks = pd.read_csv(file, keep_default_na=False)
+    tracks = pd.read_csv(file, keep_default_na=False) #TODO : Warning avec column 15 have mixed types
     if season != None:
         tracks = tracks[tracks.SEASON == season]
     tracks["time"] = tracks.ISO_TIME.astype(np.datetime64)
@@ -22,7 +22,7 @@ def load_ibtracs(
     tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks = add_season(tracks)
-    tracks["wind"] = pd.to_numeric(tracks.wind)
+    tracks["wind"] = tracks.wind.astype(float)
     return tracks
 
 
@@ -99,7 +99,17 @@ _TRACK_data_vars = [
 def load_TRACKtracks(
     file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
     data_vars=_TRACK_data_vars,
-):
+): # TODO : Doc
+    """
+    Parameters
+    ----------
+    file
+    data_vars
+
+    Returns
+    -------
+
+    """
     f = open(file)
     tracks = pd.DataFrame()
     line0 = f.readline()
@@ -171,6 +181,7 @@ def load_TRACKtracks(
     tracks["basin"] = [
         get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
     ]
+    # TODO: Selectionner un subset de colonnes
     return tracks
 
 
