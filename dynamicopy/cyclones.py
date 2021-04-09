@@ -11,6 +11,7 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 0 <= lon <= 360
 """
 
+
 def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
     """
     Parameters
@@ -314,23 +315,35 @@ def get_basin(hemisphere, lon, lat):
     return basin
 
 
-def add_season(
-    tracks
-):
+def add_season(tracks):
     if "season" in tracks.columns:
         tracks = tracks.drop(columns="season")
-    group = tracks.groupby(["track_id"])[['year', 'month']].mean().astype(int).join(
-        tracks[['track_id', 'hemisphere']].drop_duplicates().set_index("track_id"), on='track_id')
+    group = (
+        tracks.groupby(["track_id"])[["year", "month"]]
+        .mean()
+        .astype(int)
+        .join(
+            tracks[["track_id", "hemisphere"]].drop_duplicates().set_index("track_id"),
+            on="track_id",
+        )
+    )
     hemi, yr, mth = group.hemisphere.values, group.year.values, group.month.values
     season = np.where(hemi == "N", yr, None)
     season = np.where((hemi == "S") & (mth >= 7), yr, season)
-    season = np.where((hemi == "S") & (mth <= 6), yr-1,season)
-    _ = np.where((hemi == "S"), np.core.defchararray.add(season.astype(str), np.array(['-']*len(season))), season).astype(str)
-    season = np.where((hemi == "S"), np.core.defchararray.add(_, (season+1).astype(str)), season)
+    season = np.where((hemi == "S") & (mth <= 6), yr - 1, season)
+    _ = np.where(
+        (hemi == "S"),
+        np.core.defchararray.add(season.astype(str), np.array(["-"] * len(season))),
+        season,
+    ).astype(str)
+    season = np.where(
+        (hemi == "S"), np.core.defchararray.add(_, (season + 1).astype(str)), season
+    )
 
-    group['season'] = season.astype(str)
-    tracks = tracks.join(group[['season']], on = "track_id")
+    group["season"] = season.astype(str)
+    tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
+
 
 def to_dt(t):
     ts = np.floor((t - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, "s"))
@@ -387,6 +400,22 @@ def find_match(tc_detected, tracks_ref, mindays=1, maxd=4):
 
 
 def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
+    """
+
+    Parameters
+    ----------
+    tracks1 (pd.DataFrame): First tracks DataFrame
+    tracks2 (pd.DataFrame): Second tracks DataFrame
+    name1 (str): name to append corresponding to the first df
+    name2 (str): name to append corresponding to the second df
+    maxd (numeric): Maximum allowed distance between two tracks
+    mindays (int): Minimum number of days in common between two tracks
+
+    Returns
+    -------
+    pd.DataFrame
+        with the track ids of the matching trajectories in tracks1 and tracks2
+    """
     tracks1, tracks2 = (
         tracks1[["track_id", "lon", "lat", "time"]],
         tracks2[["track_id", "lon", "lat", "time"]],
