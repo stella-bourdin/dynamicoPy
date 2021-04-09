@@ -3,15 +3,29 @@ import numpy as np
 from datetime import datetime
 
 
+"""
+Format for loading the tracks data : 
+track_id    time                lon     lat     hemisphere  basin   season  sshs    slp     wind10  year    month   day     (wind925)
+str         np.datetime64[ns]   float   float   str         str     str     int     float   float   int     int     int     (float)
+
+0 <= lon <= 360
+"""
+
+# TODO : Accélerer les loads
 def load_ibtracs(
-    season=None, file="data/ibtracs_1980-2020_simplified.csv", pos_lon=True
+    file="data/ibtracs_1980-2020_simplified.csv"
 ):
-    tracks = pd.read_csv(file, keep_default_na=False) #TODO : Warning avec column 15 have mixed types
-    if season != None:
-        tracks = tracks[tracks.SEASON == season]
-    tracks["time"] = tracks.ISO_TIME.astype(np.datetime64)
-    if pos_lon:
-        tracks.loc[tracks.LON < 0, "LON"] = tracks.loc[tracks.LON < 0, "LON"] + 360
+    """
+    Parameters
+    ----------
+    file: Path to the ibtracs_simplified file
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns as described in the module header
+    """
+    tracks = pd.read_csv(file, keep_default_na=False, dtype={'USA_SSHS':str})
     tracks["USA_SSHS"] = pd.to_numeric(tracks.USA_SSHS)
     tracks = (
         tracks[tracks.USA_SSHS >= 0]
@@ -19,11 +33,13 @@ def load_ibtracs(
         .rename(columns={"usa_sshs": "sshs", "sid": "track_id", "pres":"slp"})
         .drop(columns="season")
     )
-    tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
+    tracks["time"] = tracks.iso_time.astype(np.datetime64)
+    tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
     tracks = add_season(tracks)
-    tracks["wind"] = tracks.wind.astype(float)
-    return tracks
+    tracks["wind10"] = tracks.wind.astype(float)
+    return tracks[['track_id', 'time', 'lon', 'lat', 'hemisphere', 'basin', 'season', 'sshs', 'slp', 'wind10', 'year', 'month', 'day']]
 
 
 def load_TEtracks(
@@ -247,6 +263,8 @@ def get_basin(lon, lat):
 
 
 def add_season(tracks, hemisphere = 'both', hemi_col="hemisphere", yr_col="year", mth_col="month"):
+    if "season" in tracks.columns:
+        tracks = tracks.drop(columns='season')
     if (hemisphere == 'both') :
         NH = tracks[tracks[hemi_col] == "N"]
         SH = tracks[tracks[hemi_col] == "S"]
@@ -259,25 +277,15 @@ def add_season(tracks, hemisphere = 'both', hemi_col="hemisphere", yr_col="year"
 
     if len(NH)>0 :
         NH = NH.join(
-            NH.groupby("track_id")[yr_col].mean().astype(int),
+            NH.groupby("track_id")[[yr_col]].mean().astype(int).astype(str).rename(columns={'year':'season'}),
             on="track_id",
-            rsuffix="season",
-        ).rename(columns={yr_col + "season": "season"})
+        )
 
     if len(SH)>0 :
         track_dates = SH.groupby("track_id")[[yr_col, mth_col]].mean().astype(int)
-        for row in track_dates.itertuples():
-            if row.month <= 6:
-                track_dates.loc[row.Index, "season"] = (
-                    str(row.year - 1) + "-" + str(row.year)
-                )
-            if row.month >= 7:
-                track_dates.loc[row.Index, "season"] = (
-                    str(row.year) + "-" + str(row.year + 1)
-                )
+        track_dates["season"] = np.where(track_dates.month <= 6, track_dates.year - 1, track_dates.year)
+        track_dates["season"] = track_dates.apply(lambda row: str(row.season) + '-' + str(row.season + 1), axis=1)
         SH = SH.join(track_dates["season"], on="track_id")
-
-
 
     return NH.append(SH)
 
@@ -341,11 +349,3 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
 if __name__ == "__main__":
     ibtracs_file = '../data/ibtracs_1980-2020_simplified.csv'
     ib = load_ibtracs(file=ibtracs_file)
-    #ib = ib[ib.year == 1980]
-
-    UZ_tracks_file = '../tests/tracks_ERA5.csv'
-    UZ = load_TEtracks(UZ_tracks_file, surf_wind_col='wind10')
-    #UZ = UZ[UZ.year == 1980]
-
-    matches_UZ = match_tracks(UZ, ib, 'UZ', 'ib')
-    print(matches_UZ)
