@@ -45,23 +45,13 @@ def load_ibtracs(
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
     compute_sshs=True,
-    pos_lon=True,
-    surf_wind_col="wind",
+    surf_wind_col="wind10",
     slp_col="slp",
 ):
     tracks = pd.read_csv(file)
     tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
-    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    tracks = add_season(tracks)
-    tracks["basin"] = tracks.apply(lambda row: get_basin(row.lon, row.lat), axis =1)
-    tracks[slp_col] /= 100
-    if compute_sshs:
-        tracks["sshs_wind"] = [
-            sshs_from_wind(tracks[surf_wind_col][i]) for i in range(len(tracks))
-        ]
-        tracks["sshs_pres"] = [
-            sshs_from_pres(tracks[slp_col][i]) for i in range(len(tracks))
-        ]
+    tracks.rename(columns = {surf_wind_col:"wind10", slp_col:'slp'})
+
     tracks["time"] = (
         tracks["year"].astype(str)
         + "-"
@@ -72,8 +62,15 @@ def load_TEtracks(
         + tracks["hour"].astype(str)
         + ":00"
     ).astype(np.datetime64)
-    if pos_lon:
-        tracks.loc[tracks.lon < 0, "lon"] = tracks.loc[tracks.lon < 0, "lon"] + 360
+    tracks.loc[tracks.lon < 0, "lon"] += 360
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["basin"] = get_basin(tracks.hemisphere.values, tracks.lon.values, tracks.lat.values)#tracks.apply(lambda row: get_basin(row.lon, row.lat), axis =1)
+    tracks = add_season(tracks)
+    tracks[slp_col] /= 100
+    if compute_sshs:
+        tracks["sshs_wind"] = sshs_from_wind(tracks.wind10.values)
+        tracks["sshs_pres"] = sshs_from_pres(tracks.slp.values)
+
     return tracks
 
 
@@ -202,64 +199,37 @@ def load_TRACKtracks(
 
 
 def sshs_from_wind(wind):
-    if wind <= 60 / 3.6:
-        return -1
-    elif wind <= 120 / 3.6:
-        return 0
-    elif wind <= 150 / 3.6:
-        return 1
-    elif wind <= 180 / 3.6:
-        return 2
-    elif wind <= 210 / 3.6:
-        return 3
-    elif wind <= 240 / 3.6:
-        return 4
-    else:
-        return 5
-
+    sshs = np.where(wind <= 60/3.6, -1, None)
+    sshs = np.where((sshs == None) & (wind < 120/3.6), 0, sshs)
+    sshs = np.where((sshs == None) & (wind < 150/3.6), 1, sshs)
+    sshs = np.where((sshs == None) & (wind < 180/3.6), 2, sshs)
+    sshs = np.where((sshs == None) & (wind < 210/3.6), 3, sshs)
+    sshs = np.where((sshs == None) & (wind < 240/3.6), 4, sshs)
+    sshs = np.where((sshs == None) & (~np.isnan(wind)), 5, sshs)
+    sshs = np.where(sshs == None, np.nan, sshs)
+    return sshs
 
 def sshs_from_pres(p):
-    if p >= 990:
-        return -1
-    elif p >= 980:
-        return 0
-    elif p >= 970:
-        return 1
-    elif p >= 965:
-        return 2
-    elif p >= 945:
-        return 3
-    elif p >= 920:
-        return 4
-    else:
-        return 5
+    sshs = np.where(p>990, -1, None)
+    sshs = np.where((sshs == None) & (p >=980), 0, sshs)
+    sshs = np.where((sshs == None) & (p >=970), 1, sshs)
+    sshs = np.where((sshs == None) & (p >=965), 2, sshs)
+    sshs = np.where((sshs == None) & (p >=945), 3, sshs)
+    sshs = np.where((sshs == None) & (p >=920), 4, sshs)
+    sshs = np.where((sshs == None) & (~np.isnan(p)), 5, sshs)
+    sshs = np.where(sshs==None, np.nan, sshs)
+    return sshs
 
 
-def get_basin(lon, lat):
-    if lat >= 0:
-        if lon <= 40:
-            return np.nan
-        elif lon <= 100:
-            return "NI"
-        elif lon <= 200:
-            return "WNP"
-        elif (lat >= 35) & (lon <= 250):
-            return "WNP"
-        elif lon <= 260:
-            return "ENP"
-        elif (lat <= 15) & (lon <= 290):
-            return "ENP"
-        else:
-            return "NA"
-    else:
-        if lon <= 20:
-            return "SA"
-        elif lon <= 130:
-            return "SI"
-        elif lon <= 300:
-            return "SP"
-        else:
-            return "SA"
+def get_basin(hemisphere, lon, lat):
+    basin = np.where((hemisphere == 'N') & (lon > 40) & (lon <= 100), "NI", '')
+    basin = np.where((hemisphere == 'N') & (lon > 100) & ((lon <= 200) | ((lat>=35)&(lon<=250))), "WNP", basin)
+    basin = np.where((hemisphere == 'N') & (basin !="WNP") & (lon > 200) & ((lon <= 260) | ((lat<=15) & (lon <=290))) , "ENP", basin)
+    basin = np.where((hemisphere == 'N') & (basin !='ENP') & (lon > 260) , "NA", basin)
+    basin = np.where((hemisphere == 'S') & (lon>20) & (lon <= 130), "SI", basin)
+    basin = np.where((hemisphere == 'S') & (lon>130) & (lon <= 300), "SP", basin)
+    basin = np.where((hemisphere == 'S') & (basin=='') , "SA", basin)
+    return basin
 
 
 def add_season(tracks, hemisphere = 'both', hemi_col="hemisphere", yr_col="year", mth_col="month"):
@@ -347,5 +317,5 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
 
 
 if __name__ == "__main__":
-    ibtracs_file = '../data/ibtracs_1980-2020_simplified.csv'
-    ib = load_ibtracs(file=ibtracs_file)
+    file = '../tests/tracks_ERA5.csv'
+    load_TEtracks(file)
