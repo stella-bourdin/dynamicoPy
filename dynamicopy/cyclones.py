@@ -11,7 +11,6 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 0 <= lon <= 360
 """
 
-# TODO : Accélerer les loads
 def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
     """
     Parameters
@@ -58,7 +57,6 @@ def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
-    compute_sshs=True,
     surf_wind_col="wind10",
     slp_col="slp",
 ):
@@ -66,9 +64,8 @@ def load_TEtracks(
     Parameters
     ----------
     file (str): csv file from TempestExtremes StitchNodes output
-    compute_sshs (bool): Whether or not to issue sshs
-    surf_wind_col (str): Name of the column with the surface wind to use for sshs computation
-    slp_col (str): Name of the column with the sea-level pressure to use for sshs computation
+    surf_wind_col (str): Name of the column with the surface wind to output.
+    slp_col (str): Name of the column with the sea-level pressure. If None, no sshs computation.
 
     Returns
     -------
@@ -79,64 +76,38 @@ def load_TEtracks(
     tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
     tracks.rename(columns={surf_wind_col: "wind10", slp_col: "slp"})
 
-    tracks["time"] = (
-        tracks["year"].astype(str)
-        + "-"
-        + tracks["month"].astype(str)
-        + "-"
-        + tracks["day"].astype(str)
-        + " "
-        + tracks["hour"].astype(str)
-        + ":00"
-    ).astype(np.datetime64)
+    tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks["basin"] = get_basin(
         tracks.hemisphere.values, tracks.lon.values, tracks.lat.values
-    )  # tracks.apply(lambda row: get_basin(row.lon, row.lat), axis =1)
+    )
     tracks = add_season(tracks)
     tracks[slp_col] /= 100
-    if compute_sshs:
-        tracks["sshs_wind"] = sshs_from_wind(tracks.wind10.values)
-        tracks["sshs_pres"] = sshs_from_pres(tracks.slp.values)
-        r = tracks[
-            [
-                "track_id",
-                "time",
-                "lon",
-                "lat",
-                "hemisphere",
-                "basin",
-                "season",
-                "sshs_wind",
-                "sshs_pres",
-                "slp",
-                "wind10",
-                "year",
-                "month",
-                "day",
-            ]
-        ].copy()
+    if slp_col != None:
+        tracks["sshs"] = sshs_from_pres(tracks.slp.values)
     else:
-        r = tracks[
-            [
-                "track_id",
-                "time",
-                "lon",
-                "lat",
-                "hemisphere",
-                "basin",
-                "season",
-                "slp",
-                "wind10",
-                "year",
-                "month",
-                "day",
-            ]
-        ].copy()
-    if "wind925" in tracks.columns:
-        r["wind925"] = tracks.wind925
-    return r
+        tracks["sshs"] = np.nan
+    if "wind925" not in tracks.columns:
+        tracks["wind925"] = np.nan
+    return tracks[
+        [
+            "track_id",
+            "time",
+            "lon",
+            "lat",
+            "hemisphere",
+            "basin",
+            "season",
+            "sshs",
+            "slp",
+            "wind10",
+            "year",
+            "month",
+            "day",
+            "wind925",
+        ]
+    ]
 
 
 _TRACK_data_vars = [
@@ -177,16 +148,17 @@ _TRACK_data_vars = [
 def load_TRACKtracks(
     file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
     data_vars=_TRACK_data_vars,
-):  # TODO : Doc
+):
     """
     Parameters
     ----------
-    file
-    data_vars
+    file (str): Path to the TRACK output file
+    data_vars (list): list of the variables in the file
 
     Returns
     -------
-
+    pd.DataFrame
+        Columns as described in the module header
     """
     f = open(file)
     tracks = pd.DataFrame()
@@ -242,27 +214,56 @@ def load_TRACKtracks(
     tracks["hour"] = tracks.time_step.str[-2:].astype(int)
     if SH:
         tracks.loc[tracks.month <= 6, "year"] += 1
-    tracks["time"] = (
-        tracks["year"].astype(str)
-        + "-"
-        + tracks["month"].astype(str)
-        + "-"
-        + tracks["day"].astype(str)
-        + " "
-        + tracks["hour"].astype(str)
-        + ":00"
-    ).astype(np.datetime64)
+    tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     if SH:
         tracks["hemisphere"] = "S"
         tracks = add_season(tracks, hemisphere="S")
     else:
         tracks["hemisphere"] = "N"
         tracks = add_season(tracks, hemisphere="N")
-    tracks["basin"] = [
-        get_basin(tracks.lon.iloc[i], tracks.lat.iloc[i]) for i in range(len(tracks))
+    tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
+    tracks["slp"] = tracks.slp.astype(float)
+    tracks["sshs"] = sshs_from_pres(tracks.slp)
+    if "wind10" not in tracks.columns:
+        tracks["wind10"] = np.nan
+    else:
+        tracks["wind10"] = tracks.wind10.astype(float)
+    if "wind925" not in tracks.columns:
+        tracks["wind925"] = np.nan
+    else:
+        tracks["wind925"] = tracks.wind925.astype(float)
+    return tracks[
+        [
+            "track_id",
+            "time",
+            "lon",
+            "lat",
+            "hemisphere",
+            "basin",
+            "season",
+            "sshs",
+            "slp",
+            "wind10",
+            "year",
+            "month",
+            "day",
+            "wind925",
+        ]
     ]
-    # TODO: Selectionner un subset de colonnes
-    return tracks
+
+
+def get_time(year, month, day, hour):
+    time = (
+        year.astype(str)
+        + "-"
+        + month.astype(str)
+        + "-"
+        + day.astype(str)
+        + " "
+        + hour.astype(str)
+        + ":00"
+    ).astype(np.datetime64)
+    return time
 
 
 def sshs_from_wind(wind):
@@ -435,5 +436,4 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
 
 
 if __name__ == "__main__":
-    file = "../tests/tracks_ERA5.csv"
-    load_TEtracks(file)
+    pass
