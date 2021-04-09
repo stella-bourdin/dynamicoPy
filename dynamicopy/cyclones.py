@@ -217,10 +217,10 @@ def load_TRACKtracks(
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     if SH:
         tracks["hemisphere"] = "S"
-        tracks = add_season(tracks, hemisphere="S")
+        tracks = add_season(tracks)
     else:
         tracks["hemisphere"] = "N"
-        tracks = add_season(tracks, hemisphere="N")
+        tracks = add_season(tracks)
     tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
     tracks["slp"] = tracks.slp.astype(float)
     tracks["sshs"] = sshs_from_pres(tracks.slp)
@@ -315,43 +315,22 @@ def get_basin(hemisphere, lon, lat):
 
 
 def add_season(
-    tracks, hemisphere="both", hemi_col="hemisphere", yr_col="year", mth_col="month"
+    tracks
 ):
     if "season" in tracks.columns:
         tracks = tracks.drop(columns="season")
-    if hemisphere == "both":
-        NH = tracks[tracks[hemi_col] == "N"]
-        SH = tracks[tracks[hemi_col] == "S"]
-    elif hemisphere == "N":
-        NH = tracks
-        SH = pd.DataFrame()
-    elif hemisphere == "S":
-        NH = pd.DataFrame()
-        SH = tracks
+    group = tracks.groupby(["track_id"])[['year', 'month']].mean().astype(int).join(
+        tracks[['track_id', 'hemisphere']].drop_duplicates().set_index("track_id"), on='track_id')
+    hemi, yr, mth = group.hemisphere.values, group.year.values, group.month.values
+    season = np.where(hemi == "N", yr, None)
+    season = np.where((hemi == "S") & (mth >= 7), yr, season)
+    season = np.where((hemi == "S") & (mth <= 6), yr-1,season)
+    _ = np.where((hemi == "S"), np.core.defchararray.add(season.astype(str), np.array(['-']*len(season))), season).astype(str)
+    season = np.where((hemi == "S"), np.core.defchararray.add(_, (season+1).astype(str)), season)
 
-    if len(NH) > 0:
-        NH = NH.join(
-            NH.groupby("track_id")[[yr_col]]
-            .mean()
-            .astype(int)
-            .astype(str)
-            .rename(columns={"year": "season"}),
-            on="track_id",
-        )
-
-    if len(SH) > 0:
-        track_dates = SH.groupby("track_id")[[yr_col, mth_col]].mean().astype(int)
-        track_dates["season"] = np.where(
-            track_dates.month <= 6, track_dates.year - 1, track_dates.year
-        )
-        # Room for speed improvement here :
-        track_dates["season"] = track_dates.apply(
-            lambda row: str(row.season) + "-" + str(row.season + 1), axis=1
-        )
-        SH = SH.join(track_dates["season"], on="track_id")
-
-    return NH.append(SH)
-
+    group['season'] = season.astype(str)
+    tracks = tracks.join(group[['season']], on = "track_id")
+    return tracks
 
 def to_dt(t):
     ts = np.floor((t - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, "s"))
