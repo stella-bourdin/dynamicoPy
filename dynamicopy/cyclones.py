@@ -76,7 +76,7 @@ def load_TEtracks(
     """
     tracks = pd.read_csv(file)
     tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
-    tracks.rename(columns={surf_wind_col: "wind10", slp_col: "slp"})
+    tracks = tracks.rename(columns={surf_wind_col: "wind10", slp_col: "slp"})
 
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     tracks.loc[tracks.lon < 0, "lon"] += 360
