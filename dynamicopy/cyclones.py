@@ -37,6 +37,7 @@ def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
     tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
     tracks = add_season(tracks)
     tracks["wind10"] = tracks.wind.astype(float)
+    tracks["slp"] = tracks.slp.astype(float)
     return tracks[
         [
             "track_id",
@@ -444,4 +445,5 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
 
 
 if __name__ == "__main__":
+    # t = load_TRACKtracks()
     pass

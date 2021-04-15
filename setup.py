@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="dynamicopy",
-    version="0.3.4",
+    version="0.3.4.1",
     author="Stella Bourdin",
     author_email="stella.bourdin@lsce.ipsl.fr",
     description="A set of tool to use and analyse netCDF data",
