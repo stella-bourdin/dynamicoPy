@@ -248,7 +248,6 @@ def load_TRACKtracks(
             "wind10",
             "vor_tracked",
             "vor850",
-            "vor250",
             "year",
             "month",
             "day",
