@@ -150,12 +150,16 @@ _TRACK_data_vars = [
 def load_TRACKtracks(
     file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
     data_vars=_TRACK_data_vars,
+    time_format='time_step',
+    season=None
 ):
     """
     Parameters
     ----------
     file (str): Path to the TRACK output file
     data_vars (list): list of the variables in the file
+    time_format (str): 'time_step' if the data is in model time steps, 'calendar' if the data is in 'YYYYMMDDHH'
+    season (str): If None, is read from the data
 
     Returns
     -------
@@ -180,7 +184,6 @@ def load_TRACKtracks(
                 np.array(data), columns=data_vars[: np.shape(np.array(data))[1]]
             )
             tracks = tracks.append(
-                ## <- This part is taking a long time. Idea: Replace with a list and transform into pandas in the end ?
                 pd.DataFrame(
                     {
                         "track_id": [track_id] * len(time_step),
@@ -191,7 +194,8 @@ def load_TRACKtracks(
                 ).join(data)
             )
             c += 1
-            season = line.split()[-1][:-6]
+            if season == None :
+                season = line.split()[-1][:-6]
             track_id = season + "-" + str(c)
             time_step = []
             lon = []
@@ -210,22 +214,31 @@ def load_TRACKtracks(
 
     f.close()
     SH = tracks.lat.mean() < 0
-    tracks["year"] = tracks.time_step.str[:4].astype(int)
-    tracks["month"] = tracks.time_step.str[-6:-4].astype(int)
-    tracks["day"] = tracks.time_step.str[-4:-2].astype(int)
-    tracks["hour"] = tracks.time_step.str[-2:].astype(int)
-    if SH:
-        tracks.loc[tracks.month <= 6, "year"] += 1
-    tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
-    if SH:
-        tracks["hemisphere"] = "S"
-        tracks = add_season(tracks)
-    else:
-        tracks["hemisphere"] = "N"
-        tracks = add_season(tracks)
+    if time_format == 'calendar':
+        tracks["year"] = tracks.time_step.str[:4].astype(int)
+        tracks["month"] = tracks.time_step.str[-6:-4].astype(int)
+        tracks["day"] = tracks.time_step.str[-4:-2].astype(int)
+        tracks["hour"] = tracks.time_step.str[-2:].astype(int)
+        if SH:
+            tracks.loc[tracks.month <= 6, "year"] += 1
+        tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
+    elif time_format == 'time_step':
+        if len(season) == 4 :
+            start = np.datetime64(season + '-01-01 00:00:00')
+        elif len(season) == 8 :
+            start = np.datetime64(season[:4] + '-07-01 00:00:00')
+        tracks["time"] = [start + np.timedelta64(ts*6, 'h') for ts in tracks.time_step.astype(int)]
+    else :
+        print("Please enter a valid time_format")
+    tracks["hemisphere"] = "SH" if SH else "NH"
+    tracks["season"] = season
     tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
-    tracks["slp"] = tracks.slp.astype(float)
-    tracks["sshs"] = sshs_from_pres(tracks.slp)
+    if "slp" not in tracks.columns:
+        tracks["slp"] = np.nan
+        tracks["sshs"] = np.nan
+    else :
+        tracks["slp"] = tracks.slp.astype(float)
+        tracks["sshs"] = sshs_from_pres(tracks.slp)
     if "wind10" not in tracks.columns:
         tracks["wind10"] = np.nan
     else:
@@ -248,9 +261,6 @@ def load_TRACKtracks(
             "wind10",
             "vor_tracked",
             "vor850",
-            "year",
-            "month",
-            "day",
             "wind925",
         ]
     ]
