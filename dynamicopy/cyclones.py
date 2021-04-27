@@ -170,16 +170,14 @@ _TRACK_data_vars = [
 
 def load_TRACKtracks(
     file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
-    data_vars=_TRACK_data_vars,
-    time_format='time_step',
+    origin='HRMIP',
     season=None
 ):
     """
     Parameters
     ----------
     file (str): Path to the TRACK output file
-    data_vars (list): list of the variables in the file
-    time_format (str): 'time_step' if the data is in model time steps, 'calendar' if the data is in 'YYYYMMDDHH'
+    origin (str): 'ERA5' or 'HRMIP'
     season (str): If None, is read from the data
 
     Returns
@@ -187,6 +185,12 @@ def load_TRACKtracks(
     pd.DataFrame
         Columns as described in the module header
     """
+    if origin == 'ERA5' :
+        data_vars=_TRACK_data_vars
+        time_format='calendar'
+    else:
+        data_vars=_HRMIP_TRACK_data_vars
+        time_format='time_step'
     f = open(file)
     tracks = pd.DataFrame()
     line0 = f.readline()
