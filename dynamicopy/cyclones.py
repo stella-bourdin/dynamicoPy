@@ -255,7 +255,7 @@ def load_TRACKtracks(
         tracks["time"] = [start + np.timedelta64(ts*6, 'h') for ts in tracks.time_step.astype(int)]
     else :
         print("Please enter a valid time_format")
-    tracks["hemisphere"] = "SH" if SH else "NH"
+    tracks["hemisphere"] = "S" if SH else "N"
     tracks["season"] = season
     tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
     if "slp" not in tracks.columns:
