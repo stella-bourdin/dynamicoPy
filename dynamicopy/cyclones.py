@@ -111,6 +111,27 @@ def load_TEtracks(
         ]
     ]
 
+_HRMIP_TRACK_data_vars = ['lon1',
+ 'lat1',
+ 'vor_tracked',
+ 'lon2',
+ 'lat2',
+ 'vor850',
+ 'lon3',
+ 'lat3',
+ 'vor700',
+ 'lon4',
+ 'lat4',
+ 'vor600',
+ 'lon5',
+ 'lat5',
+ 'vor500',
+ 'lon6',
+ 'lat6',
+ 'vor250',
+ 'lon7',
+ 'lat7',
+ 'wind10']
 
 _TRACK_data_vars = [
     "vor_tracked",
