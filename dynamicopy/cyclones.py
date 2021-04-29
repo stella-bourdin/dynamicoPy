@@ -258,6 +258,10 @@ def load_TRACKtracks(
     tracks["hemisphere"] = "S" if SH else "N"
     tracks["season"] = season
     tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
+    if "vor850" in tracks.columns:
+        tracks["vor850"] = track.vor850.astype(float)
+    if "vor_tracked" in tracks.columns:
+        tracks["vor_tracked"] = track.vor_tracked.astype(float)
     if "slp" not in tracks.columns:
         tracks["slp"] = np.nan
         tracks["sshs"] = np.nan
