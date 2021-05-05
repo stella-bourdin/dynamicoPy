@@ -167,6 +167,17 @@ _TRACK_data_vars = [
     "wind10",
 ]
 
+def is_leap(yr):
+    if yr%4==0:
+        if yr%100==0:
+            if yr%400==0:
+                return True
+            else :
+                return False
+        else :
+            return True
+    else :
+        return False
 
 def load_TRACKtracks(
     file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
@@ -244,9 +255,14 @@ def load_TRACKtracks(
         tracks["month"] = tracks.time_step.str[-6:-4].astype(int)
         tracks["day"] = tracks.time_step.str[-4:-2].astype(int)
         tracks["hour"] = tracks.time_step.str[-2:].astype(int)
-        if SH:
-            tracks.loc[tracks.month <= 6, "year"] += 1
+        #if SH:
+        #    tracks.loc[tracks.month <= 6, "year"] += 1
         tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
+        if SH:
+            if is_leap(int(season[:4])):
+                tracks["time"] += np.timedelta64(182, "D")
+            else :
+                tracks["time"] += np.timedelta64(181, "D")
     elif time_format == 'time_step':
         if len(season) == 4 :
             start = np.datetime64(season + '-01-01 00:00:00')
@@ -259,9 +275,9 @@ def load_TRACKtracks(
     tracks["season"] = season
     tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
     if "vor850" in tracks.columns:
-        tracks["vor850"] = track.vor850.astype(float)
+        tracks["vor850"] = tracks.vor850.astype(float)
     if "vor_tracked" in tracks.columns:
-        tracks["vor_tracked"] = track.vor_tracked.astype(float)
+        tracks["vor_tracked"] = tracks.vor_tracked.astype(float)
     if "slp" not in tracks.columns:
         tracks["slp"] = np.nan
         tracks["sshs"] = np.nan
@@ -276,6 +292,7 @@ def load_TRACKtracks(
         tracks["wind925"] = np.nan
     else:
         tracks["wind925"] = tracks.wind925.astype(float)
+    print("")
     return tracks[
         [
             "track_id",
