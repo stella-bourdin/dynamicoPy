@@ -250,24 +250,19 @@ def load_TRACKtracks(
 
     f.close()
     SH = tracks.lat.mean() < 0
+    if len(season) == 4:
+        start = np.datetime64(season + '-01-01 00:00:00')
+    elif len(season) == 8:
+        start = np.datetime64(season[:4] + '-07-01 00:00:00')
     if time_format == 'calendar':
-        tracks["year"] = tracks.time_step.str[:4].astype(int)
-        tracks["month"] = tracks.time_step.str[-6:-4].astype(int)
-        tracks["day"] = tracks.time_step.str[-4:-2].astype(int)
-        tracks["hour"] = tracks.time_step.str[-2:].astype(int)
-        #if SH:
-        #    tracks.loc[tracks.month <= 6, "year"] += 1
+        tracks["year"] = "1980" #tracks.time_step.str[:4].astype(int)
+        tracks["month"] = tracks.time_step.str[-6:-4]#.astype(int)
+        tracks["day"] = tracks.time_step.str[-4:-2]#.astype(int)
+        tracks["hour"] = tracks.time_step.str[-2:]#.astype(int)
         tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
-        if SH:
-            if is_leap(int(season[:4])):
-                tracks["time"] += np.timedelta64(182, "D")
-            else :
-                tracks["time"] += np.timedelta64(181, "D")
+        tracks["delta"] = tracks["time"] - np.datetime64("1980-01-01 00")
+        tracks["time"] = tracks["delta"] + start
     elif time_format == 'time_step':
-        if len(season) == 4 :
-            start = np.datetime64(season + '-01-01 00:00:00')
-        elif len(season) == 8 :
-            start = np.datetime64(season[:4] + '-07-01 00:00:00')
         tracks["time"] = [start + np.timedelta64(ts*6, 'h') for ts in tracks.time_step.astype(int)]
     else :
         print("Please enter a valid time_format")
@@ -321,7 +316,6 @@ def get_time(year, month, day, hour):
         + day.astype(str)
         + " "
         + hour.astype(str)
-        + ":00"
     ).astype(np.datetime64)
     return time
 
