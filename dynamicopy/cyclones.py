@@ -37,7 +37,7 @@ def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
     tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
     tracks = add_season(tracks)
     tracks["wind10"] = tracks.wind.astype(float)
-    tracks["slp"] = tracks.slp.astype(float)
+    tracks["slp"] = pd.to_numeric(tracks.slp)
     return tracks[
         [
             "track_id",
