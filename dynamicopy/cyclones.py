@@ -315,7 +315,7 @@ def get_time(year, month, day, hour):
         + "-"
         + day.astype(str)
         + " "
-        + hour.astype(str)
+        + hour.astype(str) + ":00"
     ).astype(np.datetime64)
     return time
 
