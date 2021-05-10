@@ -266,6 +266,11 @@ def load_TRACKtracks(
         tracks["time"] = [start + np.timedelta64(ts*6, 'h') for ts in tracks.time_step.astype(int)]
     else :
         print("Please enter a valid time_format")
+    time = pd.DatetimeIndex(tracks.time)
+    tracks["year"] = time.year
+    tracks["month"] = time.month
+    tracks["day"] = time.day
+    tracks["hour"] = time.hour
     tracks["hemisphere"] = "S" if SH else "N"
     tracks["season"] = season
     tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
@@ -303,6 +308,10 @@ def load_TRACKtracks(
             "vor_tracked",
             "vor850",
             "wind925",
+            "year",
+            "month",
+            "day",
+            "hour",
         ]
     ]
 
