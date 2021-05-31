@@ -12,7 +12,12 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 0 <= lon <= 360
 """
 
-def clean_ibtracs(raw_file="ibtracs.since1980.list.v04r00.csv", csv_output="ibtracs.since1980.cleaned.csv", pkl_output="ibtracs.pkl"):
+
+def clean_ibtracs(
+    raw_file="ibtracs.since1980.list.v04r00.csv",
+    csv_output="ibtracs.since1980.cleaned.csv",
+    pkl_output="ibtracs.pkl",
+):
     """
     Function used to post-treat ibtracs data into a lighter file
 
@@ -28,43 +33,127 @@ def clean_ibtracs(raw_file="ibtracs.since1980.list.v04r00.csv", csv_output="ibtr
     + saves csv and pkl file
     """
 
-    ib = pd.read_csv(raw_file, na_values=["", " "], header=0, skiprows=[1],
-                     usecols=["SID", "SEASON", "BASIN", "SUBBASIN", "ISO_TIME", "NATURE", "LON", "LAT", "USA_SSHS",
-                              'WMO_WIND', 'USA_WIND', 'TOKYO_WIND', 'REUNION_WIND', 'BOM_WIND', 'NADI_WIND',
-                              'WELLINGTON_WIND',
-                              'WMO_PRES', 'USA_PRES', 'TOKYO_PRES', 'CMA_PRES', 'HKO_PRES', 'NEWDELHI_PRES',
-                              'REUNION_PRES', 'BOM_PRES', 'NADI_PRES', 'WELLINGTON_PRES'],
-                     converters={"SID": str, "SEASON": int, "BASIN": str, "SUBBASIN": str, "LON": float,
-                                 "LAT": float, },
-                     parse_dates=["ISO_TIME"],
-                     )
-    ib["WIND10"] = np.where(~ib.WMO_WIND.isna(), ib.WMO_WIND,
-                            ib[["TOKYO_WIND", "REUNION_WIND", "BOM_WIND", 'NADI_WIND', 'WELLINGTON_WIND']].mean(axis=1,
-                                                                                                                skipna=True))
+    ib = pd.read_csv(
+        raw_file,
+        na_values=["", " "],
+        header=0,
+        skiprows=[1],
+        usecols=[
+            "SID",
+            "SEASON",
+            "BASIN",
+            "SUBBASIN",
+            "ISO_TIME",
+            "NATURE",
+            "LON",
+            "LAT",
+            "USA_SSHS",
+            "WMO_WIND",
+            "USA_WIND",
+            "TOKYO_WIND",
+            "REUNION_WIND",
+            "BOM_WIND",
+            "NADI_WIND",
+            "WELLINGTON_WIND",
+            "WMO_PRES",
+            "USA_PRES",
+            "TOKYO_PRES",
+            "CMA_PRES",
+            "HKO_PRES",
+            "NEWDELHI_PRES",
+            "REUNION_PRES",
+            "BOM_PRES",
+            "NADI_PRES",
+            "WELLINGTON_PRES",
+        ],
+        converters={
+            "SID": str,
+            "SEASON": int,
+            "BASIN": str,
+            "SUBBASIN": str,
+            "LON": float,
+            "LAT": float,
+        },
+        parse_dates=["ISO_TIME"],
+    )
+    ib["WIND10"] = np.where(
+        ~ib.WMO_WIND.isna(),
+        ib.WMO_WIND,
+        ib[
+            ["TOKYO_WIND", "REUNION_WIND", "BOM_WIND", "NADI_WIND", "WELLINGTON_WIND"]
+        ].mean(axis=1, skipna=True),
+    )
     ib["WIND10"] = np.where(ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10)
     ib["WIND10"] *= 0.514
-    ib["PRES"] = np.where(~ib.WMO_PRES.isna(), ib.WMO_PRES, ib[
-        ['USA_PRES', 'TOKYO_PRES', 'CMA_PRES', 'HKO_PRES', 'NEWDELHI_PRES', 'REUNION_PRES', 'BOM_PRES', 'NADI_PRES',
-         'WELLINGTON_PRES']].mean(axis=1, skipna=True))
+    ib["PRES"] = np.where(
+        ~ib.WMO_PRES.isna(),
+        ib.WMO_PRES,
+        ib[
+            [
+                "USA_PRES",
+                "TOKYO_PRES",
+                "CMA_PRES",
+                "HKO_PRES",
+                "NEWDELHI_PRES",
+                "REUNION_PRES",
+                "BOM_PRES",
+                "NADI_PRES",
+                "WELLINGTON_PRES",
+            ]
+        ].mean(axis=1, skipna=True),
+    )
     ib = ib.rename(columns={col: col.lower() for col in ib.columns}).rename(
-        columns={"usa_sshs": "sshs", "sid": "track_id", "pres": "slp", "iso_time": "time"})
+        columns={
+            "usa_sshs": "sshs",
+            "sid": "track_id",
+            "pres": "slp",
+            "iso_time": "time",
+        }
+    )
     ib.loc[ib.lon < 0, "lon"] += 360
     ib["hemisphere"] = np.where(ib.lat > 0, "N", "S")
     ib["basin"] = ib.basin.replace("EP", "ENP").replace("WP", "WNP")
-    ib["day"]=ib.time.dt.day
-    ib["month"]=ib.time.dt.month
-    ib["year"]=ib.time.dt.year
+    ib["day"] = ib.time.dt.day
+    ib["month"] = ib.time.dt.month
+    ib["year"] = ib.time.dt.year
     ib = add_season(ib)
-    ib = ib[["track_id","time","lon","lat","hemisphere","basin","season","sshs","slp","wind10","year","month","day",]]
+    ib = ib[
+        [
+            "track_id",
+            "time",
+            "lon",
+            "lat",
+            "hemisphere",
+            "basin",
+            "season",
+            "sshs",
+            "slp",
+            "wind10",
+            "year",
+            "month",
+            "day",
+        ]
+    ]
     # Save
     ib.to_csv("ibtracs.since1980.cleaned.csv")
     with open("ibtracs.pkl", "wb") as handle:
         pkl.dump(ib, handle)
     return ib
 
+
 def load_ibtracs():
-    stream = pkg_resources.resource_stream(__name__, 'data/ibtracs.since1980.cleaned.csv')
-    return pd.read_csv(stream, keep_default_na=False, index_col=0, na_values = ["", " "], dtype={'slp':float, 'wind10':float}, parse_dates=["time"],)
+    stream = pkg_resources.resource_stream(
+        __name__, "data/ibtracs.since1980.cleaned.csv"
+    )
+    return pd.read_csv(
+        stream,
+        keep_default_na=False,
+        index_col=0,
+        na_values=["", " "],
+        dtype={"slp": float, "wind10": float},
+        parse_dates=["time"],
+    )
+
 
 """
 def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
@@ -102,6 +191,7 @@ def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
         ]
     ]
 """
+
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
@@ -157,27 +247,30 @@ def load_TEtracks(
         ]
     ]
 
-_HRMIP_TRACK_data_vars = ['lon1',
- 'lat1',
- 'vor_tracked',
- 'lon2',
- 'lat2',
- 'vor850',
- 'lon3',
- 'lat3',
- 'vor700',
- 'lon4',
- 'lat4',
- 'vor600',
- 'lon5',
- 'lat5',
- 'vor500',
- 'lon6',
- 'lat6',
- 'vor250',
- 'lon7',
- 'lat7',
- 'wind10']
+
+_HRMIP_TRACK_data_vars = [
+    "lon1",
+    "lat1",
+    "vor_tracked",
+    "lon2",
+    "lat2",
+    "vor850",
+    "lon3",
+    "lat3",
+    "vor700",
+    "lon4",
+    "lat4",
+    "vor600",
+    "lon5",
+    "lat5",
+    "vor500",
+    "lon6",
+    "lat6",
+    "vor250",
+    "lon7",
+    "lat7",
+    "wind10",
+]
 
 _TRACK_data_vars = [
     "vor_tracked",
@@ -213,22 +306,24 @@ _TRACK_data_vars = [
     "wind10",
 ]
 
+
 def is_leap(yr):
-    if yr%4==0:
-        if yr%100==0:
-            if yr%400==0:
+    if yr % 4 == 0:
+        if yr % 100 == 0:
+            if yr % 400 == 0:
                 return True
-            else :
+            else:
                 return False
-        else :
+        else:
             return True
-    else :
+    else:
         return False
+
 
 def load_TRACKtracks(
     file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
-    origin='HRMIP',
-    season=None
+    origin="HRMIP",
+    season=None,
 ):
     """
     Parameters
@@ -242,12 +337,12 @@ def load_TRACKtracks(
     pd.DataFrame
         Columns as described in the module header
     """
-    if origin == 'ERA5' :
-        data_vars=_TRACK_data_vars
-        time_format='calendar'
+    if origin == "ERA5":
+        data_vars = _TRACK_data_vars
+        time_format = "calendar"
     else:
-        data_vars=_HRMIP_TRACK_data_vars
-        time_format='time_step'
+        data_vars = _HRMIP_TRACK_data_vars
+        time_format = "time_step"
     f = open(file)
     tracks = pd.DataFrame()
     line0 = f.readline()
@@ -276,7 +371,7 @@ def load_TRACKtracks(
                 ).join(data)
             )
             c += 1
-            if season == None :
+            if season == None:
                 season = line.split()[-1][:-6]
             track_id = season + "-" + str(c)
             time_step = []
@@ -297,20 +392,22 @@ def load_TRACKtracks(
     f.close()
     SH = tracks.lat.mean() < 0
     if len(season) == 4:
-        start = np.datetime64(season + '-01-01 00:00:00')
+        start = np.datetime64(season + "-01-01 00:00:00")
     elif len(season) == 8:
-        start = np.datetime64(season[:4] + '-07-01 00:00:00')
-    if time_format == 'calendar':
-        tracks["year"] = "1980" #tracks.time_step.str[:4].astype(int)
-        tracks["month"] = tracks.time_step.str[-6:-4]#.astype(int)
-        tracks["day"] = tracks.time_step.str[-4:-2]#.astype(int)
-        tracks["hour"] = tracks.time_step.str[-2:]#.astype(int)
+        start = np.datetime64(season[:4] + "-07-01 00:00:00")
+    if time_format == "calendar":
+        tracks["year"] = "1980"  # tracks.time_step.str[:4].astype(int)
+        tracks["month"] = tracks.time_step.str[-6:-4]  # .astype(int)
+        tracks["day"] = tracks.time_step.str[-4:-2]  # .astype(int)
+        tracks["hour"] = tracks.time_step.str[-2:]  # .astype(int)
         tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
         tracks["delta"] = tracks["time"] - np.datetime64("1980-01-01 00")
         tracks["time"] = tracks["delta"] + start
-    elif time_format == 'time_step':
-        tracks["time"] = [start + np.timedelta64(ts*6, 'h') for ts in tracks.time_step.astype(int)]
-    else :
+    elif time_format == "time_step":
+        tracks["time"] = [
+            start + np.timedelta64(ts * 6, "h") for ts in tracks.time_step.astype(int)
+        ]
+    else:
         print("Please enter a valid time_format")
     time = pd.DatetimeIndex(tracks.time)
     tracks["year"] = time.year
@@ -327,7 +424,7 @@ def load_TRACKtracks(
     if "slp" not in tracks.columns:
         tracks["slp"] = np.nan
         tracks["sshs"] = np.nan
-    else :
+    else:
         tracks["slp"] = tracks.slp.astype(float)
         tracks["sshs"] = sshs_from_pres(tracks.slp)
     if "wind10" not in tracks.columns:
@@ -370,7 +467,8 @@ def get_time(year, month, day, hour):
         + "-"
         + day.astype(str)
         + " "
-        + hour.astype(str) + ":00"
+        + hour.astype(str)
+        + ":00"
     ).astype(np.datetime64)
     return time
 
