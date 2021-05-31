@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
-
+import pickle as pkl
+import pkg_resources
 
 """
 Format for loading the tracks data : 
@@ -11,18 +12,63 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 0 <= lon <= 360
 """
 
-
-def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
+def clean_ibtracs(raw_file="ibtracs.since1980.list.v04r00.csv", csv_output="ibtracs.since1980.cleaned.csv", pkl_output="ibtracs.pkl"):
     """
+    Function used to post-treat ibtracs data into a lighter file
+
     Parameters
     ----------
-    file: Path to the ibtracs_simplified file
+    raw_file: The csv file from the ibtracs database
+    csv_output: The name of the csv file to be saved
+    pkl_output: The name of the pickle file to be saved
 
     Returns
     -------
-    pd.DataFrame
-        Columns as described in the module header
+    The cleaned dataset
+    + saves csv and pkl file
     """
+
+    ib = pd.read_csv(raw_file, na_values=["", " "], header=0, skiprows=[1],
+                     usecols=["SID", "SEASON", "BASIN", "SUBBASIN", "ISO_TIME", "NATURE", "LON", "LAT", "USA_SSHS",
+                              'WMO_WIND', 'USA_WIND', 'TOKYO_WIND', 'REUNION_WIND', 'BOM_WIND', 'NADI_WIND',
+                              'WELLINGTON_WIND',
+                              'WMO_PRES', 'USA_PRES', 'TOKYO_PRES', 'CMA_PRES', 'HKO_PRES', 'NEWDELHI_PRES',
+                              'REUNION_PRES', 'BOM_PRES', 'NADI_PRES', 'WELLINGTON_PRES'],
+                     converters={"SID": str, "SEASON": int, "BASIN": str, "SUBBASIN": str, "LON": float,
+                                 "LAT": float, },
+                     parse_dates=["ISO_TIME"],
+                     )
+    ib["WIND10"] = np.where(~ib.WMO_WIND.isna(), ib.WMO_WIND,
+                            ib[["TOKYO_WIND", "REUNION_WIND", "BOM_WIND", 'NADI_WIND', 'WELLINGTON_WIND']].mean(axis=1,
+                                                                                                                skipna=True))
+    ib["WIND10"] = np.where(ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10)
+    ib["WIND10"] *= 0.514
+    ib["PRES"] = np.where(~ib.WMO_PRES.isna(), ib.WMO_PRES, ib[
+        ['USA_PRES', 'TOKYO_PRES', 'CMA_PRES', 'HKO_PRES', 'NEWDELHI_PRES', 'REUNION_PRES', 'BOM_PRES', 'NADI_PRES',
+         'WELLINGTON_PRES']].mean(axis=1, skipna=True))
+    ib = ib.rename(columns={col: col.lower() for col in ib.columns}).rename(
+        columns={"usa_sshs": "sshs", "sid": "track_id", "pres": "slp", "iso_time": "time"})
+    ib.loc[ib.lon < 0, "lon"] += 360
+    ib["hemisphere"] = np.where(ib.lat > 0, "N", "S")
+    ib["basin"] = ib.basin.replace("EP", "ENP").replace("WP", "WNP")
+    ib["day"]=ib.time.dt.day
+    ib["month"]=ib.time.dt.month
+    ib["year"]=ib.time.dt.year
+    ib = add_season(ib)
+    ib = ib[["track_id","time","lon","lat","hemisphere","basin","season","sshs","slp","wind10","year","month","day",]]
+    # Save
+    ib.to_csv("ibtracs.since1980.cleaned.csv")
+    with open("ibtracs.pkl", "wb") as handle:
+        pkl.dump(ib, handle)
+    return ib
+
+def load_ibtracs():
+    stream = pkg_resources.resource_stream(__name__, 'data/ibtracs.since1980.cleaned.csv')
+    return pd.read_csv(stream, keep_default_na=False, index_col=0, na_values = ["", " "], dtype={'slp':float, 'wind10':float}, parse_dates=["time"],)
+
+"""
+def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
+    
     tracks = pd.read_csv(file, keep_default_na=False, dtype={"USA_SSHS": str})
     tracks["USA_SSHS"] = pd.to_numeric(tracks.USA_SSHS)
     tracks = (
@@ -55,7 +101,7 @@ def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
             "day",
         ]
     ]
-
+"""
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",

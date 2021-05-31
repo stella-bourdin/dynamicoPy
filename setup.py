@@ -23,6 +23,7 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=["numpy", "scipy", "seaborn", "matplotlib", "netCDF4", "xarray"],
     include_package_data=True,
+    package_data={"":['data/*.csv']}
 )
 
 # Black formatting:
