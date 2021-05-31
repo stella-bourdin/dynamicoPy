@@ -155,43 +155,6 @@ def load_ibtracs():
     )
 
 
-"""
-def load_ibtracs(file="data/ibtracs_1980-2020_simplified.csv"):
-    
-    tracks = pd.read_csv(file, keep_default_na=False, dtype={"USA_SSHS": str})
-    tracks["USA_SSHS"] = pd.to_numeric(tracks.USA_SSHS)
-    tracks = (
-        tracks[tracks.USA_SSHS >= 0]
-        .rename(columns={col: col.lower() for col in tracks.columns})
-        .rename(columns={"usa_sshs": "sshs", "sid": "track_id", "pres": "slp"})
-        .drop(columns="season")
-    )
-    tracks["time"] = tracks.iso_time.astype(np.datetime64)
-    tracks.loc[tracks.lon < 0, "lon"] += 360
-    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    tracks["basin"] = tracks.basin.replace("EP", "ENP").replace("WP", "WNP")
-    tracks = add_season(tracks)
-    tracks["wind10"] = tracks.wind.astype(float)
-    tracks["slp"] = pd.to_numeric(tracks.slp)
-    return tracks[
-        [
-            "track_id",
-            "time",
-            "lon",
-            "lat",
-            "hemisphere",
-            "basin",
-            "season",
-            "sshs",
-            "slp",
-            "wind10",
-            "year",
-            "month",
-            "day",
-        ]
-    ]
-"""
-
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
@@ -305,19 +268,6 @@ _TRACK_data_vars = [
     "lat10",
     "wind10",
 ]
-
-
-def is_leap(yr):
-    if yr % 4 == 0:
-        if yr % 100 == 0:
-            if yr % 400 == 0:
-                return True
-            else:
-                return False
-        else:
-            return True
-    else:
-        return False
 
 
 def load_TRACKtracks(
@@ -459,6 +409,18 @@ def load_TRACKtracks(
     ]
 
 
+def is_leap(yr):
+    if yr % 4 == 0:
+        if yr % 100 == 0:
+            if yr % 400 == 0:
+                return True
+            else:
+                return False
+        else:
+            return True
+    else:
+        return False
+
 def get_time(year, month, day, hour):
     time = (
         year.astype(str)
@@ -471,7 +433,6 @@ def get_time(year, month, day, hour):
         + ":00"
     ).astype(np.datetime64)
     return time
-
 
 def sshs_from_wind(wind):
     sshs = np.where(wind <= 60 / 3.6, -1, None)

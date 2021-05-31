@@ -280,6 +280,27 @@ def plot_tracks(
     )
     return fig, ax
 
+def plot_hist2d(hist, axis, bounds):
+    norm = BoundaryNorm(bounds, len(bounds)-1, clip = True)
+    cmap_reds = plt.cm.get_cmap('magma_r',len(bounds))
+    colors = list(cmap_reds(np.arange(len(bounds))))
+    colors[0] = "white"
+    cmap = ListedColormap(colors[:-1], "")
+    cmap.set_over(colors[-1])
+
+    p = hist.plot(ax=axis,
+        transform=ccrs.PlateCarree(), cmap = cmap, norm = norm, extend='max'
+                 )
+    axis.coastlines()
+    axis.set_global()
+
+def plot_diff(diff, axis, range = 2.0, mid = 0.125, delta=0.25):
+    bounds= list(np.arange(-range, 0, delta)) + [-mid, mid] + list(np.arange(delta, range+delta, delta))
+    norm = BoundaryNorm(bounds, len(bounds)-1)
+    p = diff.plot(ax=axis,
+            transform=ccrs.PlateCarree(), cmap="bwr", norm =  norm, cbar_kwargs={"shrink":0.5}, extend="both")
+    axis.coastlines()
+    axis.set_global()
 
 zooms = {
     "NI": ccrs.NearsidePerspective(70, 20, 35785831 / 2),
