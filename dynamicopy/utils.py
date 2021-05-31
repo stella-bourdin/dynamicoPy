@@ -44,8 +44,8 @@ def sign_change_detect(A):
     change = sign != sign[0]
     return np.min(np.where(change == True))
 
-def hist2d(bdd, n=780):
-    H, X, Y = np.histogram2d(bdd.lon, bdd.lat, bins=[360/4,180/4], range=((0, 360), (-90, 90)))
+def hist2d(bdd, n=780, resolution=4):
+    H, X, Y = np.histogram2d(bdd.lon, bdd.lat, bins=[360/resolution,180/resolution], range=((0, 360), (-90, 90)))
 
     hist = xr.DataArray(data=H.T/n, coords=(Y[:-1], X[:-1]), dims = ("lat", "lon"))
     hist.to_dataset(name="H")
