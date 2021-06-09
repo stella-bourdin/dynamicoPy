@@ -212,8 +212,6 @@ def load_TEtracks(
 
 
 _HRMIP_TRACK_data_vars = [
-    "lon1",
-    "lat1",
     "vor_tracked",
     "lon2",
     "lat2",
@@ -271,7 +269,7 @@ _TRACK_data_vars = [
 
 
 def load_TRACKtracks(
-    file="tests/tr_trs_pos.2day_addT63vor_addmslp_add925wind_add10mwind.tcident.new",
+    file="tests/TRACK/1950.dat",
     origin="HRMIP",
     season=None,
 ):
