@@ -1,5 +1,5 @@
 # If any private function or specific import is defined in a module, remove '*' and list the functions.
-from .utils import idx_closest, sign_change_detect
+from .utils import idx_closest, sign_change_detect, hist2d
 from .utils_geo import *
 from .ncload import *
 from .compute import *
