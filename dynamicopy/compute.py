@@ -36,10 +36,6 @@ def omega2w(omega, p, T):
     w = -omega / (rho * g)
     return w
 
-
-# -- NODO -- Handle anyD velocity field. -> Done with xr now
-
-
 def compute_vort(u, v, lat, lon):
     """Compute vorticity from the horizontal velocity fields
 

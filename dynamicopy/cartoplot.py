@@ -86,6 +86,7 @@ def lon_lat_plot_map(
     None
         Plots the map in ax
     """
+
     # Obtain 2D variable to plot
     var2D = _var2d(var, lon_axis, lat_axis)
 
@@ -280,7 +281,7 @@ def plot_tracks(
     )
     return fig, ax
 
-def plot_hist2d(hist, axis, bounds):
+def plot_hist2d(hist, axis, bounds, shrink_cbar=0.8):
     norm = BoundaryNorm(bounds, len(bounds)-1, clip = True)
     cmap_reds = plt.cm.get_cmap('magma_r',len(bounds))
     colors = list(cmap_reds(np.arange(len(bounds))))
@@ -289,7 +290,7 @@ def plot_hist2d(hist, axis, bounds):
     cmap.set_over(colors[-1])
 
     p = hist.plot(ax=axis,
-        transform=ccrs.PlateCarree(), cmap = cmap, norm = norm, extend='max'
+        transform=ccrs.PlateCarree(), cmap = cmap, norm = norm, extend='max', cbar_kwargs={"shrink":shrink_cbar}
                  )
     axis.coastlines()
     axis.set_global()
