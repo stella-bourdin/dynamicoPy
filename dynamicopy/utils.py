@@ -3,6 +3,7 @@
 # Utilitary functions to use inside the module
 
 import numpy as np
+import xarray as xr
 
 ### ======================================================= ###
 ###          Utilitary data manipulation functions          ###
@@ -25,7 +26,6 @@ def idx_closest(A, x):
         The coordinate of the closest value to x in A
     """
     return np.argmin(abs(np.array(A) - x))
-
 
 def sign_change_detect(A):
     """Indicates the index of the sign change in A
