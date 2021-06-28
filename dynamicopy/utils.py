@@ -5,6 +5,9 @@
 import numpy as np
 import xarray as xr
 
+def nbp2km(nbp):
+    return np.sqrt((nbp-2)/10)*20
+
 ### ======================================================= ###
 ###          Utilitary data manipulation functions          ###
 ### ======================================================= ###
