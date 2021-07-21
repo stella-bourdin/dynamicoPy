@@ -269,7 +269,7 @@ _TRACK_data_vars = [
 
 
 def load_TRACKtracks(
-    file="tests/TRACK/1950.dat",
+    file="tests/TRACK/19501951.dat",
     origin="HRMIP",
     season=None,
 ):
@@ -515,53 +515,6 @@ def to_dt(t):
     return np.array(
         [datetime.utcfromtimestamp(t) if not np.isnan(t) else np.nan for t in ts]
     )
-
-
-# Supprimer ?
-def find_match(tc_detected, tracks_ref, mindays=1, maxd=4):
-    """
-
-    Parameters
-    ----------
-    id_detected
-    tracks_detected
-    tracks_ref
-    mindays
-    maxd
-
-    Returns
-    -------
-
-    """
-    candidates = tracks_ref[
-        (tracks_ref.time >= tc_detected.time.min())
-        & (tracks_ref.time <= tc_detected.time.max())
-    ].track_id.unique()
-    if len(candidates) < 1:
-        return pd.DataFrame({"id_ref": [np.nan], "dist": [np.nan], "temp": [np.nan]})
-    matches = pd.DataFrame()
-    for candidate in candidates:
-        tc_candidate = tracks_ref[(tracks_ref.track_id == candidate)][
-            ["lon", "lat", "time"]
-        ]
-        merged = pd.merge(tc_detected, tc_candidate, on="time")
-        dist = np.mean(
-            merged.apply(
-                lambda row: np.sqrt(
-                    (row.lon_x - row.lon_y) ** 2 + (row.lat_x - row.lat_y) ** 2
-                ),
-                axis=1,
-            )
-        )  # Compute distance
-        temp = len(merged)
-        matches = matches.append(
-            pd.DataFrame({"id_ref": [candidate], "dist": [dist], "temp": [temp]})
-        )
-    matches = matches[matches.temp >= mindays * 4]
-    matches = matches[matches.dist <= maxd]
-    if len(matches) < 1:
-        return pd.DataFrame({"id_ref": [np.nan], "dist": [np.nan], "temp": [np.nan]})
-    return matches[matches.dist == matches.dist.min()]
 
 
 def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
