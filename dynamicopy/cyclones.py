@@ -179,9 +179,9 @@ def load_TEtracks(
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    tracks["basin"] = get_basin(
-        tracks.lon.values, tracks.lat.values
-    )
+    #tracks["basin"] = get_basin(
+    #    tracks.lon.values, tracks.lat.values
+    #)
     tracks = add_season(tracks)
     tracks[slp_col] /= 100
     if slp_col != None:
@@ -197,7 +197,7 @@ def load_TEtracks(
             "lon",
             "lat",
             "hemisphere",
-            "basin",
+            #"basin",
             "season",
             "sshs",
             "slp",
@@ -450,19 +450,26 @@ def sshs_from_pres(p):
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
 
+#TODO : Optimiser cette fonction
 def get_basin(lon, lat):
     basin = []
     for x,y in zip(lon, lat) :
+        ok = False
         if y >= 0 :
             for b in NH :
                 if NH[b].contains(Point(x, y)) :
                     basin.append(b)
+                    ok = True
                     break
         else :
             for b in SH :
                 if SH[b].contains(Point(x, y)) :
                     basin.append(b)
+                    ok = True
                     break
+        if ok == False :
+            basin.append(np.nan)
+    return basin
 
 def get_basin_old(hemisphere, lon, lat):
     basin = np.where((hemisphere == "N") & (lon > 40) & (lon <= 100), "NI", "")
