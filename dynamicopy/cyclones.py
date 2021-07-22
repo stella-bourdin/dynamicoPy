@@ -3,6 +3,7 @@ import numpy as np
 from datetime import datetime
 import pickle as pkl
 import pkg_resources
+from .basins import *
 
 """
 Format for loading the tracks data : 
@@ -154,8 +155,6 @@ def load_ibtracs():
         parse_dates=["time"],
     )
 
-
-
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
     surf_wind_col="wind10",
@@ -209,7 +208,6 @@ def load_TEtracks(
             "wind925",
         ]
     ]
-
 
 _HRMIP_TRACK_data_vars = [
     "vor_tracked",
@@ -266,7 +264,6 @@ _TRACK_data_vars = [
     "lat10",
     "wind10",
 ]
-
 
 def load_TRACKtracks(
     file="tests/TRACK/19501951.dat",
@@ -406,7 +403,6 @@ def load_TRACKtracks(
         ]
     ]
 
-
 def is_leap(yr):
     if yr % 4 == 0:
         if yr % 100 == 0:
@@ -443,7 +439,6 @@ def sshs_from_wind(wind):
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
 
-
 def sshs_from_pres(p):
     sshs = np.where(p > 990, -1, None)
     sshs = np.where((sshs == None) & (p >= 980), 0, sshs)
@@ -455,8 +450,21 @@ def sshs_from_pres(p):
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
 
+def get_basin(lon, lat):
+    basin = []
+    for x,y in zip(lon, lat) :
+        if y >= 0 :
+            for b in NH :
+                if NH[b].contains(Point(x, y)) :
+                    basin.append(b)
+                    break
+        else :
+            for b in SH :
+                if SH[b].contains(Point(x, y)) :
+                    basin.append(b)
+                    break
 
-def get_basin(hemisphere, lon, lat):
+def get_basin_old(hemisphere, lon, lat):
     basin = np.where((hemisphere == "N") & (lon > 40) & (lon <= 100), "NI", "")
     basin = np.where(
         (hemisphere == "N")
@@ -478,7 +486,6 @@ def get_basin(hemisphere, lon, lat):
     basin = np.where((hemisphere == "S") & (lon > 130) & (lon <= 300), "SP", basin)
     basin = np.where((hemisphere == "S") & (basin == ""), "SA", basin)
     return basin
-
 
 def add_season(tracks):
     if "season" in tracks.columns:
@@ -509,13 +516,11 @@ def add_season(tracks):
     tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
 
-
 def to_dt(t):
     ts = np.floor((t - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, "s"))
     return np.array(
         [datetime.utcfromtimestamp(t) if not np.isnan(t) else np.nan for t in ts]
     )
-
 
 def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     """
