@@ -180,7 +180,7 @@ def load_TEtracks(
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     tracks["basin"] = get_basin(
-        tracks.hemisphere.values, tracks.lon.values, tracks.lat.values
+        tracks.lon.values, tracks.lat.values
     )
     tracks = add_season(tracks)
     tracks[slp_col] /= 100
@@ -361,7 +361,7 @@ def load_TRACKtracks(
     tracks["hour"] = time.hour
     tracks["hemisphere"] = "S" if SH else "N"
     tracks["season"] = season
-    tracks["basin"] = get_basin(tracks.hemisphere, tracks.lon, tracks.lat)
+    tracks["basin"] = get_basin(tracks.lon, tracks.lat)
     if "vor850" in tracks.columns:
         tracks["vor850"] = tracks.vor850.astype(float)
     if "vor_tracked" in tracks.columns:
