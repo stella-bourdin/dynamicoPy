@@ -179,9 +179,9 @@ def load_TEtracks(
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    #tracks["basin"] = get_basin(
-    #    tracks.lon.values, tracks.lat.values
-    #)
+    tracks["basin"] = get_basin(
+        tracks.lon.values, tracks.lat.values
+    )
     tracks = add_season(tracks)
     tracks[slp_col] /= 100
     if slp_col != None:
@@ -197,7 +197,7 @@ def load_TEtracks(
             "lon",
             "lat",
             "hemisphere",
-            #"basin",
+            "basin",
             "season",
             "sshs",
             "slp",
