@@ -48,4 +48,11 @@ def storm_stats(tracks): # Ajouter LMI
     return storms
 
 def propagation_speeds(tracks):
-
+    speeds = {}
+    for t in tracks.track_id.unique():
+        T = tracks[tracks.track_id == t]
+        dlon = T[:-1].lon.values - T[1:].lon.values
+        dlat = T[:-1].lat.values - T[1:].lat.values
+        dist = np.sqrt(dlon ** 2 + dlat ** 2) # Vérifier les aspects de GCD etc.
+        speeds[t] = dist * 100 / 6
+    return speeds #Vitesses en centième de degré par heure
