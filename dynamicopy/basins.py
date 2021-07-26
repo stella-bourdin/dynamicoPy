@@ -15,12 +15,17 @@ ENP = Polygon(((180, 90), (260, 90), (260, 20), (295, 0), (180, 0)))
 WNP = Polygon(((100, 0), (100, 90), (180, 90), (180, 0)))
 NI = Polygon(((30, 0), (30, 90), (100, 90), (100, 0)))
 MED = Polygon(((0, 0), (0, 90), (30, 90), (30, 0)))
+NH = {"NATL":NATL, "ENP":ENP, "WNP":WNP, "NI":NI, "MED":MED}
+
 SI = Polygon(((20, -90), (20, 0), (135, 0), (135, -90)))
 SP = Polygon(((135, 0), (135, -90), (295, -90), (295, 0)))
 SA1 = Polygon(((295, -90), (295, 0), (360, 0), (360, -90)))
 SA2 = Polygon(((20, -90), (20, 0), (0, 0), (0, -90)))
 SA = MultiPolygon([SA1, SA2])
 SA_plot = Polygon(((295, -90), (295, 0), (380, 0), (380, -90)))
+SH = {'SI':SI, 'SP':SP, 'SA':SA}
+
+basins = dict(SH, **NH)
 
 def plot_basins(show=True, save=None) :
     """
