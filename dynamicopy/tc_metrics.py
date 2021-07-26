@@ -44,10 +44,12 @@ def storm_stats(tracks): # Ajouter LMI
     storms = storms.merge(
             tracks.groupby(['track_id'])[["sshs", "wind10"]].max().reset_index())
     storms = storms.merge(tracks.groupby(['track_id'])[["slp"]].min().reset_index())
-    storms = storms.merge(tracks.groupby(['track_id'])[['time']].count().reset_index()/4)
+    storms = storms.merge((tracks.groupby(['track_id'])[['time']].count()/4).reset_index())
     tracks[["ACE"]] = tracks[["wind10"]]**2 * 1e-4
     tracks[["PDI"]] = tracks[["wind10"]] ** 3
     storms = storms.merge(tracks.groupby(['track_id'])[["ACE", "PDI"]].sum().reset_index())
+    storms = storms.merge(storms[["track_id", 'wind10']].merge(tracks[["track_id", "wind10", "lat"]]).groupby("track_id").mean().reset_index()).rename(columns = {"lat":"lat_wind"})
+    storms = storms.merge(storms[["track_id", 'slp']].merge(tracks[["track_id", "slp", "lat"]]).groupby("track_id").mean().reset_index()).rename(columns = {"lat":"lat_slp"})
     return storms
 
 def propagation_speeds(tracks):
