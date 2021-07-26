@@ -45,6 +45,9 @@ def storm_stats(tracks): # Ajouter LMI
             tracks.groupby(['track_id'])[["sshs", "wind10"]].max().reset_index())
     storms = storms.merge(tracks.groupby(['track_id'])[["slp"]].min().reset_index())
     storms = storms.merge(tracks.groupby(['track_id'])[['time']].count().reset_index()/4)
+    tracks[["ACE"]] = tracks[["wind10"]]**2 * 1e-4
+    tracks[["PDI"]] = tracks[["wind10"]] ** 3
+    storms = storms.merge(tracks.groupby(['track_id'])[["ACE", "PDI"]].sum().reset_index())
     return storms
 
 def propagation_speeds(tracks):
@@ -56,3 +59,5 @@ def propagation_speeds(tracks):
         dist = np.sqrt(dlon ** 2 + dlat ** 2) # Vérifier les aspects de GCD etc.
         speeds[t] = dist * 100 / 6
     return speeds #Vitesses en centième de degré par heure
+
+
