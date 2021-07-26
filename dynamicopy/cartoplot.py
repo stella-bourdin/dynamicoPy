@@ -295,11 +295,11 @@ def plot_hist2d(hist, axis, bounds, shrink_cbar=0.8):
     axis.coastlines()
     axis.set_global()
 
-def plot_diff(diff, axis, range = 2.0, mid = 0.125, delta=0.25):
+def plot_diff(diff, axis, range = 2.0, mid = 0.125, delta=0.25, shrink_cbar=0.8):
     bounds= list(np.arange(-range, 0, delta)) + [-mid, mid] + list(np.arange(delta, range+delta, delta))
     norm = BoundaryNorm(bounds, len(bounds)-1)
     p = diff.plot(ax=axis,
-            transform=ccrs.PlateCarree(), cmap="bwr", norm =  norm, cbar_kwargs={"shrink":0.5}, extend="both")
+            transform=ccrs.PlateCarree(), cmap="bwr", norm =  norm, cbar_kwargs={"shrink":shrink_cbar}, extend="both")
     axis.coastlines()
     axis.set_global()
 
