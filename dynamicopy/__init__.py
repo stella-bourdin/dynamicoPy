@@ -4,8 +4,9 @@ from .utils_geo import *
 from .ncload import *
 from .compute import *
 from .plot import lon_lat_plot, zonal_plot
-from .basins import *
+from .basins import NH, SH, basins
 from .cyclones import *
+from .tc_metrics import *
 
 try:
     import cartopy.crs as ccrs

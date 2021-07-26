@@ -4,7 +4,7 @@
 Oceanic basins as defined by Knutson et al. 2020 appendix.
 """
 
-from shapely.geometry import Polygon, Point, MultiPolygon
+from shapely.geometry import Polygon, MultiPolygon
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import numpy as np

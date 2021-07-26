@@ -21,7 +21,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=["numpy", "scipy", "seaborn", "matplotlib", "netCDF4", "xarray"],
+    install_requires=["numpy", "scipy", "seaborn", "matplotlib", "netCDF4", "xarray", "shapely"],
     include_package_data=True,
     package_data={"":['data/*.csv']}
 )
