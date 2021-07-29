@@ -4,6 +4,8 @@ from datetime import datetime
 import pickle as pkl
 import pkg_resources
 from .basins import *
+from shapely.geometry import Point
+from scipy.stats import spearmanr, pearsonr
 
 """
 Format for loading the tracks data : 
@@ -146,14 +148,17 @@ def load_ibtracs():
     stream = pkg_resources.resource_stream(
         __name__, "data/ibtracs.since1980.cleaned.csv"
     )
-    return pd.read_csv(
+    ib = pd.read_csv(
         stream,
         keep_default_na=False,
         index_col=0,
         na_values=["", " "],
         dtype={"slp": float, "wind10": float},
         parse_dates=["time"],
-    )
+    ).replace("NA", "NATL")
+    ib["ACE"] = ib.wind10 ** 2 * 1e-4
+    ib = ib[ib.time <= "2020-12-31"]
+    return ib
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
@@ -190,6 +195,7 @@ def load_TEtracks(
         tracks["sshs"] = np.nan
     if "wind925" not in tracks.columns:
         tracks["wind925"] = np.nan
+    tracks["ACE"] = tracks.wind10 ** 2 * 1e-4
     return tracks[
         [
             "track_id",
@@ -202,6 +208,7 @@ def load_TEtracks(
             "sshs",
             "slp",
             "wind10",
+            "ACE",
             "year",
             "month",
             "day",
@@ -374,6 +381,7 @@ def load_TRACKtracks(
         tracks["sshs"] = sshs_from_pres(tracks.slp)
     if "wind10" not in tracks.columns:
         tracks["wind10"] = np.nan
+    tracks["ACE"] = tracks.wind10 ** 2 * 1e-4
     else:
         tracks["wind10"] = tracks.wind10.astype(float)
     if "wind925" not in tracks.columns:
@@ -393,6 +401,7 @@ def load_TRACKtracks(
             "sshs",
             "slp",
             "wind10",
+            "ACE",
             "vor_tracked",
             "vor850",
             "wind925",
