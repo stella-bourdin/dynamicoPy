@@ -47,15 +47,11 @@ def sign_change_detect(A):
     change = sign != sign[0]
     return np.min(np.where(change == True))
 
-def hist2d(bdd, n=780, resolution=4):
-    H, X, Y = np.histogram2d(bdd.lon, bdd.lat, bins=[360/resolution,180/resolution], range=((0, 360), (-90, 90)))
-
-    hist = xr.DataArray(data=H.T/n, coords=(Y[:-1], X[:-1]), dims = ("lat", "lon"))
-    hist.to_dataset(name="H")
-    hist.lat["units"] = "degrees"
-    hist.lon["units"] = "degrees"
-
-    return hist
+def hist2d(bdd,weights=None,n=None,resolution=4):
+    if n == None:
+        n = (bdd.time.dt.year.max() - bdd.time.dt.year.min() +1)*12
+    H, X, Y = np.histogram2d(bdd.lon, bdd.lat, weights=weights, bins=[int(360/resolution),int(180/resolution)], range=((0, 360), (-90, 90)))
+    return (X[1:]+X[:-1])/2, (Y[1:]+Y[:-1])/2, H/n
 
 if __name__ == "__main__":
     pass
