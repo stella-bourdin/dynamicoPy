@@ -58,7 +58,6 @@ def genesis_points(tracks):
                               ).groupby("track_id")[["hemisphere", "basin", "season", "month", "time", "lon", "lat"]
                                 ].first()
 
-
 def propagation_speeds(tracks):
     speeds = {}
     for t in tracks.track_id.unique():
@@ -133,3 +132,23 @@ def spatial_correlations(tracks1, tracks2, method="pearson", res=8):
     gen_correlation = f(hist_gen_1.flatten(), hist_gen_2.flatten())[0]
     return {"track":track_correlation, "ACE":ACE_correlation, "u10":u10_correlation,
             "slp":slp_correlation, "gen":gen_correlation}
+
+# TODO : Implementer pour LMI ?
+def temporal_correlation(tracks1, tracks2, method = "peearson") :
+    ss1 = storm_stats(tracks1)
+    ss2 = storm_stats(tracks2)
+    count_1 = ss1.groupby("month")['track_id'].count()
+    count_2 = ss2.groupby("month")['track_id'].count()
+    tcd_1 = ss1.groupby("month")['time'].sum()
+    tcd_2 = ss2.groupby("month")['time'].sum()
+    ace_1 = ss1.groupby("month")['ACE'].sum()
+    ace_2 = ss2.groupby("month")['ACE'].sum()
+
+    if method == "pearson" :
+        f = pearsonr
+    else :
+        f = spearmanr
+    count_corr = f(count_1, count_2)
+    tcd_corr = f(tcd_1, tcd_2)
+    ace_corr = f(ace_1, ace_2)
+    return {"count":count_corr, "tcd":tcd_corr, "ACE":ace_corr}
