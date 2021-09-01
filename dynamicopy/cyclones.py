@@ -381,9 +381,9 @@ def load_TRACKtracks(
         tracks["sshs"] = sshs_from_pres(tracks.slp)
     if "wind10" not in tracks.columns:
         tracks["wind10"] = np.nan
-    tracks["ACE"] = tracks.wind10 ** 2 * 1e-4
     else:
         tracks["wind10"] = tracks.wind10.astype(float)
+    tracks["ACE"] = tracks.wind10 ** 2 * 1e-4
     if "wind925" not in tracks.columns:
         tracks["wind925"] = np.nan
     else:

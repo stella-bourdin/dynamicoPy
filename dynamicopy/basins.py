@@ -66,3 +66,5 @@ basins_CZ = {
     "ENP": [[200, 290], [0, 40]],  # East North Pacific
     "ATL": [[260, 340], [0, 40]],  # Atlantic
 }
+
+# Il est possible de définir aussi les régions WMO
