@@ -7,6 +7,7 @@ from .plot import lon_lat_plot, zonal_plot
 from .basins import NH, SH, basins
 from .cyclones import *
 from .tc_metrics import *
+from .tc_maps import plot_tracks
 
 try:
     import cartopy.crs as ccrs
