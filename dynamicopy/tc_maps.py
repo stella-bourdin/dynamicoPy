@@ -51,12 +51,14 @@ def plot_tracks(
     ax.coastlines()
     ax.gridlines(draw_labels=False)
 
-    if increasing_intensity :
-        size_scale = (tracks[intensity_col] - tracks[intensity_col].min()) / (tracks[intensity_col].max() - tracks[intensity_col].min())
-    else :
-        size_scale = (tracks[intensity_col] - tracks[intensity_col].max()) / (
-                    tracks[intensity_col].min() - tracks[intensity_col].max())
     if intensity_col != None :
+        if increasing_intensity:
+            size_scale = (tracks[intensity_col] - tracks[intensity_col].min()) / (
+                        tracks[intensity_col].max() - tracks[intensity_col].min())
+        else:
+            size_scale = (tracks[intensity_col] - tracks[intensity_col].max()) / (
+                    tracks[intensity_col].min() - tracks[intensity_col].max())
+
         g = sns.scatterplot(
             data=tracks,
             x="lon",
