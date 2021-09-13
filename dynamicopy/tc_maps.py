@@ -15,6 +15,7 @@ from matplotlib.colors import BoundaryNorm
 def plot_tracks(
     tracks,
     intensity_col=None,
+    color=None,
     increasing_intensity=True,
     projection=ccrs.PlateCarree(central_longitude=180.0),
     fig_ax=None,
@@ -74,7 +75,7 @@ def plot_tracks(
             x="lon",
             y="lat",
             ax=ax,
-            color="k",
+            color=color,
             transform=ccrs.PlateCarree(),
         )
     h,l = g.get_legend_handles_labels()
