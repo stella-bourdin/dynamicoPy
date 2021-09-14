@@ -4,6 +4,7 @@ import pickle as pkl
 import pkg_resources
 from .basins import *
 from shapely.geometry import Point
+from haversine import haversine_vector, Unit
 
 """
 Format for loading the tracks data : 
@@ -558,12 +559,9 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
         tracks2[["track_id", "lon", "lat", "time"]],
     )
     merged = pd.merge(tracks1, tracks2, on="time")
-    merged["dist"] = merged.apply(
-        lambda row: np.sqrt(
-            (row.lon_x - row.lon_y) ** 2 + (row.lat_x - row.lat_y) ** 2
-        ),
-        axis=1,
-    )
+    X = np.concatenate([[merged.lat_x], [merged.lon_x]]).T
+    Y = np.concatenate([[merged.lat_y], [merged.lon_y]]).T
+    merged["dist"] = haversine_vector(X,Y,unit=Unit.DEGREES)
     dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
     temp = (
         merged.groupby(["track_id_x", "track_id_y"])[["dist"]]
