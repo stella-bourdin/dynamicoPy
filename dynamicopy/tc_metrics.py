@@ -40,7 +40,7 @@ def prop_intense(freq):
     prop_45 = freq_45 / freq.loc[:,"All"]
     return freq[["All"]].assign(intense= freq_45).assign(prop=prop_45)
 
-def storm_stats(tracks): # Ajouter LMI
+def storm_stats(tracks):
     storms = tracks.groupby(['track_id'])[['hemisphere', 'basin', 'season', 'month']].agg(lambda x: x.value_counts().index[0]).reset_index()
     storms = storms.merge(
             tracks.groupby(['track_id'])[["sshs", "wind10"]].max().reset_index())

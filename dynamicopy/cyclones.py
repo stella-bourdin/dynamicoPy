@@ -1,11 +1,9 @@
 import pandas as pd
-import numpy as np
 from datetime import datetime
 import pickle as pkl
 import pkg_resources
 from .basins import *
 from shapely.geometry import Point
-from scipy.stats import spearmanr, pearsonr
 
 """
 Format for loading the tracks data : 
@@ -87,7 +85,7 @@ def clean_ibtracs(
         ].mean(axis=1, skipna=True),
     )
     ib["WIND10"] = np.where(ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10)
-    ib["WIND10"] *= 0.514
+    ib["WIND10"] *= 0.514 # Conversion noeuds en m/s
     ib["PRES"] = np.where(
         ~ib.WMO_PRES.isna(),
         ib.WMO_PRES,
@@ -340,20 +338,20 @@ def load_TRACKtracks(
             rest = line.split()[3:]
             mask = np.array(rest) == "&"
             data.append(np.array(rest)[~mask])
-
     f.close()
+
     SH = tracks.lat.mean() < 0
     if len(season) == 4:
         start = np.datetime64(season + "-01-01 00:00:00")
     elif len(season) == 8:
         start = np.datetime64(season[:4] + "-07-01 00:00:00")
     if time_format == "calendar":
-        tracks["year"] = "1980"  # tracks.time_step.str[:4].astype(int)
+        tracks["year"] = season[-4:]  # tracks.time_step.str[:4].astype(int)
         tracks["month"] = tracks.time_step.str[-6:-4]  # .astype(int)
         tracks["day"] = tracks.time_step.str[-4:-2]  # .astype(int)
         tracks["hour"] = tracks.time_step.str[-2:]  # .astype(int)
         tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
-        tracks["delta"] = tracks["time"] - np.datetime64("1980-01-01 00")
+        tracks["delta"] = tracks["time"] - np.datetime64(season[-4:]+"-01-01 00")
         tracks["time"] = tracks["delta"] + start
     elif time_format == "time_step":
         tracks["time"] = [
