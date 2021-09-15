@@ -155,7 +155,7 @@ def load_ibtracs():
         keep_default_na=False,
         index_col=0,
         na_values=["", " "],
-        dtype={"slp": float, "wind10": float},
+        dtype={"slp": float, "wind10": float, "season":str},
         parse_dates=["time"],
     ).replace("NA", "NATL")
     ib["ACE"] = ib.wind10 ** 2 * 1e-4
