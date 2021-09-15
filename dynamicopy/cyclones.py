@@ -577,6 +577,26 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     )
     return matches
 
+def match_william(tracks1, tracks2, name1="algo", name2="ib"):
+    tracks1, tracks2 = (
+        tracks1[["track_id", "lon", "lat", "time"]],
+        tracks2[["track_id", "lon", "lat", "time"]],
+    )
+    merged = pd.merge(tracks1, tracks2, on="time")
+    X = np.concatenate([[merged.lat_x], [merged.lon_x]]).T
+    Y = np.concatenate([[merged.lat_y], [merged.lon_y]]).T
+    merged["dist"] = haversine_vector(X,Y,unit=Unit.KILOMETERS)
+    merged = merged[merged.dist <= 300]
+    temp = (
+        merged.groupby(["track_id_x", "track_id_y"])[["dist"]]
+        .count()
+        .rename(columns={"dist": "temp"})
+    )
+    matches = merged[["track_id_x", "track_id_y"]].drop_duplicates().join(temp, on = ["track_id_x", "track_id_y"])
+    maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
+    matches = maxs.merge(matches)[["track_id_x", "track_id_y"]]
+    matches = matches.rename(columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2})
+    return matches
 
 if __name__ == "__main__":
     # t = load_TRACKtracks()
