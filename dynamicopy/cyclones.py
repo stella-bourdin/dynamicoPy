@@ -47,6 +47,7 @@ def clean_ibtracs(
             "SUBBASIN",
             "ISO_TIME",
             "NATURE",
+            "TRACK_TYPE",
             "LON",
             "LAT",
             "USA_SSHS",
@@ -78,6 +79,8 @@ def clean_ibtracs(
         },
         parse_dates=["ISO_TIME"],
     )
+    ib = ib[~ib.TRACK_TYPE.str.startswith("spur")]
+    ib = ib[ib.SEASON < 2020]
     ib["WIND10"] = np.where(
         ~ib.WMO_WIND.isna(),
         ib.WMO_WIND,
@@ -137,8 +140,8 @@ def clean_ibtracs(
         ]
     ]
     # Save
-    ib.to_csv("ibtracs.since1980.cleaned.csv")
-    with open("ibtracs.pkl", "wb") as handle:
+    ib.to_csv(csv_output)
+    with open(pkl_output, "wb") as handle:
         pkl.dump(ib, handle)
     return ib
 
