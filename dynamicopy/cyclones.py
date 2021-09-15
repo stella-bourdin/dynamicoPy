@@ -596,6 +596,7 @@ def match_william(tracks1, tracks2, name1="algo", name2="ib"):
     maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
     matches = maxs.merge(matches)[["track_id_x", "track_id_y", "temp"]]
     dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
+    matches = matches.join(dist, on = ["track_id_x", "track_id_y"])
     matches = matches.rename(columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2})
     return matches
 
