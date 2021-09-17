@@ -137,9 +137,6 @@ def storm_stats(tracks):
     storms = storms.merge(
         (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
     )
-    # tracks[["ACE"]] = tracks[["wind10"]]**2 * 1e-4
-    # tracks[["PDI"]] = tracks[["wind10"]] ** 3
-    # storms = storms.merge(tracks.groupby(['track_id'])[["ACE", "PDI"]].sum().reset_index())
     storms = storms.merge(
         storms[["track_id", "wind10"]]
         .merge(tracks[["track_id", "wind10", "lat", "time"]])
