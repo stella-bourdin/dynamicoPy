@@ -414,6 +414,39 @@ def load_TRACKtracks(
         ]
     ]
 
+def load_CNRMtracks(file="tests/tracks_CNRM.csv"):
+    tracks = pd.read_csv(file)
+    tracks = tracks.rename(columns={"ID": "track_id", "Date": "time", "Longitude": "lon", "Latitude": "lat",
+                            "Pressure": "slp", "Wind": "wind10"})
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["basin"] = get_basin(
+        tracks.lon.values, tracks.lat.values
+    )
+    tracks["time"] = tracks.time.astype(np.datetime64)
+    tracks["year"] = tracks.time.dt.year
+    tracks["month"] = tracks.time.dt.month
+    tracks["day"] = tracks.time.dt.day
+    tracks = add_season(tracks)
+    tracks["sshs"] = sshs_from_pres(tracks.slp)
+    return tracks[
+        [
+            "track_id",
+            "time",
+            "lon",
+            "lat",
+            "hemisphere",
+            "basin",
+            "season",
+            "sshs",
+            "slp",
+            "wind10",
+            "year",
+            "month",
+            "day",
+        ]
+    ]
+
+    
 def is_leap(yr):
     if yr % 4 == 0:
         if yr % 100 == 0:
