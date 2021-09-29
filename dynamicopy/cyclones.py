@@ -125,7 +125,7 @@ def clean_ibtracs(
     )
     ib.loc[ib.lon < 0, "lon"] += 360
     ib["hemisphere"] = np.where(ib.lat > 0, "N", "S")
-    ib["basin"] = ib.basin.replace("EP", "ENP").replace("WP", "WNP")
+    ib["basin"] = ib.basin.replace("EP", "ENP").replace("WP", "WNP").replace("NA", "NATL")
     ib["day"] = ib.time.dt.day
     ib["month"] = ib.time.dt.month
     ib["year"] = ib.time.dt.year
@@ -165,9 +165,7 @@ def load_ibtracs():
         na_values=["", " "],
         dtype={"slp": float, "wind10": float, "season":str},
         parse_dates=["time"],
-    ).replace("NA", "NATL")
-    ib["ACE"] = ib.wind10 ** 2 * 1e-4
-    ib = ib[ib.time <= "2020-12-31"]
+    )
     return ib
 
 def load_TEtracks(
