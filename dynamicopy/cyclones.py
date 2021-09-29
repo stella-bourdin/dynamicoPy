@@ -15,10 +15,11 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 """
 
 
+
 def clean_ibtracs(
-    raw_file="ibtracs.since1980.list.v04r00.csv",
-    csv_output="ibtracs.since1980.cleaned.csv",
-    pkl_output="ibtracs.pkl",
+    raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
+    csv_output="dynamicopy/data/ibtracs.since1980.cleaned.csv",
+    pkl_output="dynamicopy/data/ibtracs.pkl",
 ):
     """
     Function used to post-treat ibtracs data into a lighter file
@@ -54,6 +55,7 @@ def clean_ibtracs(
             "WMO_WIND",
             "USA_WIND",
             "TOKYO_WIND",
+            "CMA_WIND",
             "REUNION_WIND",
             "BOM_WIND",
             "NADI_WIND",
@@ -81,6 +83,7 @@ def clean_ibtracs(
     )
     ib = ib[~ib.TRACK_TYPE.str.startswith("spur")]
     ib = ib[ib.SEASON < 2020]
+    ib = ib[(ib.SEASON > 1980) | (ib.LAT > 0)]
     ib["WIND10"] = np.where(
         ~ib.WMO_WIND.isna(),
         ib.WMO_WIND,
@@ -88,8 +91,13 @@ def clean_ibtracs(
             ["TOKYO_WIND", "REUNION_WIND", "BOM_WIND", "NADI_WIND", "WELLINGTON_WIND"]
         ].mean(axis=1, skipna=True),
     )
-    ib["WIND10"] = np.where(ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10)
+    ib["WIND10"] = np.where(ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10) # Conversion rate in the IBTrACS doc
+    ib["WIND10"] = np.where(ib.WIND10.isna(), ib.CMA_WIND / 1.08, ib.WIND10) # Conversion rate determined through a linear regression
     ib["WIND10"] *= 0.514 # Conversion noeuds en m/s
+    tcs = ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17].index
+    ib = ib[ib.SID.isin(tcs)] # Filter tracks not reaching 17 m/s
+    tcs = ib.groupby("SID")["ISO_TIME"].count()[ib.groupby("SID")["ISO_TIME"].count() >= 4].index
+    ib = ib[ib.SID.isin(tcs)] # Filter tracks not reaching 17 m/s
     ib["PRES"] = np.where(
         ~ib.WMO_PRES.isna(),
         ib.WMO_PRES,
@@ -552,17 +560,16 @@ def add_season(tracks):
     )
     hemi, yr, mth = group.hemisphere.values, group.year.values, group.month.values
     season = np.where(hemi == "N", yr, None)
-    season = np.where((hemi == "S") & (mth >= 7), yr, season)
-    season = np.where((hemi == "S") & (mth <= 6), yr - 1, season)
-    _ = np.where(
-        (hemi == "S"),
-        np.core.defchararray.add(season.astype(str), np.array(["-"] * len(season))),
-        season,
-    ).astype(str)
-    season = np.where(
-        (hemi == "S"), np.core.defchararray.add(_, (season + 1).astype(str)), season
-    )
-
+    season = np.where((hemi == "S") & (mth >= 7), yr + 1, season)
+    season = np.where((hemi == "S") & (mth <= 6), yr, season)
+    #_ = np.where(
+    #    (hemi == "S"),
+    #    np.core.defchararray.add(season.astype(str), np.array(["-"] * len(season))),
+    #    season,
+    #).astype(str)
+    #season = np.where(
+    #    (hemi == "S"), np.core.defchararray.add(_, (season + 1).astype(str)), season
+    #)
     group["season"] = season.astype(str)
     tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
