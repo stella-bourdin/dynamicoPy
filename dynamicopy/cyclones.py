@@ -436,7 +436,7 @@ def open_TRACKpkl(path = "",
 
     """
     with open(path, "rb") as handle:
-        TRACK = pkl.load(handle)
+        tracks = pkl.load(handle)
     tracks = add_season(tracks)
     tracks = tracks[
         ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
