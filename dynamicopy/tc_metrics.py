@@ -46,11 +46,11 @@ def storm_stats(tracks):
             tracks.groupby(['track_id'])[["sshs", "wind10"]].max().reset_index())
     storms = storms.merge(tracks.groupby(['track_id'])[["slp"]].min().reset_index())
     storms = storms.merge((tracks.groupby(['track_id'])[['time']].count()/4).reset_index())
-    tracks[["ACE"]] = tracks[["wind10"]]**2 * 1e-4
-    tracks[["PDI"]] = tracks[["wind10"]] ** 3
-    storms = storms.merge(tracks.groupby(['track_id'])[["ACE", "PDI"]].sum().reset_index())
+    #tracks[["ACE"]] = tracks[["wind10"]]**2 * 1e-4
+    #tracks[["PDI"]] = tracks[["wind10"]] ** 3
+    #storms = storms.merge(tracks.groupby(['track_id'])[["ACE", "PDI"]].sum().reset_index())
     storms = storms.merge(storms[["track_id", 'wind10']].merge(tracks[["track_id", "wind10", "lat", "time"]]).groupby("track_id").agg(lambda t: t.mean()).reset_index().rename(columns = {"lat":"lat_wind", "time":"time_wind"}), how = "outer")
-    storms = storms.merge(storms[["track_id", 'slp']].merge(tracks[["track_id", "slp", "lat", "time"]]).groupby("track_id").agg(lambda t: t.mean()).reset_index().rename(columns = {"lat":"lat_slp", "time":"time_wind"}), how = "outer")
+    storms = storms.merge(storms[["track_id", 'slp']].merge(tracks[["track_id", "slp", "lat", "time"]]).groupby("track_id").agg(lambda t: t.mean()).reset_index().rename(columns = {"lat":"lat_slp", "time":"time_slp"}), how = "outer")
     return storms
 
 def genesis_points(tracks):
