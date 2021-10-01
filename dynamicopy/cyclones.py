@@ -419,6 +419,32 @@ def load_TRACKtracks(
         ]
     ]
 
+def open_TRACKpkl(path = "",
+                  NH_seasons=[1980, 2019],
+                  SH_seasons=[1981, 2019],
+                  ):
+    """
+
+    Parameters
+    ----------
+    path
+    NH_seasons
+    SH_seasons
+
+    Returns
+    -------
+
+    """
+    with open(path, "rb") as handle:
+        TRACK = pkl.load(handle)
+    tracks = add_season(tracks)
+    tracks = tracks[
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
+    tracks = tracks[
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1])) | (tracks.hemisphere == "N")]
+    return tracks
+
+
 def load_CNRMtracks(file="tests/tracks_CNRM.csv"):
     tracks = pd.read_csv(file)
     tracks = tracks.rename(columns={"ID": "track_id", "Date": "time", "Longitude": "lon", "Latitude": "lat",
