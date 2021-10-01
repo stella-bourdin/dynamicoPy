@@ -445,7 +445,9 @@ def open_TRACKpkl(path = "",
     return tracks
 
 
-def load_CNRMtracks(file="tests/tracks_CNRM.csv"):
+def load_CNRMtracks(file="tests/tracks_CNRM.csv",
+                  NH_seasons=[1980, 2019],
+                  SH_seasons=[1981, 2019],):
     tracks = pd.read_csv(file)
     tracks = tracks.rename(columns={"ID": "track_id", "Date": "time", "Longitude": "lon", "Latitude": "lat",
                             "Pressure": "slp", "Wind": "wind10"})
@@ -458,6 +460,10 @@ def load_CNRMtracks(file="tests/tracks_CNRM.csv"):
     tracks["month"] = tracks.time.dt.month
     tracks["day"] = tracks.time.dt.day
     tracks = add_season(tracks)
+    tracks = tracks[
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
+    tracks = tracks[
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1])) | (tracks.hemisphere == "N")]
     tracks["sshs"] = sshs_from_pres(tracks.slp)
     return tracks[
         [
