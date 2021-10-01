@@ -64,7 +64,7 @@ def plot_tracks(
             x="lon",
             y="lat",
             hue=intensity_col,
-            hue_norm=tuple(np.percentile(tracks[intensity_col], [10,90])),
+            hue_norm=tuple(np.nanpercentile(tracks[intensity_col], [10,90])),
             ax=ax,
             transform=ccrs.PlateCarree(),
             palette=cmap,
