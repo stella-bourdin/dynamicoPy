@@ -170,6 +170,8 @@ def load_ibtracs():
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
+    NH_seasons = [1980,2019],
+    SH_seasons = [1981,2019],
     surf_wind_col="wind10",
     slp_col="slp",
 ):
@@ -196,14 +198,13 @@ def load_TEtracks(
         tracks.lon.values, tracks.lat.values
     )
     tracks = add_season(tracks)
+    tracks = tracks[((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
+    tracks = tracks[((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1])) | (tracks.hemisphere == "N")]
     tracks[slp_col] /= 100
     if slp_col != None:
         tracks["sshs"] = sshs_from_pres(tracks.slp.values)
     else:
         tracks["sshs"] = np.nan
-    if "wind925" not in tracks.columns:
-        tracks["wind925"] = np.nan
-    tracks["ACE"] = tracks.wind10 ** 2 * 1e-4
     return tracks[
         [
             "track_id",
@@ -216,11 +217,9 @@ def load_TEtracks(
             "sshs",
             "slp",
             "wind10",
-            "ACE",
             "year",
             "month",
             "day",
-            "wind925",
         ]
     ]
 
@@ -568,7 +567,7 @@ def add_season(tracks):
     #season = np.where(
     #    (hemi == "S"), np.core.defchararray.add(_, (season + 1).astype(str)), season
     #)
-    group["season"] = season.astype(str)
+    group["season"] = season.astype(int)
     tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
 
