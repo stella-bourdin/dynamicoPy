@@ -53,11 +53,11 @@ def plot_tracks(
 
     if intensity_col != None :
         if increasing_intensity:
-            size_scale = (tracks[intensity_col] - tracks[intensity_col].min()) / (
-                        tracks[intensity_col].max() - tracks[intensity_col].min())
+            size_scale = (tracks[intensity_col] - tracks[intensity_col].nanmin()) / (
+                        tracks[intensity_col].nanmax() - tracks[intensity_col].nanmin())
         else:
-            size_scale = (tracks[intensity_col] - tracks[intensity_col].max()) / (
-                    tracks[intensity_col].min() - tracks[intensity_col].max())
+            size_scale = (tracks[intensity_col] - tracks[intensity_col].nanmax()) / (
+                    tracks[intensity_col].nanmin() - tracks[intensity_col].nanmax())
 
         g = sns.scatterplot(
             data=tracks,
