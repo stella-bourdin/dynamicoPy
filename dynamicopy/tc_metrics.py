@@ -21,8 +21,6 @@ def genesis_points(tracks):
     )
 
 
-
-
 def u10_map(tracks, resolution=8):
     tracks["lon_block"] = (tracks.lon // resolution) * resolution + resolution / 2
     lon_blocks = np.arange(resolution / 2, 360.1, resolution)

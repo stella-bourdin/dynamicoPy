@@ -192,3 +192,23 @@ def propagation_speeds(tracks):
         dist = np.sqrt(dlon ** 2 + dlat ** 2)  # Vérifier les aspects de GCD etc.
         speeds[t] = dist * 100 / 6
     return speeds  # Vitesses en centième de degré par heure
+
+def genesis_points(tracks):
+    """
+    Return the first point of each track
+
+    Parameters
+    ----------
+    tracks (pd.Dataframe)
+
+    Returns
+    -------
+    pd.Dataframe
+    """
+    return (
+        tracks.sort_values("time")
+        .groupby("track_id")[
+            ["hemisphere", "basin", "season", "month", "time", "lon", "lat"]
+        ]
+        .first()
+    )
