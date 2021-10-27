@@ -97,6 +97,18 @@ def get_basin(lon, lat):
     return basin
 
 def sshs_from_pres(p):
+    """
+    Get the SSHS corresponding to the pressure
+
+    Parameters
+    ----------
+    p (float or np.array or pd.Series): Pressure in hPa
+
+    Returns
+    -------
+    float or np.array
+        SSHS category
+    """
     sshs = np.where(p > 990, -1, None)
     sshs = np.where((sshs == None) & (p >= 980), 0, sshs)
     sshs = np.where((sshs == None) & (p >= 970), 1, sshs)
@@ -108,6 +120,18 @@ def sshs_from_pres(p):
     return sshs
 
 def sshs_from_wind(wind):
+    """
+    Get the SSHS corresponding to the wind
+
+    Parameters
+    ----------
+    wind (float or np.array or pd.Series): wind in m/s
+
+    Returns
+    -------
+    float or np.array
+        SSHS category
+    """
     sshs = np.where(wind <= 60 / 3.6, -1, None)
     sshs = np.where((sshs == None) & (wind < 120 / 3.6), 0, sshs)
     sshs = np.where((sshs == None) & (wind < 150 / 3.6), 1, sshs)
