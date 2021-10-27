@@ -53,17 +53,17 @@ def get_freq(tracks):
     storms["sshs"] = tracks.groupby("track_id")["sshs"].max()
 
     SH = (
-        storms[storms.hemisphere == "S"] \
-        .groupby(["season", "sshs"])[["basin"]] \
-        .count() \
-        .reset_index() \
-        .pivot_table(index=["sshs"], columns="season", fill_value=0) \
-        .melt(ignore_index=False) \
-        .iloc[:, 2:] \
-        .groupby("sshs") \
-        .mean() \
-        .assign(basin="S") \
-        .reset_index() \
+        storms[storms.hemisphere == "S"]
+        .groupby(["season", "sshs"])[["basin"]]
+        .count()
+        .reset_index()
+        .pivot_table(index=["sshs"], columns="season", fill_value=0)
+        .melt(ignore_index=False)
+        .iloc[:, 2:]
+        .groupby("sshs")
+        .mean()
+        .assign(basin="S")
+        .reset_index()
     )
 
     NH = (
@@ -145,3 +145,26 @@ def storm_stats(tracks):
         how="outer",
     )
     return storms
+
+def propagation_speeds(tracks):
+    """
+    Return the propagation speed of each track
+
+    Parameters
+    ----------
+    tracks (pd.Dataframe): The track dataframe
+
+    Returns
+    -------
+    dict
+        keys are the track ids, values the arrays corresponding to propagation speed along the trajectory.
+    """
+
+    speeds = {}
+    for t in tracks.track_id.unique():
+        T = tracks[tracks.track_id == t]
+        dlon = T[:-1].lon.values - T[1:].lon.values
+        dlat = T[:-1].lat.values - T[1:].lat.values
+        dist = np.sqrt(dlon ** 2 + dlat ** 2)  # Vérifier les aspects de GCD etc.
+        speeds[t] = dist * 100 / 6
+    return speeds  # Vitesses en centième de degré par heure
