@@ -3,6 +3,18 @@ from ._basins import *
 from shapely.geometry import Point
 
 def add_season(tracks):
+    """
+    Add (or changes) the season columns in a track dataframe.
+
+    Parameters
+    ----------
+    tracks (pd.DataFrame): The track dataframe
+
+    Returns
+    -------
+    pd.DataFrame
+        The track dataframe with the new season column
+    """
     if "season" in tracks.columns:
         tracks = tracks.drop(columns="season")
     group = (
