@@ -10,46 +10,6 @@ In all functions, tracks represent a dataset of TC points as issued by the load_
 
 
 
-def prop_intense(freq):
-    cat_45_cols = list(freq.columns[:-1] >= 4) + [False]
-    freq_45 = freq.loc[:, cat_45_cols].sum(axis=1)
-    prop_45 = freq_45 / freq.loc[:, "All"]
-    return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
-
-
-def storm_stats(tracks):
-    storms = (
-        tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
-        .agg(lambda x: x.value_counts().index[0])
-        .reset_index()
-    )
-    storms = storms.merge(
-        tracks.groupby(["track_id"])[["sshs", "wind10"]].max().reset_index()
-    )
-    storms = storms.merge(tracks.groupby(["track_id"])[["slp"]].min().reset_index())
-    storms = storms.merge(
-        (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
-    )
-    storms = storms.merge(
-        storms[["track_id", "wind10"]]
-        .merge(tracks[["track_id", "wind10", "lat", "time"]])
-        .groupby("track_id")
-        .agg(lambda t: t.mean())
-        .reset_index()
-        .rename(columns={"lat": "lat_wind", "time": "time_wind"}),
-        how="outer",
-    )
-    storms = storms.merge(
-        storms[["track_id", "slp"]]
-        .merge(tracks[["track_id", "slp", "lat", "time"]])
-        .groupby("track_id")
-        .agg(lambda t: t.mean())
-        .reset_index()
-        .rename(columns={"lat": "lat_slp", "time": "time_slp"}),
-        how="outer",
-    )
-    return storms
-
 
 def genesis_points(tracks):
     return (
