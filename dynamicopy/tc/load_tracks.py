@@ -131,7 +131,7 @@ _TRACK_data_vars = [
 def read_TRACKfiles(
     file="tests/TRACK/19501951.dat",
     origin="HRMIP",
-    season=None,
+    season="19501951",
 ):
     """
     Parameters
