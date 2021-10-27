@@ -278,7 +278,7 @@ def open_TRACKpkl(
 
     Parameters
     ----------
-    path: Path to the pkl file
+    path (str): Path to the pkl file
     NH_season (list of 2 ints): first and last season in the northern hemisphere
     SH_season (list of 2 ints): first and last season in the southern hemisphere
 
@@ -299,3 +299,66 @@ def open_TRACKpkl(
         | (tracks.hemisphere == "N")
     ]
     return tracks
+
+def load_CNRMtracks(
+    file="tests/tracks_CNRM.csv",
+    NH_seasons=[1980, 2019],
+    SH_seasons=[1981, 2019],
+):
+    """
+
+    Parameters
+    ----------
+    file (str): Path to the CNRM tracks file
+    NH_season (list of 2 ints): first and last season in the northern hemisphere
+    SH_season (list of 2 ints): first and last season in the southern hemisphere
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns as described in the module header
+    """
+    tracks = pd.read_csv(file)
+    tracks = tracks.rename(
+        columns={
+            "ID": "track_id",
+            "Date": "time",
+            "Longitude": "lon",
+            "Latitude": "lat",
+            "Pressure": "slp",
+            "Wind": "wind10",
+        }
+    )
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
+    tracks["time"] = tracks.time.astype(np.datetime64)
+    tracks["year"] = tracks.time.dt.year
+    tracks["month"] = tracks.time.dt.month
+    tracks["day"] = tracks.time.dt.day
+    tracks = add_season(tracks)
+    tracks = tracks[
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
+        | (tracks.hemisphere == "S")
+    ]
+    tracks = tracks[
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
+        | (tracks.hemisphere == "N")
+    ]
+    tracks["sshs"] = sshs_from_pres(tracks.slp)
+    return tracks[
+        [
+            "track_id",
+            "time",
+            "lon",
+            "lat",
+            "hemisphere",
+            "basin",
+            "season",
+            "sshs",
+            "slp",
+            "wind10",
+            "year",
+            "month",
+            "day",
+        ]
+    ]
