@@ -11,7 +11,7 @@ import seaborn as sns
 import numpy as np
 from matplotlib.colors import BoundaryNorm
 
-#TODO : Ajouter les lignes ?
+# TODO : Ajouter les lignes ?
 def plot_tracks(
     tracks,
     intensity_col=None,
@@ -51,27 +51,29 @@ def plot_tracks(
     ax.coastlines()
     ax.gridlines(draw_labels=False)
 
-    if intensity_col != None :
+    if intensity_col != None:
         if increasing_intensity:
             size_scale = (tracks[intensity_col] - tracks[intensity_col].nanmin()) / (
-                        tracks[intensity_col].nanmax() - tracks[intensity_col].nanmin())
+                tracks[intensity_col].nanmax() - tracks[intensity_col].nanmin()
+            )
         else:
             size_scale = (tracks[intensity_col] - tracks[intensity_col].nanmax()) / (
-                    tracks[intensity_col].nanmin() - tracks[intensity_col].nanmax())
+                tracks[intensity_col].nanmin() - tracks[intensity_col].nanmax()
+            )
 
         g = sns.scatterplot(
             data=tracks,
             x="lon",
             y="lat",
             hue=intensity_col,
-            hue_norm=tuple(np.nanpercentile(tracks[intensity_col], [10,90])),
+            hue_norm=tuple(np.nanpercentile(tracks[intensity_col], [10, 90])),
             ax=ax,
             transform=ccrs.PlateCarree(),
             palette=cmap,
             size=size_scale,
             sizes=(4, 20),
         )
-    else :
+    else:
         g = sns.scatterplot(
             data=tracks,
             x="lon",
@@ -80,21 +82,34 @@ def plot_tracks(
             color=color,
             transform=ccrs.PlateCarree(),
         )
-    h,l = g.get_legend_handles_labels()
+    h, l = g.get_legend_handles_labels()
     plt.legend(h[:-6], l[:-6])
     return fig, ax
 
-def density_map(lons, lats, hist,
-                ax=None,
-                projection = ccrs.PlateCarree(central_longitude=180.),
-                cmap = "Reds",
-                vmax=None,
-                shrink_cbar = 1):
-    #if ax == None:
+
+def density_map(
+    lons,
+    lats,
+    hist,
+    ax=None,
+    projection=ccrs.PlateCarree(central_longitude=180.0),
+    cmap="Reds",
+    vmax=None,
+    shrink_cbar=1,
+):
+    # if ax == None:
 
     ax = plt.axes(projection=projection)
-    p = ax.pcolormesh(lons, lats, hist.T, transform=ccrs.PlateCarree(), cmap=cmap, shading = "nearest",
-                      vmin=0, vmax=vmax)
-    plt.colorbar(p, shrink = shrink_cbar)
+    p = ax.pcolormesh(
+        lons,
+        lats,
+        hist.T,
+        transform=ccrs.PlateCarree(),
+        cmap=cmap,
+        shading="nearest",
+        vmin=0,
+        vmax=vmax,
+    )
+    plt.colorbar(p, shrink=shrink_cbar)
     ax.coastlines()
     plt.show()

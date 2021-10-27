@@ -15,7 +15,7 @@ ENP = Polygon(((180, 90), (260, 90), (260, 20), (295, 0), (180, 0)))
 WNP = Polygon(((100, 0), (100, 90), (180, 90), (180, 0)))
 NI = Polygon(((30, 0), (30, 90), (100, 90), (100, 0)))
 MED = Polygon(((0, 0), (0, 90), (30, 90), (30, 0)))
-NH = {"NATL":NATL, "ENP":ENP, "WNP":WNP, "NI":NI, "MED":MED}
+NH = {"NATL": NATL, "ENP": ENP, "WNP": WNP, "NI": NI, "MED": MED}
 
 SI = Polygon(((20, -90), (20, 0), (135, 0), (135, -90)))
 SP = Polygon(((135, 0), (135, -90), (295, -90), (295, 0)))
@@ -23,11 +23,12 @@ SA1 = Polygon(((295, -90), (295, 0), (360, 0), (360, -90)))
 SA2 = Polygon(((20, -90), (20, 0), (0, 0), (0, -90)))
 SA = MultiPolygon([SA1, SA2])
 SA_plot = Polygon(((295, -90), (295, 0), (380, 0), (380, -90)))
-SH = {'SI':SI, 'SP':SP, 'SA':SA}
+SH = {"SI": SI, "SP": SP, "SA": SA}
 
 basins = dict(SH, **NH)
 
-def plot_basins(show=True, save=None) :
+
+def plot_basins(show=True, save=None):
     """
     Plot the basins according to the Knutson definition
 
@@ -41,20 +42,38 @@ def plot_basins(show=True, save=None) :
     A plot.
     """
 
-    fig, ax = plt.subplots(subplot_kw={"projection":ccrs.PlateCarree(central_longitude = 180)})
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
+    )
     ax.coastlines()
     ax.set_global()
-    gl = ax.gridlines(draw_labels = True)
+    gl = ax.gridlines(draw_labels=True)
     gl.xlocator = mticker.FixedLocator([20, 30, 100, 135, 180, -100, -65])
     gl.ylocator = mticker.FixedLocator([-90, 0, 20, 90])
     gl.xlines = False
     gl.ylines = False
 
-    for basin, name in zip([NATL, ENP, WNP, NI, MED, SI, SP, SA_plot], ["NATL", "ENP", "WNP", "NI", "MED", "SI", "SP", "SATL"]) :
-        plt.plot(basin.exterior.xy[0], basin.exterior.xy[1], transform = ccrs.PlateCarree(), color = "k")
-        plt.text(basin.centroid.x-10, np.sign(basin.centroid.y)*25, name, transform = ccrs.PlateCarree(), fontweight="bold")
-    if show : plt.show();
-    if save != None : plt.savefig(save)
+    for basin, name in zip(
+        [NATL, ENP, WNP, NI, MED, SI, SP, SA_plot],
+        ["NATL", "ENP", "WNP", "NI", "MED", "SI", "SP", "SATL"],
+    ):
+        plt.plot(
+            basin.exterior.xy[0],
+            basin.exterior.xy[1],
+            transform=ccrs.PlateCarree(),
+            color="k",
+        )
+        plt.text(
+            basin.centroid.x - 10,
+            np.sign(basin.centroid.y) * 25,
+            name,
+            transform=ccrs.PlateCarree(),
+            fontweight="bold",
+        )
+    if show:
+        plt.show()
+    if save != None:
+        plt.savefig(save)
 
 
 basins_CZ = {

@@ -15,7 +15,6 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 """
 
 
-
 def clean_ibtracs(
     raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
     csv_output="dynamicopy/data/ibtracs.since1980.cleaned.csv",
@@ -91,13 +90,23 @@ def clean_ibtracs(
             ["TOKYO_WIND", "REUNION_WIND", "BOM_WIND", "NADI_WIND", "WELLINGTON_WIND"]
         ].mean(axis=1, skipna=True),
     )
-    ib["WIND10"] = np.where(ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10) # Conversion rate in the IBTrACS doc
-    ib["WIND10"] = np.where(ib.WIND10.isna(), ib.CMA_WIND / 1.08, ib.WIND10) # Conversion rate determined through a linear regression
-    ib["WIND10"] *= 0.514 # Conversion noeuds en m/s
-    tcs = ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17].index
-    ib = ib[ib.SID.isin(tcs)] # Filter tracks not reaching 17 m/s
-    tcs = ib.groupby("SID")["ISO_TIME"].count()[ib.groupby("SID")["ISO_TIME"].count() >= 4].index
-    ib = ib[ib.SID.isin(tcs)] # Filter tracks not reaching 17 m/s
+    ib["WIND10"] = np.where(
+        ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10
+    )  # Conversion rate in the IBTrACS doc
+    ib["WIND10"] = np.where(
+        ib.WIND10.isna(), ib.CMA_WIND / 1.08, ib.WIND10
+    )  # Conversion rate determined through a linear regression
+    ib["WIND10"] *= 0.514  # Conversion noeuds en m/s
+    tcs = (
+        ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17].index
+    )
+    ib = ib[ib.SID.isin(tcs)]  # Filter tracks not reaching 17 m/s
+    tcs = (
+        ib.groupby("SID")["ISO_TIME"]
+        .count()[ib.groupby("SID")["ISO_TIME"].count() >= 4]
+        .index
+    )
+    ib = ib[ib.SID.isin(tcs)]  # Filter tracks not reaching 17 m/s
     ib["PRES"] = np.where(
         ~ib.WMO_PRES.isna(),
         ib.WMO_PRES,
@@ -125,7 +134,9 @@ def clean_ibtracs(
     )
     ib.loc[ib.lon < 0, "lon"] += 360
     ib["hemisphere"] = np.where(ib.lat > 0, "N", "S")
-    ib["basin"] = ib.basin.replace("EP", "ENP").replace("WP", "WNP").replace("NA", "NATL")
+    ib["basin"] = (
+        ib.basin.replace("EP", "ENP").replace("WP", "WNP").replace("NA", "NATL")
+    )
     ib["day"] = ib.time.dt.day
     ib["month"] = ib.time.dt.month
     ib["year"] = ib.time.dt.year
@@ -163,15 +174,16 @@ def load_ibtracs():
         keep_default_na=False,
         index_col=0,
         na_values=["", " "],
-        dtype={"slp": float, "wind10": float, "season":str},
+        dtype={"slp": float, "wind10": float, "season": str},
         parse_dates=["time"],
     )
     return ib
 
+
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
-    NH_seasons = [1980,2019],
-    SH_seasons = [1981,2019],
+    NH_seasons=[1980, 2019],
+    SH_seasons=[1981, 2019],
     surf_wind_col="wind10",
     slp_col="slp",
 ):
@@ -194,12 +206,16 @@ def load_TEtracks(
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    tracks["basin"] = get_basin(
-        tracks.lon.values, tracks.lat.values
-    )
+    tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
     tracks = add_season(tracks)
-    tracks = tracks[((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
-    tracks = tracks[((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1])) | (tracks.hemisphere == "N")]
+    tracks = tracks[
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
+        | (tracks.hemisphere == "S")
+    ]
+    tracks = tracks[
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
+        | (tracks.hemisphere == "N")
+    ]
     tracks[slp_col] /= 100
     if slp_col != None:
         tracks["sshs"] = sshs_from_pres(tracks.slp.values)
@@ -222,6 +238,7 @@ def load_TEtracks(
             "day",
         ]
     ]
+
 
 _HRMIP_TRACK_data_vars = [
     "vor_tracked",
@@ -278,6 +295,7 @@ _TRACK_data_vars = [
     "lat10",
     "wind10",
 ]
+
 
 def load_TRACKtracks(
     file="tests/TRACK/19501951.dat",
@@ -360,7 +378,7 @@ def load_TRACKtracks(
         tracks["day"] = tracks.time_step.str[-4:-2]  # .astype(int)
         tracks["hour"] = tracks.time_step.str[-2:]  # .astype(int)
         tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
-        tracks["delta"] = tracks["time"] - np.datetime64(season[-4:]+"-01-01 00")
+        tracks["delta"] = tracks["time"] - np.datetime64(season[-4:] + "-01-01 00")
         tracks["time"] = tracks["delta"] + start
     elif time_format == "time_step":
         tracks["time"] = [
@@ -419,10 +437,12 @@ def load_TRACKtracks(
         ]
     ]
 
-def open_TRACKpkl(path = "",
-                  NH_seasons=[1980, 2019],
-                  SH_seasons=[1981, 2019],
-                  ):
+
+def open_TRACKpkl(
+    path="",
+    NH_seasons=[1980, 2019],
+    SH_seasons=[1981, 2019],
+):
     """
 
     Parameters
@@ -439,31 +459,47 @@ def open_TRACKpkl(path = "",
         tracks = pkl.load(handle)
     tracks = add_season(tracks)
     tracks = tracks[
-        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
+        | (tracks.hemisphere == "S")
+    ]
     tracks = tracks[
-        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1])) | (tracks.hemisphere == "N")]
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
+        | (tracks.hemisphere == "N")
+    ]
     return tracks
 
 
-def load_CNRMtracks(file="tests/tracks_CNRM.csv",
-                  NH_seasons=[1980, 2019],
-                  SH_seasons=[1981, 2019],):
+def load_CNRMtracks(
+    file="tests/tracks_CNRM.csv",
+    NH_seasons=[1980, 2019],
+    SH_seasons=[1981, 2019],
+):
     tracks = pd.read_csv(file)
-    tracks = tracks.rename(columns={"ID": "track_id", "Date": "time", "Longitude": "lon", "Latitude": "lat",
-                            "Pressure": "slp", "Wind": "wind10"})
-    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    tracks["basin"] = get_basin(
-        tracks.lon.values, tracks.lat.values
+    tracks = tracks.rename(
+        columns={
+            "ID": "track_id",
+            "Date": "time",
+            "Longitude": "lon",
+            "Latitude": "lat",
+            "Pressure": "slp",
+            "Wind": "wind10",
+        }
     )
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
     tracks["time"] = tracks.time.astype(np.datetime64)
     tracks["year"] = tracks.time.dt.year
     tracks["month"] = tracks.time.dt.month
     tracks["day"] = tracks.time.dt.day
     tracks = add_season(tracks)
     tracks = tracks[
-        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1])) | (tracks.hemisphere == "S")]
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
+        | (tracks.hemisphere == "S")
+    ]
     tracks = tracks[
-        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1])) | (tracks.hemisphere == "N")]
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
+        | (tracks.hemisphere == "N")
+    ]
     tracks["sshs"] = sshs_from_pres(tracks.slp)
     return tracks[
         [
@@ -483,7 +519,7 @@ def load_CNRMtracks(file="tests/tracks_CNRM.csv",
         ]
     ]
 
-    
+
 def is_leap(yr):
     if yr % 4 == 0:
         if yr % 100 == 0:
@@ -495,6 +531,7 @@ def is_leap(yr):
             return True
     else:
         return False
+
 
 def get_time(year, month, day, hour):
     time = (
@@ -509,6 +546,7 @@ def get_time(year, month, day, hour):
     ).astype(np.datetime64)
     return time
 
+
 def sshs_from_wind(wind):
     sshs = np.where(wind <= 60 / 3.6, -1, None)
     sshs = np.where((sshs == None) & (wind < 120 / 3.6), 0, sshs)
@@ -519,6 +557,7 @@ def sshs_from_wind(wind):
     sshs = np.where((sshs == None) & (~np.isnan(wind)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
+
 
 def sshs_from_pres(p):
     sshs = np.where(p > 990, -1, None)
@@ -531,26 +570,28 @@ def sshs_from_pres(p):
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
 
-#TODO : Optimiser cette fonction
+
+# TODO : Optimiser cette fonction
 def get_basin(lon, lat):
     basin = []
-    for x,y in zip(lon, lat) :
+    for x, y in zip(lon, lat):
         ok = False
-        if y >= 0 :
-            for b in NH :
-                if NH[b].contains(Point(x, y)) :
+        if y >= 0:
+            for b in NH:
+                if NH[b].contains(Point(x, y)):
                     basin.append(b)
                     ok = True
                     break
-        else :
-            for b in SH :
-                if SH[b].contains(Point(x, y)) :
+        else:
+            for b in SH:
+                if SH[b].contains(Point(x, y)):
                     basin.append(b)
                     ok = True
                     break
-        if ok == False :
+        if ok == False:
             basin.append(np.nan)
     return basin
+
 
 def get_basin_old(hemisphere, lon, lat):
     basin = np.where((hemisphere == "N") & (lon > 40) & (lon <= 100), "NI", "")
@@ -575,6 +616,7 @@ def get_basin_old(hemisphere, lon, lat):
     basin = np.where((hemisphere == "S") & (basin == ""), "SA", basin)
     return basin
 
+
 def add_season(tracks):
     if "season" in tracks.columns:
         tracks = tracks.drop(columns="season")
@@ -591,23 +633,25 @@ def add_season(tracks):
     season = np.where(hemi == "N", yr, None)
     season = np.where((hemi == "S") & (mth >= 7), yr + 1, season)
     season = np.where((hemi == "S") & (mth <= 6), yr, season)
-    #_ = np.where(
+    # _ = np.where(
     #    (hemi == "S"),
     #    np.core.defchararray.add(season.astype(str), np.array(["-"] * len(season))),
     #    season,
-    #).astype(str)
-    #season = np.where(
+    # ).astype(str)
+    # season = np.where(
     #    (hemi == "S"), np.core.defchararray.add(_, (season + 1).astype(str)), season
-    #)
+    # )
     group["season"] = season.astype(int)
     tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
+
 
 def to_dt(t):
     ts = np.floor((t - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, "s"))
     return np.array(
         [datetime.utcfromtimestamp(t) if not np.isnan(t) else np.nan for t in ts]
     )
+
 
 def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     """
@@ -633,7 +677,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     merged = pd.merge(tracks1, tracks2, on="time")
     X = np.concatenate([[merged.lat_x], [merged.lon_x]]).T
     Y = np.concatenate([[merged.lat_y], [merged.lon_y]]).T
-    merged["dist"] = haversine_vector(X,Y,unit=Unit.DEGREES)
+    merged["dist"] = haversine_vector(X, Y, unit=Unit.DEGREES)
     dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
     temp = (
         merged.groupby(["track_id_x", "track_id_y"])[["dist"]]
@@ -649,6 +693,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     )
     return matches
 
+
 def match_william(tracks1, tracks2, name1="algo", name2="ib"):
     tracks1, tracks2 = (
         tracks1[["track_id", "lon", "lat", "time"]],
@@ -657,20 +702,27 @@ def match_william(tracks1, tracks2, name1="algo", name2="ib"):
     merged = pd.merge(tracks1, tracks2, on="time")
     X = np.concatenate([[merged.lat_x], [merged.lon_x]]).T
     Y = np.concatenate([[merged.lat_y], [merged.lon_y]]).T
-    merged["dist"] = haversine_vector(X,Y,unit=Unit.KILOMETERS)
+    merged["dist"] = haversine_vector(X, Y, unit=Unit.KILOMETERS)
     merged = merged[merged.dist <= 300]
     temp = (
         merged.groupby(["track_id_x", "track_id_y"])[["dist"]]
         .count()
         .rename(columns={"dist": "temp"})
     )
-    matches = merged[["track_id_x", "track_id_y"]].drop_duplicates().join(temp, on = ["track_id_x", "track_id_y"])
+    matches = (
+        merged[["track_id_x", "track_id_y"]]
+        .drop_duplicates()
+        .join(temp, on=["track_id_x", "track_id_y"])
+    )
     maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
     matches = maxs.merge(matches)[["track_id_x", "track_id_y", "temp"]]
     dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
-    matches = matches.join(dist, on = ["track_id_x", "track_id_y"])
-    matches = matches.rename(columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2})
+    matches = matches.join(dist, on=["track_id_x", "track_id_y"])
+    matches = matches.rename(
+        columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2}
+    )
     return matches
+
 
 if __name__ == "__main__":
     # t = load_TRACKtracks()

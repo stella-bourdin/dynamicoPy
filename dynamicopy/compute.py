@@ -36,6 +36,7 @@ def omega2w(omega, p, T):
     w = -omega / (rho * g)
     return w
 
+
 def compute_vort(u, v, lat, lon):
     """Compute vorticity from the horizontal velocity fields
 
