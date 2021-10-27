@@ -6,7 +6,6 @@ from .compute import *
 from .plot import lon_lat_plot, zonal_plot
 from dynamicopy.tc._basins import NH, SH, basins
 from .tc_metrics import *
-from .tc_maps import plot_tracks
 
 try:
     import cartopy.crs as ccrs
