@@ -66,3 +66,14 @@ def sshs_from_pres(p):
     sshs = np.where((sshs == None) & (~np.isnan(p)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
+
+def sshs_from_wind(wind):
+    sshs = np.where(wind <= 60 / 3.6, -1, None)
+    sshs = np.where((sshs == None) & (wind < 120 / 3.6), 0, sshs)
+    sshs = np.where((sshs == None) & (wind < 150 / 3.6), 1, sshs)
+    sshs = np.where((sshs == None) & (wind < 180 / 3.6), 2, sshs)
+    sshs = np.where((sshs == None) & (wind < 210 / 3.6), 3, sshs)
+    sshs = np.where((sshs == None) & (wind < 240 / 3.6), 4, sshs)
+    sshs = np.where((sshs == None) & (~np.isnan(wind)), 5, sshs)
+    sshs = np.where(sshs == None, np.nan, sshs)
+    return sshs
