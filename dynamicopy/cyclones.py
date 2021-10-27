@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 import pickle as pkl
-from dynamicopy.tc.basins import *
+from dynamicopy.tc._basins import *
 from shapely.geometry import Point
 
 """
@@ -11,8 +11,6 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 
 0 <= lon <= 360
 """
-
-
 
 def is_leap(yr):
     if yr % 4 == 0:
@@ -25,10 +23,6 @@ def is_leap(yr):
             return True
     else:
         return False
-
-
-
-
 
 def get_basin_old(hemisphere, lon, lat):
     basin = np.where((hemisphere == "N") & (lon > 40) & (lon <= 100), "NI", "")
@@ -53,16 +47,11 @@ def get_basin_old(hemisphere, lon, lat):
     basin = np.where((hemisphere == "S") & (basin == ""), "SA", basin)
     return basin
 
-
-
-
-
 def to_dt(t):
     ts = np.floor((t - np.datetime64("1970-01-01T00:00:00")) / np.timedelta64(1, "s"))
     return np.array(
         [datetime.utcfromtimestamp(t) if not np.isnan(t) else np.nan for t in ts]
     )
-
 
 def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
     """
@@ -103,9 +92,6 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", maxd=8, mindays=1):
         .rename(columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2})
     )
     return matches
-
-
-
 
 if __name__ == "__main__":
     # t = load_TRACKtracks()

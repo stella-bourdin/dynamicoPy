@@ -222,7 +222,7 @@ def select_box_lonlat(
 
 
 def select_basin(lon, lat, var, basin, lon_axis=-1, lat_axis=-2):
-    """Extract basin from a global field, from basin defined as in basins.py.
+    """Extract basin from a global field, from basin defined as in _basins.py.
 
     Parameters
     ----------

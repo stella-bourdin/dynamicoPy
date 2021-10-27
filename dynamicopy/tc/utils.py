@@ -1,5 +1,5 @@
 import numpy as np
-from .basins import *
+from ._basins import *
 from shapely.geometry import Point
 
 def add_season(tracks):
