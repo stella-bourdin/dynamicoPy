@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="dynamicopy",
-    version="0.3.4.3",
+    version="0.4",
     author="Stella Bourdin",
     author_email="stella.bourdin@lsce.ipsl.fr",
     description="A set of tool to use and analyse netCDF _data",
@@ -27,7 +27,7 @@ setuptools.setup(
 )
 
 # Black formatting:
-# `python -m black <directory or file(s)>
+# `python -m black <directory or file(s)>`
 
 # To generate the distribution:
 # 1 / Check that wheel is up to date with `pip install --user --upgrade setuptools wheel`

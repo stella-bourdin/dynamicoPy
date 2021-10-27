@@ -2,6 +2,7 @@ import numpy as np
 from ._basins import *
 from shapely.geometry import Point
 
+
 def add_season(tracks):
     """
     Add (or changes) the season columns in a track dataframe.
@@ -34,6 +35,7 @@ def add_season(tracks):
     tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
 
+
 def get_time(year, month, day, hour):
     """
     Get np.datetime64 array corresponding to year, month, day and hour arrays
@@ -61,6 +63,7 @@ def get_time(year, month, day, hour):
         + ":00"
     ).astype(np.datetime64)
     return time
+
 
 # TODO : Optimiser cette fonction
 def get_basin(lon, lat):
@@ -96,6 +99,7 @@ def get_basin(lon, lat):
             basin.append(np.nan)
     return basin
 
+
 def sshs_from_pres(p):
     """
     Get the SSHS corresponding to the pressure
@@ -118,6 +122,7 @@ def sshs_from_pres(p):
     sshs = np.where((sshs == None) & (~np.isnan(p)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
+
 
 def sshs_from_wind(wind):
     """

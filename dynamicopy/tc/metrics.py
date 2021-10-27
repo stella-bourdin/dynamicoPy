@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def tc_count(tracks):
     """
     Counts the number of tracks per basin and per SSHS category
@@ -46,6 +47,7 @@ def tc_count(tracks):
         .reindex(["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"])
     )
 
+
 def get_freq(tracks):
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
         lambda x: x.value_counts().index[0]
@@ -81,8 +83,7 @@ def get_freq(tracks):
     )
 
     basins = (
-        storms
-        .groupby(["season", "sshs", "basin"])
+        storms.groupby(["season", "sshs", "basin"])
         .count()
         .reset_index()
         .pivot_table(index=["basin", "sshs"], columns="season", fill_value=0)
@@ -107,6 +108,7 @@ def get_freq(tracks):
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
 
+
 def prop_intense(freq):
     """
     Retrieve the proportion of intense tc among all
@@ -124,6 +126,7 @@ def prop_intense(freq):
     freq_45 = freq.loc[:, cat_45_cols].sum(axis=1)
     prop_45 = freq_45 / freq.loc[:, "All"]
     return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
+
 
 def storm_stats(tracks):
     """
@@ -170,6 +173,7 @@ def storm_stats(tracks):
     )
     return storms
 
+
 def propagation_speeds(tracks):
     """
     Return the propagation speed of each track
@@ -192,6 +196,7 @@ def propagation_speeds(tracks):
         dist = np.sqrt(dlon ** 2 + dlat ** 2)  # Vérifier les aspects de GCD etc.
         speeds[t] = dist * 100 / 6
     return speeds  # Vitesses en centième de degré par heure
+
 
 def genesis_points(tracks):
     """

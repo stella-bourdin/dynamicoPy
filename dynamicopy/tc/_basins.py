@@ -27,6 +27,7 @@ SH = {"SI": SI, "SP": SP, "SA": SA}
 
 basins = dict(SH, **NH)
 
+
 def plot_basins(show=True, save=None):
     """
     Plot the basins according to the Knutson definition
@@ -73,5 +74,6 @@ def plot_basins(show=True, save=None):
         plt.show()
     if save != None:
         plt.savefig(save)
+
 
 # TODO (?) : Définir aussi les régions WMO

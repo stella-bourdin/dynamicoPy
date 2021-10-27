@@ -9,6 +9,7 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 0 <= lon <= 360
 """
 
+
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
     NH_seasons=[1980, 2019],
@@ -127,6 +128,7 @@ _TRACK_data_vars = [
     "lat10",
     "wind10",
 ]
+
 
 def read_TRACKfiles(
     file="tests/TRACK/19501951.dat",
@@ -268,6 +270,7 @@ def read_TRACKfiles(
         ]
     ]
 
+
 def open_TRACKpkl(
     path="",
     NH_seasons=[1980, 2019],
@@ -289,7 +292,9 @@ def open_TRACKpkl(
     """
     with open(path, "rb") as handle:
         tracks = pkl.load(handle)
-    tracks = add_season(tracks) # TODO : Supprimer quand tout aura retourné avec la nouvelle read_TRACKfile
+    tracks = add_season(
+        tracks
+    )  # TODO : Supprimer quand tout aura retourné avec la nouvelle read_TRACKfile
     tracks = tracks[
         ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
         | (tracks.hemisphere == "S")
@@ -299,6 +304,7 @@ def open_TRACKpkl(
         | (tracks.hemisphere == "N")
     ]
     return tracks
+
 
 def load_CNRMtracks(
     file="tests/tracks_CNRM.csv",
