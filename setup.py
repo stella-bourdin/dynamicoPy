@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.3.4.3",
     author="Stella Bourdin",
     author_email="stella.bourdin@lsce.ipsl.fr",
-    description="A set of tool to use and analyse netCDF data",
+    description="A set of tool to use and analyse netCDF _data",
     long_description=long_description,
     long_description_content_type="text/markdown",
     # TODO : Upload to Github when done
@@ -23,7 +23,7 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=["numpy", "scipy", "seaborn", "matplotlib", "netCDF4", "xarray", "shapely"],
     include_package_data=True,
-    package_data={"":['data/*.csv']}
+    package_data={"":['_data/*.csv']}
 )
 
 # Black formatting:

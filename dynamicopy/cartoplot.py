@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
+# Tools for ploting the _data from NetCDF file, using only numpy and matplotlib libs.
 
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -40,7 +40,7 @@ def lon_lat_plot_map(
     savefig=False,
     filename="saved_fig.png",
 ):
-    """Plot a 2D map of the data with cartopy.
+    """Plot a 2D map of the _data with cartopy.
 
     Parameters
     ----------
@@ -166,7 +166,7 @@ def scatterplot_map(
     fig_ax : [type], optional
         [description], by default None
     color : str, optional
-        color of the points, can also be a 1D list of the same length than the data, by default 'k'
+        color of the points, can also be a 1D list of the same length than the _data, by default 'k'
     size : float, optional
         size of the points, by default 1
     title : str, optional

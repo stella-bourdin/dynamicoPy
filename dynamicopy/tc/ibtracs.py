@@ -6,11 +6,11 @@ from .utils import *
 
 def clean_ibtracs(
     raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
-    csv_output="dynamicopy/data/ibtracs.since1980.cleaned.csv",
-    pkl_output="dynamicopy/data/ibtracs.pkl",
+    csv_output="dynamicopy/_data/ibtracs.since1980.cleaned.csv",
+    pkl_output="dynamicopy/_data/ibtracs.pkl",
 ):
     """
-    Function used to post-treat ibtracs data into a lighter file
+    Function used to post-treat ibtracs _data into a lighter file
 
     Parameters
     ----------
@@ -165,7 +165,7 @@ def load_ibtracs():
         The ibtracs dataset
     """
     stream = pkg_resources.resource_stream(
-        __name__, "../data/ibtracs.since1980.cleaned.csv"
+        __name__, "../_data/ibtracs.since1980.cleaned.csv"
     )
     ib = pd.read_csv(
         stream,

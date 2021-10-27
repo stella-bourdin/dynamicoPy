@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Tools for ploting the data from NetCDF file, using only numpy and matplotlib libs.
+# Tools for ploting the _data from NetCDF file, using only numpy and matplotlib libs.
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ def lon_lat_plot(
     savefig=False,
     filename="saved_fig.png",
 ):
-    """Plot a 2D map of the data.
+    """Plot a 2D map of the _data.
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def zonal_plot(
     savefig=False,
     filename="saved_fig.png",
 ):
-    """Plot a 2D map of the data.
+    """Plot a 2D map of the _data.
 
     Parameters
     ----------

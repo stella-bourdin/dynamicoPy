@@ -571,7 +571,7 @@ def compute_EKE(u, v):  # Probably deserves optimization if useful later.
 def hemispheric_mean(var, lat, axis=-1, neg=False):
     """Computes the mean over both hemispheres.
 
-    If assymetric data is given, the mean is computed only on the common latitudes.
+    If assymetric _data is given, the mean is computed only on the common latitudes.
 
     Parameters
     ----------

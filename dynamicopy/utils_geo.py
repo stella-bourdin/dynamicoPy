@@ -63,7 +63,7 @@ def get_south(var, lat, axis=-2, flip=False):
     axis : int, optional
         latitude axis in var, by default -2
     flip : bool, option
-        if True, reverse the data along the latitude index (so that abs(lat) is increasing)
+        if True, reverse the _data along the latitude index (so that abs(lat) is increasing)
 
     Returns
     -------
@@ -95,7 +95,7 @@ def get_north(var, lat, axis=-2, flip=False):
     axis : int, optional
         latitude axis in var, by default -2
     flip : bool, option
-        if True, reverse the data along the latitude index (so that abs(lat) is increasing)
+        if True, reverse the _data along the latitude index (so that abs(lat) is increasing)
 
 
     Returns
@@ -128,7 +128,7 @@ def select_box_indices(
     lat_axis=-2,
     lon_axis=-1,
 ):
-    """Extract data in a box from a field. The box is defined by its indices.
+    """Extract _data in a box from a field. The box is defined by its indices.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def select_box_lonlat(
     lon_axis=-1,
     lat_axis=-2,
 ):
-    """Extract data in a box from a field. The box is defined by its lon/lat coordinates
+    """Extract _data in a box from a field. The box is defined by its lon/lat coordinates
 
     Parameters
     ----------

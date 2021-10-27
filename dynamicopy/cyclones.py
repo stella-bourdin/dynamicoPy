@@ -7,7 +7,7 @@ from shapely.geometry import Point
 from haversine import haversine_vector, Unit
 
 """
-Format for loading the tracks data : 
+Format for loading the tracks _data : 
 track_id    time                lon     lat     hemisphere  basin   season  sshs    slp     wind10  year    month   day     (wind925)
 str         np.datetime64[ns]   float   float   str         str     str     int     float   float   int     int     int     (float)
 
@@ -17,11 +17,11 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 
 def clean_ibtracs(
     raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
-    csv_output="dynamicopy/data/ibtracs.since1980.cleaned.csv",
-    pkl_output="dynamicopy/data/ibtracs.pkl",
+    csv_output="dynamicopy/_data/ibtracs.since1980.cleaned.csv",
+    pkl_output="dynamicopy/_data/ibtracs.pkl",
 ):
     """
-    Function used to post-treat ibtracs data into a lighter file
+    Function used to post-treat ibtracs _data into a lighter file
 
     Parameters
     ----------
@@ -167,7 +167,7 @@ def clean_ibtracs(
 
 def load_ibtracs():
     stream = pkg_resources.resource_stream(
-        __name__, "data/ibtracs.since1980.cleaned.csv"
+        __name__, "_data/ibtracs.since1980.cleaned.csv"
     )
     ib = pd.read_csv(
         stream,
@@ -307,7 +307,7 @@ def load_TRACKtracks(
     ----------
     file (str): Path to the TRACK output file
     origin (str): 'ERA5' or 'HRMIP'
-    season (str): If None, is read from the data
+    season (str): If None, is read from the _data
 
     Returns
     -------

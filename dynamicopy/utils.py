@@ -11,7 +11,7 @@ def nbp2km(nbp):
 
 
 ### ======================================================= ###
-###          Utilitary data manipulation functions          ###
+###          Utilitary _data manipulation functions          ###
 ### ======================================================= ###
 
 
@@ -39,7 +39,7 @@ def sign_change_detect(A):
     Parameters
     ----------
     A : list or 1D array
-        The data in which we want to detect the sign change
+        The _data in which we want to detect the sign change
 
     Returns
     -------
