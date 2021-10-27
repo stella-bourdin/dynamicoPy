@@ -64,6 +64,19 @@ def get_time(year, month, day, hour):
 
 # TODO : Optimiser cette fonction
 def get_basin(lon, lat):
+    """
+    Get the basins corresponding to given lon and lat
+
+    Parameters
+    ----------
+    lon (np.array or pd.Series)
+    lat (np.array or pd.Series)
+
+    Returns
+    -------
+    list
+        basins list
+    """
     basin = []
     for x, y in zip(lon, lat):
         ok = False
