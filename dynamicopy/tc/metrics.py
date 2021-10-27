@@ -106,3 +106,9 @@ def get_freq(tracks):
     return freq.reindex(
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
+
+def prop_intense(freq):
+    cat_45_cols = list(freq.columns[:-1] >= 4) + [False]
+    freq_45 = freq.loc[:, cat_45_cols].sum(axis=1)
+    prop_45 = freq_45 / freq.loc[:, "All"]
+    return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
