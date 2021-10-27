@@ -6,7 +6,7 @@
 from netCDF4 import Dataset
 import numpy as np
 
-
+# TODO: Revoir avec xarray
 def var_load(varname, file_path, group=None, subgroup=None, silent=True):
     """Loads a variable from a netCDF file.
 
