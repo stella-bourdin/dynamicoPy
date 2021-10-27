@@ -108,12 +108,36 @@ def get_freq(tracks):
     )
 
 def prop_intense(freq):
+    """
+    Retrieve the proportion of intense tc among all
+
+    Parameters
+    ----------
+    freq (pd.Dataframe): output from the get_freq function
+
+    Returns
+    -------
+    pd.Dataframe
+        total freq, intense freq, intense prop
+    """
     cat_45_cols = list(freq.columns[:-1] >= 4) + [False]
     freq_45 = freq.loc[:, cat_45_cols].sum(axis=1)
     prop_45 = freq_45 / freq.loc[:, "All"]
     return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
 
 def storm_stats(tracks):
+    """
+    Statistics about each track
+
+    Parameters
+    ----------
+    tracks (pd.Dataframe): The track dataframe
+
+    Returns
+    -------
+    pd.Dataframe
+        Grouped dataframe of the initial one
+    """
     storms = (
         tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
         .agg(lambda x: x.value_counts().index[0])
