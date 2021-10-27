@@ -223,7 +223,7 @@ def read_TRACKfiles(
     tracks["day"] = time.day
     tracks["hour"] = time.hour
     tracks["hemisphere"] = "S" if SH else "N"
-    tracks["season"] = season
+    tracks = add_season(tracks)
     tracks["basin"] = get_basin(tracks.lon, tracks.lat)
     if "vor850" in tracks.columns:
         tracks["vor850"] = tracks.vor850.astype(float)
@@ -267,3 +267,35 @@ def read_TRACKfiles(
             "hour",
         ]
     ]
+
+def open_TRACKpkl(
+    path="",
+    NH_seasons=[1980, 2019],
+    SH_seasons=[1981, 2019],
+):
+    """
+    Function to open TRACK files saved as pkl after read_TRACKfiles
+
+    Parameters
+    ----------
+    path: Path to the pkl file
+    NH_season (list of 2 ints): first and last season in the northern hemisphere
+    SH_season (list of 2 ints): first and last season in the southern hemisphere
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns as described in the module header
+    """
+    with open(path, "rb") as handle:
+        tracks = pkl.load(handle)
+    tracks = add_season(tracks)
+    tracks = tracks[
+        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
+        | (tracks.hemisphere == "S")
+    ]
+    tracks = tracks[
+        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
+        | (tracks.hemisphere == "N")
+    ]
+    return tracks

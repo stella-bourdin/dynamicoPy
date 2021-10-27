@@ -18,35 +18,7 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 
 
 
-def open_TRACKpkl(
-    path="",
-    NH_seasons=[1980, 2019],
-    SH_seasons=[1981, 2019],
-):
-    """
 
-    Parameters
-    ----------
-    path
-    NH_seasons
-    SH_seasons
-
-    Returns
-    -------
-
-    """
-    with open(path, "rb") as handle:
-        tracks = pkl.load(handle)
-    tracks = add_season(tracks)
-    tracks = tracks[
-        ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
-        | (tracks.hemisphere == "S")
-    ]
-    tracks = tracks[
-        ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
-        | (tracks.hemisphere == "N")
-    ]
-    return tracks
 
 
 def load_CNRMtracks(
