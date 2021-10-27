@@ -289,7 +289,7 @@ def open_TRACKpkl(
     """
     with open(path, "rb") as handle:
         tracks = pkl.load(handle)
-    tracks = add_season(tracks)
+    tracks = add_season(tracks) # TODO : Supprimer quand tout aura retourné avec la nouvelle read_TRACKfile
     tracks = tracks[
         ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
         | (tracks.hemisphere == "S")

@@ -131,6 +131,7 @@ def clean_ibtracs(
     ib["month"] = ib.time.dt.month
     ib["year"] = ib.time.dt.year
     ib = add_season(ib)
+    ib["basin"] = get_basin(ib.lon, ib.lat)
     ib = ib[
         [
             "track_id",
@@ -175,4 +176,5 @@ def load_ibtracs():
         dtype={"slp": float, "wind10": float, "season": str},
         parse_dates=["time"],
     )
+    ib["basin"] = get_basin(ib.lon, ib.lat)
     return ib
