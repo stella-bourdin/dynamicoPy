@@ -27,7 +27,6 @@ SH = {"SI": SI, "SP": SP, "SA": SA}
 
 basins = dict(SH, **NH)
 
-
 def plot_basins(show=True, save=None):
     """
     Plot the basins according to the Knutson definition
