@@ -75,15 +75,4 @@ def plot_basins(show=True, save=None):
     if save != None:
         plt.savefig(save)
 
-
-basins_CZ = {
-    "NI": [[45, 100], [0, 40]],  # North Indian
-    "SI": [[30, 105], [-40, 0]],  # South Indian
-    "AUS": [[105, 165], [-40, 0]],  # Australia
-    "WNP": [[100, 200], [0, 40]],  # West North Pacific
-    "SP": [[165, 240], [-40, 0]],  # South Pacific
-    "ENP": [[200, 290], [0, 40]],  # East North Pacific
-    "ATL": [[260, 340], [0, 40]],  # Atlantic
-}
-
-# Il est possible de définir aussi les régions WMO
+# TODO (?) : Définir aussi les régions WMO
