@@ -78,5 +78,5 @@ def plot_tracks(
     h, l = g.get_legend_handles_labels()
     plt.legend(h[:-6], l[:-6])
 
-    plt.show()
+    #plt.show()
     return fig, ax
