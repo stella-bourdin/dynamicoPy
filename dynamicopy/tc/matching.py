@@ -48,3 +48,32 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib"):
         columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2}
     )
     return matches
+
+def merge_duplicates(tracks1, tracks2, matches = None):
+    """
+    Function to manage cases where tracks from tracks2 match with several tracks in tracks1,
+    by merging the duplicates into one track.
+
+    Parameters
+    ----------
+    tracks1 (pd.Dataframe)
+    tracks2 (pd.Dataframe)
+    matches (pd.Dataframe): The output from match_tracks on tracks1 and tracks2.
+        If None, match_tracks is run on tracks1 and tracks2.
+
+    Returns
+    -------
+    pd.Dataframe
+        The new match dataset
+    + tracks1 modified in place
+    """
+    c1, c2 = matches.columns[:2]
+    count = matches.groupby(c2)[[c1]].nunique()
+    duplicates = count[(count > 1).values].index
+    print("Handled " + str(len(duplicates)) + " duplicates")
+    for i in duplicates:
+        merge = matches[matches[c2] == i][c1].values
+        new_id = '+'.join(merge.astype(str))
+        tracks1["track_id"] = tracks1.track_id.replace({old_id: new_id for old_id in merge})
+    matches = match_tracks(tracks1, tracks2, c1[3:], c2[3:])
+    return matches
