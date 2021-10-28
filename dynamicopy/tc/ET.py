@@ -11,7 +11,8 @@ def identify_ET(tracks, NH_lim, SH_lim):
 
     Returns
     -------
-
+    pd.Dataframe
+        tracks with the ET column
     """
 
     # Pre-treat latitude limits
