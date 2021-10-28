@@ -42,7 +42,7 @@ def plot_tracks(
         fig, ax = fig_ax
 
     ax.coastlines()
-    ax.gridlines(draw_labels=False)
+    ax.gridlines(draw_labels=True)
 
     if intensity_col != None:
         if increasing_intensity:
