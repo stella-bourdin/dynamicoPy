@@ -47,3 +47,10 @@ def identify_ET(tracks, NH_lim, SH_lim):
             tracks.loc[row.Index, "ET"] = False
 
     return tracks
+
+def remove_ET(tracks):
+    tracks["trop"] = 1 - tracks.ET
+    ET_track_ids = tracks.groupby("track_id")["trop"].sum().index[tracks.groupby("track_id")["trop"].sum() < 2]
+    tracks_trop = tracks[~tracks.track_id.isin(ET_track_ids)]
+    tracks_ET = tracks[tracks.track_id.isin(ET_track_ids)]
+    return tracks_trop, tracks_ET
