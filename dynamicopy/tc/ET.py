@@ -29,10 +29,10 @@ def identify_ET(tracks, NH_lim, SH_lim):
     tracks["lon"] = np.where(tracks.lon > 180, tracks.lon - 360, tracks.lon)
 
     # Detect ET points
-    idx_lon = [np.where(NH_lim.longitude == tracks.lon.iloc[i])[0][0] for i in range(len(tracks))]
-    idx_time = [np.where(NH_lim.time.values == tracks.time.iloc[i])[0][0] for i in range(len(tracks))]
-    tracks["lat_STJ_NH"] = [NH_lim[(idx_time[i], idx_lon[i])].values for i in range(len(idx_time))]
-    tracks["lat_STJ_SH"] = [SH_lim[(idx_time[i], idx_lon[i])].values for i in range(len(idx_time))]
+    target_lon = xr.DataArray(tracks.lon, dims="points")
+    target_time = xr.DataArray(tracks.time, dims="points")
+    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon)
+    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)
     tracks["ET"] = (tracks.lat > tracks.lat_STJ_NH) | (tracks.lat < tracks.lat_STJ_SH)
 
     # Fill trajectories once one point is ET
