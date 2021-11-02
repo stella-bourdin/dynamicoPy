@@ -356,6 +356,8 @@ def load_CNRMtracks(
         | (tracks.hemisphere == "N")
     ]
     tracks["sshs"] = sshs_from_pres(tracks.slp)
+    if "ET" not in tracks.columns :
+        tracks["ET"] = np.nan
     return tracks[
         [
             "track_id",
@@ -371,6 +373,7 @@ def load_CNRMtracks(
             "year",
             "month",
             "day",
+            "ET",
         ]
     ]
 
