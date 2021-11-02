@@ -309,6 +309,8 @@ def open_TRACKpkl(
         ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
         | (tracks.hemisphere == "N")
     ]
+    if "ET" not in tracks.columns :
+        tracks["ET"] = np.nan
     return tracks
 
 
