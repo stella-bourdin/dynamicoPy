@@ -178,4 +178,5 @@ def load_ibtracs():
         parse_dates=["time"],
     )
     ib["basin"] = get_basin(ib.lon, ib.lat)
+    ib["ET"] = False
     return ib

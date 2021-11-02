@@ -375,6 +375,7 @@ def load_CNRMtracks(
             "year",
             "month",
             "day",
+            "hour",
             "ET",
         ]
     ]
