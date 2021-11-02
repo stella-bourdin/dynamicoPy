@@ -152,11 +152,11 @@ def storm_stats(tracks):
         (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
     )
     # Intensity stats : Only on tropical part
-    tracks = tracks[~tracks.ET]
+    tracks = tracks[(1 - tracks.ET) == 1]
     storms = storms.merge(
         tracks.groupby(["track_id"])[["sshs", "wind10"]].max().reset_index()
     )
-    storms = storms.merge(tracks[~tracks.ET].groupby(["track_id"])[["slp"]].min().reset_index())
+    storms = storms.merge(tracks.groupby(["track_id"])[["slp"]].min().reset_index())
 
     storms = storms.merge(
         storms[["track_id", "wind10"]]
