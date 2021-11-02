@@ -51,7 +51,8 @@ def load_TEtracks(
         ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
         | (tracks.hemisphere == "N")
     ]
-    tracks[slp_col] /= 100
+    if tracks[slp_col].mean() > 10000 :
+        tracks[slp_col] /= 100
     if slp_col != None:
         tracks["sshs"] = sshs_from_pres(tracks.slp.values)
     else:

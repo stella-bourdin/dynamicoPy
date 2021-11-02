@@ -141,18 +141,23 @@ def storm_stats(tracks):
     pd.Dataframe
         Grouped dataframe of the initial one
     """
+    tracks = tracks.copy()
+    tracks.loc[tracks.ET.isna(), "ET"] = False
     storms = (
         tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
-        .agg(lambda x: x.value_counts().index[0])
+        .agg(lambda x: x.value_counts().index[0])  #TODO : line responsible for the slow behavior
         .reset_index()
     )
     storms = storms.merge(
-        tracks.groupby(["track_id"])[["sshs", "wind10"]].max().reset_index()
-    )
-    storms = storms.merge(tracks.groupby(["track_id"])[["slp"]].min().reset_index())
-    storms = storms.merge(
         (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
     )
+    # Intensity stats : Only on tropical part
+    tracks = tracks[~tracks.ET]
+    storms = storms.merge(
+        tracks.groupby(["track_id"])[["sshs", "wind10"]].max().reset_index()
+    )
+    storms = storms.merge(tracks[~tracks.ET].groupby(["track_id"])[["slp"]].min().reset_index())
+
     storms = storms.merge(
         storms[["track_id", "wind10"]]
         .merge(tracks[["track_id", "wind10", "lat", "time"]])
