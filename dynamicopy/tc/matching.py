@@ -67,6 +67,8 @@ def merge_duplicates(tracks1, tracks2, matches = None):
         The new match dataset
     + tracks1 modified in place
     """
+    if matches == None:
+        matches = match_tracks(tracks1, tracks2)
     c1, c2 = matches.columns[:2]
     count = matches.groupby(c2)[[c1]].nunique()
     duplicates = count[(count > 1).values].index
@@ -77,3 +79,35 @@ def merge_duplicates(tracks1, tracks2, matches = None):
         tracks1["track_id"] = tracks1.track_id.replace({old_id: new_id for old_id in merge})
     matches = match_tracks(tracks1, tracks2, c1[3:], c2[3:])
     return matches
+
+def overlap(tracks1, tracks2, matches = None):
+    """
+    Function computing the overlap between matched tracks.
+
+    Parameters
+    ----------
+    tracks1 (pd.Dataframe)
+    tracks2 (pd.Dataframe)
+    matches (pd.Dataframe): The output from match_tracks on tracks1 and tracks2.
+        If None, match_tracks is run on tracks1 and tracks2.
+
+    Returns
+    -------
+    pd.Dataframe
+        Match dataset with added deltas
+    """
+    if matches == None:
+        matches = match_tracks(tracks1, tracks2)
+    c1, c2 = matches.columns[:2].str.slice(3)
+    matches = matches.join(tracks1.groupby("track_id")[["time"]].min().rename(columns={"time":"tmin_"+c1}), on = 'id_'+c1
+                      ).join(tracks1.groupby("track_id")[["time"]].max().rename(columns={"time":"tmax_"+c1}), on = 'id_'+c1
+                      ).join(tracks2.groupby("track_id")[["time"]].min().rename(columns={"time":"tmin_"+c2}), on = 'id_'+c2
+                      ).join(tracks2.groupby("track_id")[["time"]].max().rename(columns={"time":"tmax_"+c2}), on = 'id_'+c2
+                      )
+
+    matches["delta_start"] = matches["tmin_"+c2] - matches["tmin_"+c1]
+    matches["delta_end"] = matches["tmax_"+c2] - matches["tmax_"+c1]
+    matches["delta_end"] = (matches.delta_end.dt.days + matches.delta_end.dt.seconds / 86400)
+    matches["delta_start"] = (matches.delta_start.dt.days + matches.delta_start.dt.seconds / 86400)
+
+    return matches[['id_algo', 'id_ib', 'temp', 'dist', 'delta_start', 'delta_end']]
