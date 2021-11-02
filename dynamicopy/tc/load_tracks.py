@@ -34,7 +34,8 @@ def load_TEtracks(
     """
 
     tracks = pd.read_csv(file)
-    tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
+    if tracks.columns.str[0][1] == " ":
+        tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
     tracks = tracks.rename(columns={surf_wind_col: "wind10", slp_col: "slp"})
 
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
@@ -55,6 +56,8 @@ def load_TEtracks(
         tracks["sshs"] = sshs_from_pres(tracks.slp.values)
     else:
         tracks["sshs"] = np.nan
+    if "ET" not in tracks.columns :
+        tracks["ET"] = np.nan
     return tracks[
         [
             "track_id",
@@ -71,6 +74,7 @@ def load_TEtracks(
             "month",
             "day",
             "hour",
+            "ET",
         ]
     ]
 
