@@ -348,6 +348,7 @@ def load_CNRMtracks(
     tracks["year"] = tracks.time.dt.year
     tracks["month"] = tracks.time.dt.month
     tracks["day"] = tracks.time.dt.day
+    tracks["hour"] = tracks.time.dt.hour
     tracks = add_season(tracks)
     tracks = tracks[
         ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
