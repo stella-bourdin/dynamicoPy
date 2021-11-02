@@ -110,4 +110,4 @@ def overlap(tracks1, tracks2, matches = None):
     matches["delta_end"] = (matches.delta_end.dt.days + matches.delta_end.dt.seconds / 86400)
     matches["delta_start"] = (matches.delta_start.dt.days + matches.delta_start.dt.seconds / 86400)
 
-    return matches[['id_algo', 'id_ib', 'temp', 'dist', 'delta_start', 'delta_end']]
+    return matches[['id_'+c1, 'id_'+c2, 'temp', 'dist', 'delta_start', 'delta_end']]
