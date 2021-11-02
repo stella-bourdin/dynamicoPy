@@ -341,6 +341,7 @@ def load_CNRMtracks(
         }
     )
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["lon"] = np.where(tracks.lon < 0, tracks.lon + 360, tracks.lon)
     tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
     tracks["time"] = tracks.time.astype(np.datetime64)
     tracks["year"] = tracks.time.dt.year
