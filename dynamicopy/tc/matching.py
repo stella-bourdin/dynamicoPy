@@ -67,7 +67,7 @@ def merge_duplicates(tracks1, tracks2, matches = None):
         The new match dataset
     + tracks1 modified in place
     """
-    if matches == None:
+    if type(matches) == type(None):
         matches = match_tracks(tracks1, tracks2)
     c1, c2 = matches.columns[:2]
     count = matches.groupby(c2)[[c1]].nunique()
@@ -96,7 +96,7 @@ def overlap(tracks1, tracks2, matches = None):
     pd.Dataframe
         Match dataset with added deltas
     """
-    if matches == None:
+    if type(matches) == type(None):
         matches = match_tracks(tracks1, tracks2)
     c1, c2 = matches.columns[:2].str.slice(3)
     matches = matches.join(tracks1.groupby("track_id")[["time"]].min().rename(columns={"time":"tmin_"+c1}), on = 'id_'+c1
