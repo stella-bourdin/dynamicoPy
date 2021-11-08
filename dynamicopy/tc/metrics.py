@@ -50,6 +50,7 @@ def tc_count(tracks):
 
 
 def get_freq(tracks):
+    tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
         lambda x: x.value_counts().index[0]
     )
