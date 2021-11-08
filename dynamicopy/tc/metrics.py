@@ -111,7 +111,7 @@ def get_freq(tracks):
     )
 
 
-def prop_intense(freq):
+def prop_intense(freq, sshs_min = 4):
     """
     Retrieve the proportion of intense tc among all
 
@@ -124,7 +124,7 @@ def prop_intense(freq):
     pd.Dataframe
         total freq, intense freq, intense prop
     """
-    cat_45_cols = list(freq.columns[:-1] >= 4) + [False]
+    cat_45_cols = list(freq.columns[:-1] >= sshs_min) + [False]
     freq_45 = freq.loc[:, cat_45_cols].sum(axis=1)
     prop_45 = freq_45 / freq.loc[:, "All"]
     return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
