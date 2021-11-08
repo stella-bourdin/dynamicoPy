@@ -14,6 +14,7 @@ def tc_count(tracks):
     pd.DataFrame
         A two-entry table with the basins as rows and the categories as columns, values are the counts. Total added.
     """
+    tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["hemisphere", "basin"]].agg(
         lambda x: x.value_counts().index[0]
     )
