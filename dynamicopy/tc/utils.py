@@ -99,8 +99,9 @@ def get_basin(lon, lat):
             basin.append(np.nan)
     return basin
 
-
-def sshs_from_pres(p):
+_Simpson_pres_thresholds=[990, 980, 970, 965, 945, 920]
+_Klotzbach_pres_thresholds=[1005, 990, 975, 960, 945, 925]
+def sshs_from_pres(p, classification = "Klotzbach"):
     """
     Get the SSHS corresponding to the pressure
 
@@ -113,12 +114,16 @@ def sshs_from_pres(p):
     float or np.array
         SSHS category
     """
-    sshs = np.where(p > 990, -1, None)
-    sshs = np.where((sshs == None) & (p >= 980), 0, sshs)
-    sshs = np.where((sshs == None) & (p >= 970), 1, sshs)
-    sshs = np.where((sshs == None) & (p >= 965), 2, sshs)
-    sshs = np.where((sshs == None) & (p >= 945), 3, sshs)
-    sshs = np.where((sshs == None) & (p >= 920), 4, sshs)
+    if classification == "Klotzbach" :
+        p0, p1, p2, p3, p4, p5 = _Klotzbach_pres_thresholds
+    else :
+        p0, p1, p2, p3, p4, p5 = _Simpson_pres_thresholds
+    sshs = np.where(p > p0, -1, None)
+    sshs = np.where((sshs == None) & (p >= p1), 0, sshs)
+    sshs = np.where((sshs == None) & (p >= p2), 1, sshs)
+    sshs = np.where((sshs == None) & (p >= p3), 2, sshs)
+    sshs = np.where((sshs == None) & (p >= p4), 3, sshs)
+    sshs = np.where((sshs == None) & (p >= p5), 4, sshs)
     sshs = np.where((sshs == None) & (~np.isnan(p)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
