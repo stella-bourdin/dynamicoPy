@@ -9,6 +9,8 @@ def _clean_ibtracs(
     raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
     csv_output="dynamicopy/_data/ibtracs.since1980.cleaned.csv",
     pkl_output="dynamicopy/_data/ibtracs.pkl",
+    six_hourly = True,
+    threshold_wind = True,
 ):
     """
     Function used to post-treat ibtracs _data into a lighter file
@@ -71,9 +73,15 @@ def _clean_ibtracs(
         },
         parse_dates=["ISO_TIME"],
     )
+    # Remove spur tracls
     ib = ib[~ib.TRACK_TYPE.str.startswith("spur")]
+
+    # Season selection
     ib = ib[ib.SEASON < 2020]
     ib = ib[(ib.SEASON > 1980) | (ib.LAT > 0)]
+
+    # All about wind
+    ## Select from the data & convert
     ib["WIND10"] = np.where(
         ~ib.WMO_WIND.isna(),
         ib.WMO_WIND,
@@ -88,16 +96,14 @@ def _clean_ibtracs(
         ib.WIND10.isna(), ib.CMA_WIND / 1.08, ib.WIND10
     )  # Conversion rate determined through a linear regression
     ib["WIND10"] *= 0.514  # Conversion noeuds en m/s
-    tcs = (
-        ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17].index
-    )
-    ib = ib[ib.SID.isin(tcs)]  # Filter tracks not reaching 17 m/s
-    tcs = (
-        ib.groupby("SID")["ISO_TIME"]
-        .count()[ib.groupby("SID")["ISO_TIME"].count() >= 4]
-        .index
-    )
-    ib = ib[ib.SID.isin(tcs)]  # Filter tracks not reaching 17 m/s
+    ## Filter tracks not reaching 17 m/s
+    if threshold_wind:
+        tcs = (
+            ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17].index
+        )
+        ib = ib[ib.SID.isin(tcs)]
+
+    # Select pressure
     ib["PRES"] = np.where(
         ~ib.WMO_PRES.isna(),
         ib.WMO_PRES,
@@ -115,6 +121,8 @@ def _clean_ibtracs(
             ]
         ].mean(axis=1, skipna=True),
     )
+
+    # Rename columns
     ib = ib.rename(columns={col: col.lower() for col in ib.columns}).rename(
         columns={
             "usa_sshs": "sshs",
@@ -123,16 +131,29 @@ def _clean_ibtracs(
             "iso_time": "time",
         }
     )
+
+    # Geographical details
     ib.loc[ib.lon < 0, "lon"] += 360
     ib["hemisphere"] = np.where(ib.lat > 0, "N", "S")
-    ib["basin"] = (
-        ib.basin.replace("EP", "ENP").replace("WP", "WNP").replace("NA", "NATL")
-    )
+    ib["basin"] = get_basin(ib.lon, ib.lat)
+
+    # All about time
+    ib["hour"] = ib.time.dt.hour
     ib["day"] = ib.time.dt.day
     ib["month"] = ib.time.dt.month
     ib["year"] = ib.time.dt.year
     ib = add_season(ib)
-    ib["basin"] = get_basin(ib.lon, ib.lat)
+    ## Filter 6-hourly
+    if six_hourly : ib = ib[ib.hour % 6 == 0];
+    ## Filter tracks lasting for at least 4 time steps
+    tcs = (
+        ib.groupby("track_id")["time"]
+            .count()[ib.groupby("track_id")["time"].count() >= 4]
+            .index
+    )
+    ib = ib[ib.track_id.isin(tcs)]
+
+
     ib = ib[
         [
             "track_id",
@@ -148,8 +169,12 @@ def _clean_ibtracs(
             "year",
             "month",
             "day",
+            "hour",
         ]
     ]
+
+    ib["ET"] = False
+
     # Save
     ib.to_csv(csv_output)
     with open(pkl_output, "wb") as handle:
@@ -177,6 +202,5 @@ def load_ibtracs():
         dtype={"slp": float, "wind10": float, "season": str},
         parse_dates=["time"],
     )
-    ib["basin"] = get_basin(ib.lon, ib.lat)
-    ib["ET"] = False
+
     return ib
