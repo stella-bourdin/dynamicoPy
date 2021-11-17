@@ -43,7 +43,6 @@ def _clean_ibtracs(
             "TRACK_TYPE",
             "LON",
             "LAT",
-            "USA_SSHS",
             "WMO_WIND",
             "USA_WIND",
             "TOKYO_WIND",
@@ -125,7 +124,6 @@ def _clean_ibtracs(
     # Rename columns
     ib = ib.rename(columns={col: col.lower() for col in ib.columns}).rename(
         columns={
-            "usa_sshs": "sshs",
             "sid": "track_id",
             "pres": "slp",
             "iso_time": "time",
@@ -153,6 +151,8 @@ def _clean_ibtracs(
     )
     ib = ib[ib.track_id.isin(tcs)]
 
+    # Compute SSHS classification according to Klotzbach
+    ib["sshs"] = sshs_from_pres(ib.slp)
 
     ib = ib[
         [
