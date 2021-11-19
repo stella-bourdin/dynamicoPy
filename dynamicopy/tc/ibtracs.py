@@ -72,7 +72,7 @@ def _clean_ibtracs(
         },
         parse_dates=["ISO_TIME"],
     )
-    # Remove spur tracls
+    # Remove spur tracks
     ib = ib[~ib.TRACK_TYPE.str.startswith("spur")]
 
     # Season selection
@@ -98,7 +98,7 @@ def _clean_ibtracs(
     ## Filter tracks not reaching 17 m/s
     if threshold_wind:
         tcs = (
-            ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17].index
+            ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17/1.12].index
         )
         ib = ib[ib.SID.isin(tcs)]
 
