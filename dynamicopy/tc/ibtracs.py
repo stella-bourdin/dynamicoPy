@@ -1,6 +1,7 @@
 import pandas as pd
 import pickle as pkl
 import pkg_resources
+import datetime
 import numpy as np
 from .utils import *
 
@@ -98,7 +99,7 @@ def _clean_ibtracs(
     ## Filter tracks not reaching 17 m/s
     if threshold_wind:
         tcs = (
-            ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 17/1.12].index
+            ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 16].index
         )
         ib = ib[ib.SID.isin(tcs)]
 
@@ -142,7 +143,8 @@ def _clean_ibtracs(
     ib["year"] = ib.time.dt.year
     ib = add_season(ib)
     ## Filter 6-hourly
-    if six_hourly : ib = ib[ib.hour % 6 == 0];
+    origin = datetime.datetime(1800, 1, 1, 0, 0, 0)
+    if six_hourly : ib = ib[(ib.time - origin).dt.total_seconds() % (6*60*60) == 0];
     ## Filter tracks lasting for at least 4 time steps
     tcs = (
         ib.groupby("track_id")["time"]
