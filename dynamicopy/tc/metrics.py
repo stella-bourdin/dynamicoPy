@@ -144,6 +144,7 @@ def storm_stats(tracks):
         Grouped dataframe of the initial one
     """
     tracks = tracks.copy()
+    tracks["wind10"] = tracks.wind10.round(2)
     tracks.loc[tracks.ET.isna(), "ET"] = False
     storms = (
         tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
@@ -160,16 +161,16 @@ def storm_stats(tracks):
     )
     storms = storms.merge(tracks.groupby(["track_id"])[["slp"]].min().reset_index())
 
-    storms = storms.merge(
+    storms = storms.merge(   # Wind lat
         storms[["track_id", "wind10"]]
         .merge(tracks[["track_id", "wind10", "lat", "time"]])
         .groupby("track_id")
         .agg(lambda t: t.mean())
         .reset_index()
-        .rename(columns={"lat": "lat_wind", "time": "time_wind"}),
+        .rename(columns={"lat": "lat_wind", "time": "time_wind"}).round(2),
         how="outer",
     )
-    storms = storms.merge(
+    storms = storms.merge(    # slp lat
         storms[["track_id", "slp"]]
         .merge(tracks[["track_id", "slp", "lat", "time"]])
         .groupby("track_id")
