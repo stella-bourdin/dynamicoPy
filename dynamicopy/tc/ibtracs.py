@@ -96,12 +96,6 @@ def _clean_ibtracs(
         ib.WIND10.isna(), ib.CMA_WIND / 1.08, ib.WIND10
     )  # Conversion rate determined through a linear regression
     ib["WIND10"] *= 0.514  # Conversion noeuds en m/s
-    ## Filter tracks not reaching 17 m/s
-    if threshold_wind:
-        tcs = (
-            ib.groupby("SID")["WIND10"].max()[ib.groupby("SID")["WIND10"].max() >= 16].index
-        )
-        ib = ib[ib.SID.isin(tcs)]
 
     # Select pressure
     ib["PRES"] = np.where(
@@ -145,6 +139,7 @@ def _clean_ibtracs(
     ## Filter 6-hourly
     origin = datetime.datetime(1800, 1, 1, 0, 0, 0)
     if six_hourly : ib = ib[(ib.time - origin).dt.total_seconds() % (6*60*60) == 0];
+
     ## Filter tracks lasting for at least 4 time steps
     tcs = (
         ib.groupby("track_id")["time"]
@@ -152,6 +147,13 @@ def _clean_ibtracs(
             .index
     )
     ib = ib[ib.track_id.isin(tcs)]
+
+    ## Filter tracks not reaching 16 m/s
+    if threshold_wind:
+        tcs = (
+            ib.groupby("track_id")["wind10"].max()[ib.groupby("track_id")["wind10"].max() >= 16].index
+        )
+        ib = ib[ib.track_id.isin(tcs)]
 
     # Compute SSHS classification according to Klotzbach
     ib["sshs"] = sshs_from_pres(ib.slp)
