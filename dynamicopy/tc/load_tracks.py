@@ -207,15 +207,15 @@ def read_TRACKfiles(
     f.close()
 
     SH = tracks.lat.mean() < 0
-    if len(season) == 4:
+    if SH :
+        start = start = np.datetime64(str(int(season) - 1) + "-07-01 00:00:00")
+    else :
         start = np.datetime64(season + "-01-01 00:00:00")
-    elif len(season) == 8:
-        start = np.datetime64(season[:4] + "-07-01 00:00:00")
     if time_format == "calendar":
-        tracks["year"] = season[-4:]  # tracks.time_step.str[:4].astype(int)
-        tracks["month"] = tracks.time_step.str[-6:-4]  # .astype(int)
-        tracks["day"] = tracks.time_step.str[-4:-2]  # .astype(int)
-        tracks["hour"] = tracks.time_step.str[-2:]  # .astype(int)
+        tracks["year"] = season
+        tracks["month"] = tracks.time_step.str[-6:-4]
+        tracks["day"] = tracks.time_step.str[-4:-2]
+        tracks["hour"] = tracks.time_step.str[-2:]
         tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
         tracks["delta"] = tracks["time"] - np.datetime64(season[-4:] + "-01-01 00")
         tracks["time"] = tracks["delta"] + start
