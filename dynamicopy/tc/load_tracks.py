@@ -252,7 +252,6 @@ def read_TRACKfiles(
         tracks["wind925"] = np.nan
     else:
         tracks["wind925"] = tracks.wind925.astype(float)
-    print("")
     return tracks[
         [
             "track_id",
@@ -298,9 +297,6 @@ def open_TRACKpkl(
     """
     with open(path, "rb") as handle:
         tracks = pkl.load(handle)
-    tracks = add_season(
-        tracks
-    )  # TODO : Supprimer quand tout aura retourné avec la nouvelle read_TRACKfile
     tracks = tracks[
         ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
         | (tracks.hemisphere == "S")
