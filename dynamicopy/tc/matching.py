@@ -25,25 +25,35 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib"):
         tracks1[["track_id", "lon", "lat", "time"]],
         tracks2[["track_id", "lon", "lat", "time"]],
     )
+    # Find corresponding points (same time step, less than 300km)
     merged = pd.merge(tracks1, tracks2, on="time")
     X = np.concatenate([[merged.lat_x], [merged.lon_x]]).T
     Y = np.concatenate([[merged.lat_y], [merged.lon_y]]).T
     merged["dist"] = haversine_vector(X, Y, unit=Unit.KILOMETERS)
     merged = merged[merged.dist <= 300]
+    # Compute temporal overlap
     temp = (
         merged.groupby(["track_id_x", "track_id_y"])[["dist"]]
         .count()
         .rename(columns={"dist": "temp"})
     )
+    # Build a table of all pairs of tracks sharing at least one point
     matches = (
         merged[["track_id_x", "track_id_y"]]
         .drop_duplicates()
         .join(temp, on=["track_id_x", "track_id_y"])
     )
+    # For each track of the first set, only keep the track of the second set with the longest overlap
     maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
     matches = maxs.merge(matches)[["track_id_x", "track_id_y", "temp"]]
+    # In case there remains duplicates:
+    # For one track of the first set two tracks of the second correspond with the same overlap
+    # We keep the closest one
     dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
     matches = matches.join(dist, on=["track_id_x", "track_id_y"])
+    mins = matches.groupby("track_id_x")[["dist"]].min().reset_index()
+    matches = mins.merge(matches)[["track_id_x", "track_id_y", "temp", "dist"]]
+    # Rename columns before output
     matches = matches.rename(
         columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2}
     )

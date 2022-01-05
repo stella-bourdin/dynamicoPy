@@ -136,9 +136,17 @@ def _clean_ibtracs(
     ib["month"] = ib.time.dt.month
     ib["year"] = ib.time.dt.year
     ib = add_season(ib)
+
     ## Filter 6-hourly
     origin = datetime.datetime(1800, 1, 1, 0, 0, 0)
     if six_hourly : ib = ib[(ib.time - origin).dt.total_seconds() % (6*60*60) == 0];
+
+    ## Filter tracks not reaching 16 m/s
+    if threshold_wind:
+        tcs = (
+            ib.groupby("track_id")["wind10"].max()[ib.groupby("track_id")["wind10"].max() >= 16].index
+        )
+        ib = ib[ib.track_id.isin(tcs)]
 
     ## Filter tracks lasting for at least 4 time steps
     tcs = (
@@ -147,13 +155,6 @@ def _clean_ibtracs(
             .index
     )
     ib = ib[ib.track_id.isin(tcs)]
-
-    ## Filter tracks not reaching 16 m/s
-    if threshold_wind:
-        tcs = (
-            ib.groupby("track_id")["wind10"].max()[ib.groupby("track_id")["wind10"].max() >= 16].index
-        )
-        ib = ib[ib.track_id.isin(tcs)]
 
     # Compute SSHS classification according to Klotzbach
     ib["sshs"] = sshs_from_pres(ib.slp)
