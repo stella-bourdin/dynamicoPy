@@ -6,7 +6,14 @@ Oceanic basins as defined by Knutson et al. 2020 appendix.
 
 from shapely.geometry import Polygon, MultiPolygon
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+try:
+    import cartopy.crs as ccrs
+    from .cartoplot import *
+except ImportError:
+    print(
+        "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
+    Please install cartopy if you wish to use it."
+    )
 import numpy as np
 import matplotlib.ticker as mticker
 
