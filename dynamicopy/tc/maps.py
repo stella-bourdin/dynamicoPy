@@ -1,5 +1,12 @@
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+try:
+    import cartopy.crs as ccrs
+    from .cartoplot import *
+except ImportError:
+    print(
+        "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
+    Please install cartopy if you wish to use it."
+    )
 import seaborn as sns
 import numpy as np
 
