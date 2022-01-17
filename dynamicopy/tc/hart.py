@@ -20,6 +20,17 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
         Θ *= -1
     return Θ
 
+def theta_track(track):
+    Θ = []
+    track=track.reset_index()
+    for i in track.index[:-1]:  # On calcule la direction de chaque point vers son successeur
+        Θ.append(theta(track.loc[i, 'lon'], track.loc[i + 1, 'lon'], track.loc[i, 'lat'], track.loc[i + 1, 'lat']))
+        if np.isnan(Θ[-1]):  # S'il est indentique, on prend la direction précédente
+            if i != 0 :
+                Θ[-1] = Θ[-2]
+    Θ.append(Θ[-1])
+    return Θ
+
 def right_left(field, Θ):
     """
     Separate field into left and right of the Θ line.
@@ -72,14 +83,11 @@ def B(Θ, snap, SH = False):
     """
     z900 = snap.snap_z900
     z600 = snap.snap_z600
-
     z900_R, z900_L = right_left(z900, Θ)
     z600_R, z600_L = right_left(z600, Θ)
-
     ΔZ_R = z900_R - z600_R
     ΔZ_L = z900_L - z600_L
-
-    if SH : h = -1 ;
+    if SH : h = -1;
     else : h=1;
     return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean() - ΔZ_L.weighted(area_weights(ΔZ_L)).mean())
 
@@ -98,12 +106,9 @@ def VT(snap):
     z900 = snap.snap_z900
     z600 = snap.snap_z600
     z300 = snap.snap_z300
-
     δz300 = np.abs(z300.max() - z300.min())
     δz600 = np.abs(z600.max() - z600.min())
     δz900 = np.abs(z900.max() - z900.min())
-
     VTL = 750 * (δz900 - δz600) / (900 - 600)
     VTU = 450 * (δz600 - δz300) / (600 - 300)
-
     return VTL, VTU

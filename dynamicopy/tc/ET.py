@@ -32,8 +32,8 @@ def identify_ET(tracks, NH_lim, SH_lim):
     # Detect ET points
     target_lon = xr.DataArray(tracks.lon, dims="points")
     target_time = xr.DataArray(tracks.time, dims="points")
-    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon)
-    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)
+    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon).longitude
+    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon).longitude
     tracks["ET"] = (tracks.lat > tracks.lat_STJ_NH) | (tracks.lat < tracks.lat_STJ_SH)
 
     # Fill trajectories once one point is ET

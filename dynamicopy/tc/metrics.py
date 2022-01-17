@@ -48,7 +48,7 @@ def tc_count(tracks):
         .reindex(["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"])
     )
 
-def get_freq(tracks):
+def get_freq(tracks): # TODO : A optimiser
     tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
         lambda x: x.value_counts().index[0]
@@ -61,7 +61,7 @@ def get_freq(tracks):
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
 
-"""
+""" # Version qui avait des erreurs dans les sommes, à revoir si besoin de la distinction en SSHS
 def get_freq(tracks):
     tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
