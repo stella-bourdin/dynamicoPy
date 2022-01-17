@@ -48,7 +48,20 @@ def tc_count(tracks):
         .reindex(["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"])
     )
 
+def get_freq(tracks):
+    tracks = tracks[~tracks.ET].copy()
+    storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
+        lambda x: x.value_counts().index[0]
+    )
+    basins = storms.reset_index().groupby(["season", "basin"])["track_id"].count().reset_index().pivot_table(index=["basin"], columns="season", fill_value=0).mean(axis=1)
+    hemi = storms.reset_index().groupby(["season", "hemisphere"])["track_id"].count().reset_index().pivot_table(index=["hemisphere"], columns="season", fill_value=0).mean(axis=1)
+    freq = hemi.append(basins)
+    freq.loc["global"] = freq.loc["S"] + freq.loc["N"]
+    return freq.reindex(
+        ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
+    )
 
+"""
 def get_freq(tracks):
     tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
@@ -96,20 +109,14 @@ def get_freq(tracks):
         .reset_index()
     )
 
-    freq = (
-        SH.append(NH)
-        .append(basins)
-        .pivot_table(
-            index="basin", columns="sshs", fill_value=0.0, margins=True, aggfunc=np.sum
-        )
-        .drop("All")
-    )
+    freq = SH.append(NH).append(basins).pivot_table(index="basin", columns="sshs", fill_value=0.0, margins=True, aggfunc=np.sum).drop("All")
+
     freq.loc["global"] = freq.loc["S"] + freq.loc["N"]
     freq.columns = freq.columns.get_level_values(1)
     return freq.reindex(
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
-
+"""
 
 def prop_intense(freq, sshs_min = 4):
     """
