@@ -1,3 +1,5 @@
+import numpy as np
+
 def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     """
     Computes the angular direction between to points. 0° corresponds to eastward, 90° northward, 180° westward and 270° southward
