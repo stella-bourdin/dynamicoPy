@@ -30,7 +30,8 @@ def theta_track(track):
         if np.isnan(Θ[-1]):  # S'il est indentique, on prend la direction précédente
             if i != 0 :
                 Θ[-1] = Θ[-2]
-    Θ.append(Θ[-1])
+    if len(track) > 1 : Θ.append(Θ[-1]);
+    else : Θ = [np.nan]
     return Θ
 
 def right_left(field, Θ):
