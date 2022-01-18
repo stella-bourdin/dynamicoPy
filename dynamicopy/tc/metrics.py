@@ -56,7 +56,11 @@ def get_freq(tracks): # TODO : A optimiser
     basins = storms.reset_index().groupby(["season", "basin"])["track_id"].count().reset_index().pivot_table(index=["basin"], columns="season", fill_value=0).mean(axis=1)
     hemi = storms.reset_index().groupby(["season", "hemisphere"])["track_id"].count().reset_index().pivot_table(index=["hemisphere"], columns="season", fill_value=0).mean(axis=1)
     freq = hemi.append(basins)
-    freq.loc["global"] = freq.loc["S"] + freq.loc["N"]
+    freq.loc["global"] = 0
+    if "S" in freq.index :
+        freq.loc["global"] += freq.loc["S"]
+    if "N" in freq.index :
+        freq.loc["global"] += freq.loc["N"]
     return freq.reindex(
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
