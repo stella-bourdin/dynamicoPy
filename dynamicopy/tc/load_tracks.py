@@ -59,6 +59,29 @@ def load_TEtracks(
         tracks["sshs"] = np.nan
     if "ET" not in tracks.columns :
         tracks["ET"] = np.nan
+    if "VTU" in tracks.columns:
+        return tracks[
+            [
+                "track_id",
+                "time",
+                "lon",
+                "lat",
+                "hemisphere",
+                "basin",
+                "season",
+                "sshs",
+                "slp",
+                "wind10",
+                "year",
+                "month",
+                "day",
+                "hour",
+                "ET",
+                "B",
+                "VTL",
+                "VTU",
+            ]
+        ]
     return tracks[
         [
             "track_id",
