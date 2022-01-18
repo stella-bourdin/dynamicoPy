@@ -32,8 +32,8 @@ def identify_ET(tracks, NH_lim, SH_lim):
     # Detect ET points
     target_lon = xr.DataArray(tracks.lon, dims="points")
     target_time = xr.DataArray(tracks.time, dims="points")
-    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon).longitude
-    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon).longitude
+    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon)#.longitude
+    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)#.longitude
     tracks["ET"] = (tracks.lat > tracks.lat_STJ_NH) | (tracks.lat < tracks.lat_STJ_SH)
 
     # Fill trajectories once one point is ET
@@ -49,9 +49,20 @@ def identify_ET(tracks, NH_lim, SH_lim):
 
     return tracks
 
-def remove_ET(tracks):
+def remove_ET(tracks, trop_pts=1):
+    """
+
+    Parameters
+    ----------
+    tracks
+    trop_pts (int): Number of trop points
+
+    Returns
+    -------
+
+    """
     tracks["trop"] = 1 - tracks.ET
-    ET_track_ids = tracks.groupby("track_id")["trop"].sum().index[tracks.groupby("track_id")["trop"].sum() < 2]
+    ET_track_ids = tracks.groupby("track_id")["trop"].sum().index[tracks.groupby("track_id")["trop"].sum() < trop_pts+1]
     tracks_trop = tracks[~tracks.track_id.isin(ET_track_ids)]
     tracks_ET = tracks[tracks.track_id.isin(ET_track_ids)]
     return tracks_trop, tracks_ET
