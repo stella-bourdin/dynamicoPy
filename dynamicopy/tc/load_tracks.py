@@ -77,7 +77,6 @@ def load_TEtracks(
                 "day",
                 "hour",
                 "ET",
-                "B",
                 "VTL",
                 "VTU",
             ]
