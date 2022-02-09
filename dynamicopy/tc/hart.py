@@ -71,7 +71,7 @@ def area_weights(field) :
     w = (field.r +δ) ** 2 - (field.r - δ) ** 2
     return w
 
-def B(Θ, snap, SH = False):
+def B(Θ, snap, SH = False, names=["snap_z900", "snap_z600"]):
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
@@ -84,8 +84,8 @@ def B(Θ, snap, SH = False):
     -------
 
     """
-    z900 = snap.snap_z900
-    z600 = snap.snap_z600
+    z900 = snap[names[0]]
+    z600 = snap[names[1]]
     z900_R, z900_L = right_left(z900, Θ)
     z600_R, z600_L = right_left(z600, Θ)
     ΔZ_R = z900_R - z600_R
@@ -94,7 +94,7 @@ def B(Θ, snap, SH = False):
     else : h=1;
     return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean() - ΔZ_L.weighted(area_weights(ΔZ_L)).mean())
 
-def VT(snap):
+def VT(snap, names=["snap_z900", "snap_z600", "snap_z300"]):
     """
     Computes V_T^U and V_T^L parameters for the given snapshot of geopt at 300, 600 and 900 hPa
 
@@ -106,9 +106,9 @@ def VT(snap):
     -------
 
     """
-    z900 = snap.snap_z900
-    z600 = snap.snap_z600
-    z300 = snap.snap_z300
+    z900 = snap[names[0]]
+    z600 = snap[names[1]]
+    z300 = snap[names[2]]
     δz300 = np.abs(z300.max() - z300.min())
     δz600 = np.abs(z600.max() - z600.min())
     δz900 = np.abs(z900.max() - z900.min())
