@@ -59,6 +59,8 @@ def load_TEtracks(
         tracks["sshs"] = np.nan
     if "ET" not in tracks.columns :
         tracks["ET"] = np.nan
+    if "B" not in tracks.columns:
+        tracks["B"] = np.nan
     if "VTU" in tracks.columns:
         return tracks[
             [
@@ -77,6 +79,7 @@ def load_TEtracks(
                 "day",
                 "hour",
                 "ET",
+                "B",
                 "VTL",
                 "VTU",
             ]
