@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-def identify_ET(tracks, NH_lim, SH_lim):
+def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude"):
     """
 
     Parameters
@@ -10,7 +10,6 @@ def identify_ET(tracks, NH_lim, SH_lim):
     NH_lim (xr.DataArray)
     SH_lim (xr.DataArray)
 
-    Returns
     -------
     pd.Dataframe
         tracks with the ET column
@@ -18,8 +17,8 @@ def identify_ET(tracks, NH_lim, SH_lim):
 
     # Pre-treat latitude limits
     ## Fill NAs in the latitude limits with linear interpolation
-    NH_lim = NH_lim.interpolate_na(dim="longitude")
-    SH_lim = SH_lim.interpolate_na(dim="longitude")
+    NH_lim = NH_lim.interpolate_na(dim=lon_name)
+    SH_lim = SH_lim.interpolate_na(dim=lon_name)
     ## Change time to -3h to fit with tracks
     NH_lim["time"] = NH_lim.time - np.timedelta64(3, 'h')
     SH_lim["time"] = SH_lim.time - np.timedelta64(3, 'h')
