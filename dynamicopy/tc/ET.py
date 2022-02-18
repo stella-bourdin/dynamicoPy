@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude"):
+def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True):
     """
 
     Parameters
@@ -20,8 +20,11 @@ def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude"):
     NH_lim = NH_lim.interpolate_na(dim=lon_name)
     SH_lim = SH_lim.interpolate_na(dim=lon_name)
     ## Change time to -3h to fit with tracks
-    NH_lim["time"] = NH_lim.time - np.timedelta64(3, 'h')
-    SH_lim["time"] = SH_lim.time - np.timedelta64(3, 'h')
+    if minus_3h:
+        NH_lim["time"] = NH_lim.time - np.timedelta64(3, 'h')
+        SH_lim["time"] = SH_lim.time - np.timedelta64(3, 'h')
+    NH_lim = NH_lim.rename({lon_name:"longitude"})
+    SH_lim = SH_lim.rename({lon_name:"longitude"})
 
     # Pre-treat tracks
     tracks = tracks.reset_index(drop=True)
@@ -30,9 +33,12 @@ def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude"):
 
     # Detect ET points
     target_lon = xr.DataArray(tracks.lon, dims="points")
-    target_time = xr.DataArray(tracks.time, dims="points")
-    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon)#.longitude
-    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)#.longitude
+    #target_time = xr.DataArray(tracks.time, dims="points")
+    ##TODO: Unsatisying method
+    target_time = [np.datetime64(t) if np.datetime64(t) in NH_lim.time.values else np.datetime64("1950-01-16") for t in tracks.time.dt.date.astype(str).values]
+    target_time = xr.DataArray(target_time, dims="points")
+    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon)
+    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)
     tracks["ET"] = (tracks.lat > tracks.lat_STJ_NH) | (tracks.lat < tracks.lat_STJ_SH)
 
     # Fill trajectories once one point is ET
