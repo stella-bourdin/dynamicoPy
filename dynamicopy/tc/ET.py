@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True):
+def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True, fill = True):
     """
 
     Parameters
@@ -41,16 +41,17 @@ def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True):
     tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)
     tracks["ET"] = (tracks.lat > tracks.lat_STJ_NH) | (tracks.lat < tracks.lat_STJ_SH)
 
-    # Fill trajectories once one point is ET
-    tracks_ET = tracks.groupby('track_id')["ET"].max().index[tracks.groupby('track_id')["ET"].max()]
-    dic = {t: False for t in tracks_ET}
-    for row in tracks[tracks.track_id.isin(tracks_ET)].sort_values("time").itertuples():
-        if row.ET == True:
-            dic[row.track_id] = True
-        if dic[row.track_id] == True:
-            tracks.loc[row.Index, "ET"] = True
-        else:
-            tracks.loc[row.Index, "ET"] = False
+    if fill :
+        # Fill trajectories once one point is ET
+        tracks_ET = tracks.groupby('track_id')["ET"].max().index[tracks.groupby('track_id')["ET"].max()]
+        dic = {t: False for t in tracks_ET}
+        for row in tracks[tracks.track_id.isin(tracks_ET)].sort_values("time").itertuples():
+            if row.ET == True:
+                dic[row.track_id] = True
+            if dic[row.track_id] == True:
+                tracks.loc[row.Index, "ET"] = True
+            else:
+                tracks.loc[row.Index, "ET"] = False
 
     return tracks
 
