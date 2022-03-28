@@ -159,7 +159,7 @@ def storm_stats(tracks):
     tracks.loc[tracks.ET.isna(), "ET"] = False
     storms = (
         tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
-        .agg(lambda x: x.value_counts().index[0])  #TODO : line responsible for the slow behavior
+        .agg(lambda x: x.value_counts().index[0])  #TODO : line responsible for the slow behavior / remplacer par pd.Series.mode : https://stackoverflow.com/questions/15222754/groupby-pandas-dataframe-and-select-most-common-value
         .reset_index()
     )
     storms = storms.merge(

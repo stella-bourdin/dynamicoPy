@@ -1,7 +1,7 @@
 import numpy as np
 from ._basins import *
 from shapely.geometry import Point
-
+import pandas as pd
 
 def add_season(tracks):
     """
@@ -23,7 +23,7 @@ def add_season(tracks):
         .mean()
         .astype(int)
         .join(
-            tracks[["track_id", "hemisphere"]].drop_duplicates().set_index("track_id"),
+            tracks.groupby("track_id")[["hemisphere"]].agg(pd.Series.mode),
             on="track_id",
         )
     )
