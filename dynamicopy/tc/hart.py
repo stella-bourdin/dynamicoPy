@@ -1,8 +1,13 @@
 import numpy as np
 
+
+
 def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     """
-    Computes the angular direction between to points. 0° corresponds to eastward, 90° northward, 180° westward and 270° southward
+    Computes the angular direction between to points.
+    0° corresponds to eastward, 90° northward, 180° westward and 270° southward.
+
+
     Parameters
     ----------
     x0
@@ -16,13 +21,23 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     """
     u = [1,0]
     v = [x1-x0,y1-y0]
-    cos = np.dot(u,v) / (np.sqrt(np.dot(u,u)) * np.sqrt(np.dot(v,v)))
-    Θ = np.arccos(cos) * 180 / np.pi
-    if y1-y0 < 0 : # Si on va vers le sud
-        Θ *= -1
+    cos = (x1-x0) / (np.sqrt(np.dot(u,u)) * np.sqrt(np.dot(v,v))) # Simplification due to u's coordinates
+    Θ = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
     return Θ
 
 def theta_track(track):
+    """
+    Computes the angular direction for each points along a track.
+    Handling the track altogether allows for treating stationnary cases as well as the end of the track.
+
+    Parameters
+    ----------
+    track: The Dataframe with the lon/lat positions of the point along the track.
+
+    Returns
+    -------
+    Θ (np.ndarray): values of Θ along the track.
+    """
     Θ = []
     track=track.reset_index()
     for i in track.index[:-1]:  # On calcule la direction de chaque point vers son successeur
