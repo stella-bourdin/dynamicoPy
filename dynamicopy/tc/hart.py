@@ -10,19 +10,22 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
 
     Parameters
     ----------
-    x0
-    x1
-    y0
-    y1
+    x0: longitude coordinate of the current point
+    x1: longitude coordinate of the next point
+    y0: latitude coordinate of the current point
+    y1: longitude coordinate of the next point
 
     Returns
     -------
-
+    The directional angle between the current and the next point.
     """
     u = [1,0]
     v = [x1-x0,y1-y0]
-    cos = (x1-x0) / (np.sqrt(np.dot(u,u)) * np.sqrt(np.dot(v,v))) # Simplification due to u's coordinates
-    Θ = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
+    if np.linalg.norm(v) != 0 :
+        cos = (x1-x0) / (np.linalg.norm(u) * np.linalg.norm(v)) # Simplification due to u's coordinates
+        Θ = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
+    else :
+        Θ = np.nan
     return Θ
 
 def theta_track(track):
