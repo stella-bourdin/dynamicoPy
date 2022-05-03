@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def tc_count(tracks):
@@ -159,7 +160,9 @@ def storm_stats(tracks):
     tracks.loc[tracks.ET.isna(), "ET"] = False
     storms = (
         tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
-        .agg(lambda x: x.value_counts().index[0])  #TODO : line responsible for the slow behavior / remplacer par pd.Series.mode : https://stackoverflow.com/questions/15222754/groupby-pandas-dataframe-and-select-most-common-value
+        .agg(lambda x: x.value_counts().index[0])
+            #TODO : line responsible for the slow behavior / remplacer par pd.Series.mode : https://stackoverflow.com/questions/15222754/groupby-pandas-dataframe-and-select-most-common-value
+            #Teste, améliore de 34s -> 21s, mais pb dans le cas limite ou même nb de points dans 2 bassins, a gerer
         .reset_index()
     )
     storms = storms.merge(
@@ -191,7 +194,6 @@ def storm_stats(tracks):
         how="outer",
     )
     return storms
-
 
 def propagation_speeds(tracks):
     """
