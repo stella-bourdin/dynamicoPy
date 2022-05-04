@@ -49,7 +49,7 @@ def theta_track(lon, lat):
         th.append(theta(lon[i], lon[i+1], lat[i], lat[i+1]))
         if np.isnan(th[-1]) & (i != 0):  # If two successive points are superimposed, we take the previous direction
             th[-1] = th[-2]
-    if len(track) > 1 : th.append(th[-1]); # The direction for the last point is considered the same as the point before
+    if n > 1 : th.append(th[-1]); # The direction for the last point is considered the same as the point before
     else : th = [np.nan]
     return th
 
