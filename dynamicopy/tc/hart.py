@@ -74,6 +74,36 @@ def right_left(field, th):
         left = field.where((field.az>th) | (field.az<=th-180))
     return right, left
 
+def right_left_vector(field_vec, th_vec):
+    """
+    Separate geopotential field into left and right of the th line.
+
+    Parameters
+    ----------
+    field (xr.DataArray): The geopotential field
+    th: The direction (in degrees)
+
+    Returns
+    -------
+    left, right (2 xr.DataArray): The left and right side of the geopt. field.
+    """
+    right_vec, left_vec = [], []
+    for i in range(len(th_vec)):
+        field, th = field_vec.isel(snapshot = i), th_vec[i]
+        if th <= 180 :
+            right = field.where((field.az<=th) | (field.az>180+th))
+            left = field.where((field.az>th) & (field.az<=180+th))
+        else :
+            right = field.where((field.az<=th) & (field.az>th-180))
+            left = field.where((field.az>th) | (field.az<=th-180))
+        right_vec.append(right)
+        left_vec.append(left)
+
+    right = xr.concat(right_vec, "snapshot")
+    left = xr.concat(left_vec, "snapshot")
+
+    return right, left
+
 def area_weights(field) :
     """
     Computes the weights needed for the weighted mean of polar field.
@@ -114,6 +144,30 @@ def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoris
     if SH : h = -1;
     else : h=1;
     return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean() - ΔZ_L.weighted(area_weights(ΔZ_L)).mean())
+
+def B_vector(th_vec, snap, lat, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
+    """
+    Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
+
+    Parameters
+    ----------
+    th: The direction (in degrees)
+    snap (xr.DataSet): The snapshots at both levels
+    SH (bool): Set to True if the point is in the southern hemisphere
+    names: names of the 900hPa and 600hPa geopt. variables in snap.
+
+    Returns
+    -------
+    B, the Hart phase space parameter for symetry.
+    """
+    z900 = snap[names[0]]
+    z600 = snap[names[1]]
+    z900_R, z900_L = right_left_vector(z900, th_vec)
+    z600_R, z600_L = right_left_vector(z600, th_vec)
+    ΔZ_R = z900_R - z600_R
+    ΔZ_L = z900_L - z600_L
+    h = np.where(lat < 0, -1, 1)
+    return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"]) - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["az", "r"]))
 
 def VT(snap, names=["snap_z900", "snap_z600", "snap_z300"]):
     """
