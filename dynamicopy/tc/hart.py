@@ -21,12 +21,12 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     if np.linalg.norm(v) != 0 :
         cos = (x1-x0) / (np.linalg.norm(u) * np.linalg.norm(v)) # Simplification due to u's coordinates
         if cos == -1 :
-            Θ = 180
+            th = 180
         else:
-            Θ = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
+            th = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
     else :
-        Θ = np.nan
-    return Θ
+        th = np.nan
+    return th
 
 def theta_track(lon, lat):
     """
@@ -40,38 +40,38 @@ def theta_track(lon, lat):
 
     Returns
     -------
-    Θ (np.ndarray): values of Θ along the track.
+    th (np.ndarray): values of th along the track.
     """
-    Θ = []
+    th = []
     assert len(lon) == len(lat), "The two vector do not have the same length"
     n = len(lon)
     for i in range(n-1):  # Computing the direction between each point and the following
-        Θ.append(theta(lon[i], lon[i+1], lat[i], lat[i+1]))
-        if np.isnan(Θ[-1]) & (i != 0):  # If two successive points are superimposed, we take the previous direction
-            Θ[-1] = Θ[-2]
-    if len(track) > 1 : Θ.append(Θ[-1]); # The direction for the last point is considered the same as the point before
-    else : Θ = [np.nan]
-    return Θ
+        th.append(theta(lon[i], lon[i+1], lat[i], lat[i+1]))
+        if np.isnan(th[-1]) & (i != 0):  # If two successive points are superimposed, we take the previous direction
+            th[-1] = th[-2]
+    if len(track) > 1 : th.append(th[-1]); # The direction for the last point is considered the same as the point before
+    else : th = [np.nan]
+    return th
 
-def right_left(field, Θ):
+def right_left(field, th):
     """
-    Separate field into left and right of the Θ line.
+    Separate geopotential field into left and right of the th line.
 
     Parameters
     ----------
-    field
-    Θ
+    field (xr.DataArray): The geopotential field
+    th: The direction (in degrees)
 
     Returns
     -------
-
+    left, right (2 xr.DataArray): The left and right side of the geopt. field.
     """
-    if Θ <= 180 :
-        right = field.where((field.az<=Θ) | (field.az>180+Θ))
-        left = field.where((field.az>Θ) & (field.az<=180+Θ))
+    if th <= 180 :
+        right = field.where((field.az<=th) | (field.az>180+th))
+        left = field.where((field.az>th) & (field.az<=180+th))
     else :
-        right = field.where((field.az<=Θ) & (field.az>Θ-180))
-        left = field.where((field.az>Θ) | (field.az<=Θ-180))
+        right = field.where((field.az<=th) & (field.az>th-180))
+        left = field.where((field.az>th) | (field.az<=th-180))
     return right, left
 
 def area_weights(field) :
@@ -80,33 +80,35 @@ def area_weights(field) :
 
     Parameters
     ----------
-    field
+    field (xr.DataArray): The geopotential field
 
     Returns
     -------
-
+    w (xr.DataArray): The weights corresponding to the area wrt the radius.
     """
     δ=(field.r[1] - field.r[0])/2
     w = (field.r +δ) ** 2 - (field.r - δ) ** 2
     return w
 
-def B(Θ, snap, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
+def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
     Parameters
     ----------
-    point
-    snap
+    th: The direction (in degrees)
+    snap (xr.DataSet): The snapshots at both levels
+    SH (bool): Set to True if the point is in the southern hemisphere
+    names: names of the 900hPa and 600hPa geopt. variables in snap. 
 
     Returns
     -------
-
+    B, the Hart phase space parameter for symetry.
     """
     z900 = snap[names[0]]
     z600 = snap[names[1]]
-    z900_R, z900_L = right_left(z900, Θ)
-    z600_R, z600_L = right_left(z600, Θ)
+    z900_R, z900_L = right_left(z900, th)
+    z600_R, z600_L = right_left(z600, th)
     ΔZ_R = z900_R - z600_R
     ΔZ_L = z900_L - z600_L
     if SH : h = -1;
@@ -119,18 +121,19 @@ def VT(snap, names=["snap_z900", "snap_z600", "snap_z300"]):
 
     Parameters
     ----------
-    snap
+    snap (xr.DataSet): The snapshots at both levels
+    names: names of the 900hPa and 600hPa geopt. variables in snap. 
 
     Returns
     -------
-
+    VTL, VTU
     """
     z900 = snap[names[0]]
     z600 = snap[names[1]]
     z300 = snap[names[2]]
-    δz300 = np.abs(z300.max() - z300.min())
-    δz600 = np.abs(z600.max() - z600.min())
-    δz900 = np.abs(z900.max() - z900.min())
+    δz300 = np.abs(z300.max(["r", "az"]) - z300.min(["r", "az"]))
+    δz600 = np.abs(z600.max(["r", "az"]) - z600.min(["r", "az"]))
+    δz900 = np.abs(z900.max(["r", "az"]) - z900.min(["r", "az"]))
     VTL = 750 * (δz900 - δz600) / (900 - 600)
     VTU = 450 * (δz600 - δz300) / (600 - 300)
     return VTL, VTU
