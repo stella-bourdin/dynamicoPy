@@ -1,12 +1,9 @@
 import numpy as np
 
-
-
 def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     """
     Computes the angular direction between to points.
     0° corresponds to eastward, 90° northward, 180° westward and 270° southward.
-
 
     Parameters
     ----------
@@ -23,32 +20,36 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     v = [x1-x0,y1-y0]
     if np.linalg.norm(v) != 0 :
         cos = (x1-x0) / (np.linalg.norm(u) * np.linalg.norm(v)) # Simplification due to u's coordinates
-        Θ = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
+        if cos == -1 :
+            Θ = 180
+        else:
+            Θ = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
     else :
         Θ = np.nan
     return Θ
 
-def theta_track(track):
+def theta_track(lon, lat):
     """
     Computes the angular direction for each points along a track.
     Handling the track altogether allows for treating stationnary cases as well as the end of the track.
 
     Parameters
     ----------
-    track: The Dataframe with the lon/lat positions of the point along the track.
+    lon: The list of longitudes along the track
+    lat: The list of latitude along the track
 
     Returns
     -------
     Θ (np.ndarray): values of Θ along the track.
     """
     Θ = []
-    track=track.reset_index()
-    for i in track.index[:-1]:  # On calcule la direction de chaque point vers son successeur
-        Θ.append(theta(track.loc[i, 'lon'], track.loc[i + 1, 'lon'], track.loc[i, 'lat'], track.loc[i + 1, 'lat']))
-        if np.isnan(Θ[-1]):  # S'il est indentique, on prend la direction précédente
-            if i != 0 :
-                Θ[-1] = Θ[-2]
-    if len(track) > 1 : Θ.append(Θ[-1]);
+    assert len(lon) == len(lat), "The two vector do not have the same length"
+    n = len(lon)
+    for i in range(n-1):  # Computing the direction between each point and the following
+        Θ.append(theta(lon[i], lon[i+1], lat[i], lat[i+1]))
+        if np.isnan(Θ[-1]) & (i != 0):  # If two successive points are superimposed, we take the previous direction
+            Θ[-1] = Θ[-2]
+    if len(track) > 1 : Θ.append(Θ[-1]); # The direction for the last point is considered the same as the point before
     else : Θ = [np.nan]
     return Θ
 
