@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     """
@@ -139,7 +140,7 @@ def area_weights(field) :
     w = (field.r +δ) ** 2 - (field.r - δ) ** 2
     return w
 
-def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
+def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]):
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
@@ -164,7 +165,7 @@ def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoris
     else : h=1;
     return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean() - ΔZ_L.weighted(area_weights(ΔZ_L)).mean())
 
-def B_vector(th_vec, snap, lat, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
+def B_vector(th_vec, snap, lat, names=["snap_z900", "snap_z600"]): # TODO: Accelerate
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
@@ -210,3 +211,24 @@ def VT(snap, names=["snap_z900", "snap_z600", "snap_z300"]):
     VTL = 750 * (δz900 - δz600) / (900 - 600)
     VTU = 450 * (δz600 - δz300) / (600 - 300)
     return VTL, VTU
+
+def compute_Hart_parameters(tracks, geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
+    """
+    Computes the three (+ theta) Hart parameters for all the points in tracks.
+
+    Parameters
+    ----------
+    tracks (pd.DataFrame): The set of TC points
+    geopt (xr.DataSet): The geopotential snapshots associated with the tracks
+
+    Returns
+    -------
+    tracks (pd.DataFrame): The set of TC points with four new columns corresponding to the parameters
+    """
+
+    tracks = tracks.assign(theta=theta_multitrack(tracks))
+    tracks = tracks.assign(B=B_vector(tracks.theta.values, geopt, tracks.lat.values, names=names[:-1]))
+    VTL, VTU = VT(geopt, names = names)
+    tracks = tracks.assign(VTL=VTL, VTU = VTU)
+
+    return tracks
