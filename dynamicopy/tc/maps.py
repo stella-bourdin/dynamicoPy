@@ -87,3 +87,7 @@ def plot_tracks(
 
     #plt.show()
     return fig, ax
+
+def plot_polar(da):
+    da.plot.pcolormesh("az", "r", subplot_kws=dict(projection="polar"))
+    plt.show()
