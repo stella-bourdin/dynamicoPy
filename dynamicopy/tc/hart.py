@@ -1,5 +1,6 @@
 import numpy as np
-import xarray as xr
+#import xarray as xr
+import pandas as pd
 
 def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     """
@@ -27,7 +28,7 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
             th = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
     else :
         th = np.nan
-    return th
+    return np.where(th <0, th + 360, th)
 
 def theta_track(lon, lat):
     """
@@ -87,14 +88,11 @@ def right_left(field, th):
     left, right (2 xr.DataArray): The left and right side of the geopt. field.
     """
     if th <= 180 :
-        right = field.where((field.az<=th) | (field.az>180+th))
-        left = field.where((field.az>th) & (field.az<=180+th))
+        return field.where((field.az<=th) | (field.az>180+th)), field.where((field.az>th) & (field.az<=180+th))
     else :
-        right = field.where((field.az<=th) & (field.az>th-180))
-        left = field.where((field.az>th) | (field.az<=th-180))
-    return right, left
+        return field.where((field.az<=th) & (field.az>th-180)), field.where((field.az>th) | (field.az<=th-180))
 
-def right_left_vector(field_vec, th_vec):
+def right_left_vector(geopt, th):
     """
     Separate geopotential field into left and right of the th line.
 
@@ -107,22 +105,13 @@ def right_left_vector(field_vec, th_vec):
     -------
     left, right (2 xr.DataArray): The left and right side of the geopt. field.
     """
-    right_vec, left_vec = [], []
-    for i in range(len(th_vec)):
-        field, th = field_vec.isel(snapshot = i), th_vec[i]
-        if th <= 180 :
-            right = field.where((field.az<=th) | (field.az>180+th))
-            left = field.where((field.az>th) & (field.az<=180+th))
-        else :
-            right = field.where((field.az<=th) & (field.az>th-180))
-            left = field.where((field.az>th) | (field.az<=th-180))
-        right_vec.append(right)
-        left_vec.append(left)
 
-    right = xr.concat(right_vec, "snapshot")
-    left = xr.concat(left_vec, "snapshot")
-
-    return right, left
+    A = pd.DataFrame([list(geopt.az.values)] * len(geopt.snapshot)) # matrix of az x snapshot
+    mask = np.array(A.lt(pd.Series(th % 180), 0) | A.ge((pd.Series(th % 180) + 180), 0)) #Mask in 2D (az, snapshot)
+    mask = np.array([mask] * len(geopt.r)) # Mask in 3D (r, az, snapshot)
+    mask = np.swapaxes(mask, 0, 1) # Mask in 3D (az, r, snapshot)
+    R, L = geopt.where(mask), geopt.where(~mask) # We don't really care if left and right are the wrong way because we only differentiate them afterwards
+    return R, L
 
 def area_weights(field) :
     """
@@ -140,23 +129,23 @@ def area_weights(field) :
     w = (field.r +δ) ** 2 - (field.r - δ) ** 2
     return w
 
-def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]):
+def B(th, geopt, SH = False, names=["snap_z900", "snap_z600"]):
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
     Parameters
     ----------
     th: The direction (in degrees)
-    snap (xr.DataSet): The snapshots at both levels
+    geopt (xr.DataSet): The snapshots at both levels
     SH (bool): Set to True if the point is in the southern hemisphere
-    names: names of the 900hPa and 600hPa geopt. variables in snap. 
+    names: names of the 900hPa and 600hPa geopt. variables in geopt.
 
     Returns
     -------
     B, the Hart phase space parameter for symetry.
     """
-    z900 = snap[names[0]]
-    z600 = snap[names[1]]
+    z900 = geopt[names[0]]
+    z600 = geopt[names[1]]
     z900_R, z900_L = right_left(z900, th)
     z600_R, z600_L = right_left(z600, th)
     ΔZ_R = z900_R - z600_R
@@ -165,23 +154,23 @@ def B(th, snap, SH = False, names=["snap_z900", "snap_z600"]):
     else : h=1;
     return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean() - ΔZ_L.weighted(area_weights(ΔZ_L)).mean())
 
-def B_vector(th_vec, snap, lat, names=["snap_z900", "snap_z600"]): # TODO: Accelerate
+def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
     Parameters
     ----------
     th: The direction (in degrees)
-    snap (xr.DataSet): The snapshots at both levels
+    geopt (xr.DataSet): The snapshots at both levels
     SH (bool): Set to True if the point is in the southern hemisphere
-    names: names of the 900hPa and 600hPa geopt. variables in snap.
+    names: names of the 900hPa and 600hPa geopt. variables in geopt.
 
     Returns
     -------
     B, the Hart phase space parameter for symetry.
     """
-    z900 = snap[names[0]]
-    z600 = snap[names[1]]
+    z900 = geopt[names[0]]
+    z600 = geopt[names[1]]
     z900_R, z900_L = right_left_vector(z900, th_vec)
     z600_R, z600_L = right_left_vector(z600, th_vec)
     ΔZ_R = z900_R - z600_R
@@ -189,22 +178,22 @@ def B_vector(th_vec, snap, lat, names=["snap_z900", "snap_z600"]): # TODO: Accel
     h = np.where(lat < 0, -1, 1)
     return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"]) - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["az", "r"]))
 
-def VT(snap, names=["snap_z900", "snap_z600", "snap_z300"]):
+def VT(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     """
     Computes V_T^U and V_T^L parameters for the given snapshot of geopt at 300, 600 and 900 hPa
 
     Parameters
     ----------
-    snap (xr.DataSet): The snapshots at both levels
-    names: names of the 900hPa and 600hPa geopt. variables in snap. 
+    geopt (xr.DataSet): The snapshots at both levels
+    names: names of the 900hPa and 600hPa geopt. variables in geopt.
 
     Returns
     -------
     VTL, VTU
     """
-    z900 = snap[names[0]]
-    z600 = snap[names[1]]
-    z300 = snap[names[2]]
+    z900 = geopt[names[0]]
+    z600 = geopt[names[1]]
+    z300 = geopt[names[2]]
     δz300 = np.abs(z300.max(["r", "az"]) - z300.min(["r", "az"]))
     δz600 = np.abs(z600.max(["r", "az"]) - z600.min(["r", "az"]))
     δz900 = np.abs(z900.max(["r", "az"]) - z900.min(["r", "az"]))
