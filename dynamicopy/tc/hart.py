@@ -53,6 +53,25 @@ def theta_track(lon, lat):
     else : th = [np.nan]
     return th
 
+def theta_multitrack(tracks) :
+    """
+    Compute the angular direction for every tracks in a dataset
+
+    Parameters
+    ----------
+    tracks (pd.DataFrame): The set of TC points
+
+    Returns
+    -------
+    thetas (list): The list of angle for each point in the dataset
+    """
+    thetas = []
+    for id in tracks.track_id.unique():
+        track = tracks[tracks.track_id == id]
+        th = theta_track(track.lon.values, track.lat.values)
+        thetas.append(th)
+    return np.concatenate(thetas)
+
 def right_left(field, th):
     """
     Separate geopotential field into left and right of the th line.
