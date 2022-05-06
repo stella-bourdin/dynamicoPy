@@ -92,25 +92,25 @@ def right_left(field, th):
     else :
         return field.where((field.az<=th) & (field.az>th-180)), field.where((field.az>th) | (field.az<=th-180))
 
-def right_left_vector(geopt, th):
+def right_left_vector(z, th):
     """
     Separate geopotential field into left and right of the th line.
 
     Parameters
     ----------
-    field (xr.DataArray): The geopotential field
+    z (xr.DataArray): The geopotential field
     th: The direction (in degrees)
 
     Returns
     -------
-    left, right (2 xr.DataArray): The left and right side of the geopt. field.
+    left, right (2 xr.DataArray): The left and right side of the z. field.
     """
 
-    A = pd.DataFrame([list(geopt.az.values)] * len(geopt.snapshot)) # matrix of az x snapshot
+    A = pd.DataFrame([list(z.az.values)] * len(z.snapshot)) # matrix of az x snapshot
     mask = np.array(A.lt(pd.Series(th % 180), 0) | A.ge((pd.Series(th % 180) + 180), 0)) #Mask in 2D (az, snapshot)
-    mask = np.array([mask] * len(geopt.r)) # Mask in 3D (r, az, snapshot)
+    mask = np.array([mask] * len(z.r)) # Mask in 3D (r, az, snapshot)
     mask = np.swapaxes(mask, 0, 1) # Mask in 3D (az, r, snapshot)
-    R, L = geopt.where(mask), geopt.where(~mask) # We don't really care if left and right are the wrong way because we only differentiate them afterwards
+    R, L = z.where(mask), z.where(~mask) # We don't really care if left and right are the wrong way because we only differentiate them afterwards
     return R, L
 
 def area_weights(field) :
@@ -176,7 +176,7 @@ def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     ΔZ_R = z900_R - z600_R
     ΔZ_L = z900_L - z600_L
     h = np.where(lat < 0, -1, 1)
-    return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"]) - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["az", "r"]))
+    return h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"]) - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["az", "r"]))
 
 def VT(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     """
