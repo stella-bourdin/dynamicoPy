@@ -17,6 +17,7 @@ def load_TEtracks(
     SH_seasons=[1981, 2019],
     surf_wind_col="wind10",
     slp_col="slp",
+    get_basins=True,
 ):
     """
     Parameters
@@ -26,6 +27,7 @@ def load_TEtracks(
     SH_season (list of 2 ints): first and last season in the southern hemisphere
     surf_wind_col (str): Name of the column with the surface wind to output.
     slp_col (str): Name of the column with the sea-level pressure. If None, no sshs computation.
+    get_basins (bool): Set to false if you don't need to get the basins.
 
     Returns
     -------
@@ -41,7 +43,10 @@ def load_TEtracks(
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
+    if get_basins:
+        tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
+    else :
+        tracks["basin"] = np.nan
     tracks = add_season(tracks)
     tracks = tracks[
         ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
