@@ -251,7 +251,6 @@ def compute_Coriolis_param(lat):
     phi = lat * np.pi / 180
     return 2 * W * np.sin(phi)
 
-@njit # 50 ms -> 35 ms
 def compute_OWZ(vort, E, F, lat):
     OW_n = compute_ObukoWeiss_norm(vort, E, F)
     f = compute_Coriolis_param(lat)
