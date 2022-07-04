@@ -93,19 +93,27 @@ def compute_OWZ_from_files(
             vo = xr.open_dataset(vo_file).squeeze()
 
     OWZ = []
-    for t in u.time :
+    for i,t in enumerate(u.time) :
+        lon, lat, E, F = compute_E_F(u.sel(time = t).values, v.sel(time = t).values,
+                                     u[lat_name].values, u[lon_name].values)
+        E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
+        E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
+        F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
+        F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
+
         if vo_file == None :
             lon, lat, vo_t = compute_vort(u.sel(time = t).values, v.sel(time = t).values,
                                           u[lat_name].values, u[lon_name].values)
+            vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
+            vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
         else :
-            vo_t = vo.sel(time = t).values
-        lon, lat, E, F = compute_E_F(u.sel(time = t).values, v.sel(time = t).values,
-                                     u[lat_name].values, u[lon_name].values)
+            vo_t = vo.isel(time = i)
 
-        OWZ.append(compute_OWZ(np.array(vo_t), np.array(E), np.array(F), lat))
+        OWZ.append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
 
-    OWZ = xr.DataArray(OWZ, coords = [u.time, lat, lon], dims = ["time", "latitude", "longitude"])
+    OWZ = xr.DataArray(OWZ, coords = [u.time, u[lat_name], u[lon_name]], dims = ["time", lat_name, lon_name])
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
+
     if owz_file != None:
         OWZ.to_netcdf(owz_file, format="NETCDF4_CLASSIC")
     return OWZ
