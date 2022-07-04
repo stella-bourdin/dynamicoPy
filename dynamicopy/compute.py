@@ -5,7 +5,7 @@
 import numpy as np
 import xarray as xr
 from .utils_geo import get_south, get_north, apply_mask_axis
-from numba import njit, jit
+from .utils_geo import get_south, get_north, apply_mask_axis
 
 
 ### ==================================== ###
@@ -192,7 +192,6 @@ def compute_E_F(u, v, lat, lon):
 
     return lon_E, lat_E, E, F
 
-@njit # 26ms -> 8ms
 def compute_ObukoWeiss(vort, E, F):
     """Compute the Obuko-Weiss Parameter
 
@@ -232,7 +231,6 @@ def compute_ObukoWeiss_norm(vort, E, F):
     OW = compute_ObukoWeiss(vort, E, F)
     return OW / vort ** 2
 
-@njit # 19ùs -> 9 ùs
 def compute_Coriolis_param(lat):
     """Compute the coriolis parameter for a given latitude (array)
 
