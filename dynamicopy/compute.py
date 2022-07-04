@@ -212,7 +212,6 @@ def compute_ObukoWeiss(vort, E, F):
     """
     return vort ** 2 - (E ** 2 + F ** 2)
 
-@njit
 def compute_ObukoWeiss_norm(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
 
