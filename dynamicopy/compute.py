@@ -55,7 +55,6 @@ def compute_OWZ_from_files(
     vo_file=None,
     owz_file=None,
     level=850,
-    owz_name="owz",
     u_name="u",
     v_name="v",
     vo_name="vo",
@@ -86,7 +85,7 @@ def compute_OWZ_from_files(
         u = xr.open_dataset(u_file).sel(level=level).squeeze()[u_name]
         v = xr.open_dataset(v_file).sel(level=level).squeeze()[v_name]
         if vo_file != None :
-            vo = xr.open_dataset(vo_file).sel(level=level).squeeze()
+            vo = xr.open_dataset(vo_file).sel(level=level).squeeze()[vo_name]
     else :
         u = xr.open_dataset(u_file).squeeze()
         v = xr.open_dataset(v_file).squeeze()
@@ -104,6 +103,7 @@ def compute_OWZ_from_files(
                                      u[lat_name].values, u[lon_name].values)
 
         OWZ.append(compute_OWZ(np.array(vo_t), np.array(E), np.array(F), lat))
+
     OWZ = xr.DataArray(OWZ, coords = [u.time, lat, lon], dims = ["time", "latitude", "longitude"])
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
     if owz_file != None:
