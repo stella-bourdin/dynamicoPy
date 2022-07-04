@@ -341,7 +341,7 @@ def compute_OWZ_from_files(
 
         OWZ.append(compute_OWZ(np.array(vo_t), np.array(E), np.array(F), lat))
     OWZ = xr.DataArray(OWZ, coords = [u.time, lat, lon], dims = ["time", "latitude", "longitude"])
-    OWZ = OWZ.interp_like(u)
+    OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
     if owz_file != None:
         OWZ.to_netcdf(owz_file, format="NETCDF4_CLASSIC")
     return OWZ
