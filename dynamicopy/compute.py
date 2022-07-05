@@ -83,15 +83,15 @@ def compute_OWZ_from_files(
         OWZ field
     """
     if level != None:
-        u = xr.open_dataset(u_file)[u_name].rename({p_name:"level"}).sel(level=level)
-        v = xr.open_dataset(v_file)[v_name].rename({p_name:"level"}).sel(level=level)
+        u = xr.open_dataset(u_file)[u_name].rename({p_name:"level"}).sel(level=level).squeeze()
+        v = xr.open_dataset(v_file)[v_name].rename({p_name:"level"}).sel(level=level).squeeze()
         if vo_file != None :
-            vo = xr.open_dataset(vo_file)[vo_name].rename({p_name:"level"}).sel(level=level)
+            vo = xr.open_dataset(vo_file)[vo_name].rename({p_name:"level"}).sel(level=level).squeeze()
     else :
-        u = xr.open_dataset(u_file).rename({p_name:"level"})
-        v = xr.open_dataset(v_file).rename({p_name:"level"})
+        u = xr.open_dataset(u_file).squeeze().rename({p_name:"level"})
+        v = xr.open_dataset(v_file).squeeze().rename({p_name:"level"})
         if vo_file != None :
-            vo = xr.open_dataset(vo_file).rename({p_name:"level"})
+            vo = xr.open_dataset(vo_file).squeeze().rename({p_name:"level"})
 
     OWZ = []
     for i,t in enumerate(u.time) :
