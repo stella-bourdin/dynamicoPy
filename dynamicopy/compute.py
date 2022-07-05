@@ -60,6 +60,7 @@ def compute_OWZ_from_files(
     vo_name="vo",
     lon_name="longitude",
     lat_name="latitude",
+    pname="level",
 ):
     """
 
@@ -82,8 +83,8 @@ def compute_OWZ_from_files(
         OWZ field
     """
     if level != None:
-        u = xr.open_dataset(u_file).sel(level=level).squeeze()[u_name]
-        v = xr.open_dataset(v_file).sel(level=level).squeeze()[v_name]
+        u = xr.open_dataset(u_file).sel(level=level).squeeze()[u_name].rename({p_name:"level"})
+        v = xr.open_dataset(v_file).sel(level=level).squeeze()[v_name].rename({p_name:"level"})
         if vo_file != None :
             vo = xr.open_dataset(vo_file).sel(level=level).squeeze()[vo_name]
     else :
@@ -94,24 +95,28 @@ def compute_OWZ_from_files(
 
     OWZ = []
     for i,t in enumerate(u.time) :
-        lon, lat, E, F = compute_E_F(u.sel(time = t).values, v.sel(time = t).values,
-                                     u[lat_name].values, u[lon_name].values)
-        E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
-        E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
-        F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
-        F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
+        OWZ.append([])
+        for p in level :
+            lon, lat, E, F = compute_E_F(u.sel(time = t).sel(level=p).values,
+                                         v.sel(time = t).sel(level=p).values,
+                                         u[lat_name].values, u[lon_name].values)
+            E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
+            E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
+            F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
+            F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
-        if vo_file == None :
-            lon, lat, vo_t = compute_vort(u.sel(time = t).values, v.sel(time = t).values,
-                                          u[lat_name].values, u[lon_name].values)
-            vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
-            vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
-        else :
-            vo_t = vo.isel(time = i)
+            if vo_file == None :
+                lon, lat, vo_t = compute_vort(u.sel(time = t).sel(level=p).values,
+                                              v.sel(time = t).sel(level=p).values,
+                                              u[lat_name].values, u[lon_name].values)
+                vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
+                vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
+            else :
+                vo_t = vo.isel(time = i).sel(level=p)
 
-        OWZ.append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
+            OWZ[-1].append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
 
-    OWZ = xr.DataArray(OWZ, coords = [u.time, u[lat_name], u[lon_name]], dims = ["time", lat_name, lon_name])
+    OWZ = xr.DataArray(OWZ, coords = [u.time, u.level, u[lat_name], u[lon_name]], dims = ["time", p_name, lat_name, lon_name])
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
     if owz_file != None:
