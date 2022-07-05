@@ -82,6 +82,7 @@ def compute_OWZ_from_files(
     OWZ : xr.Dataset
         OWZ field
     """
+    print(p_name)
     if level != None:
         u = xr.open_dataset(u_file).sel(level=level).squeeze()[u_name].rename({p_name:"level"})
         v = xr.open_dataset(v_file).sel(level=level).squeeze()[v_name].rename({p_name:"level"})
