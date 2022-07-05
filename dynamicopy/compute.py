@@ -60,7 +60,7 @@ def compute_OWZ_from_files(
     vo_name="vo",
     lon_name="longitude",
     lat_name="latitude",
-    pname="level",
+    p_name="level",
 ):
     """
 
