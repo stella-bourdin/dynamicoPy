@@ -54,7 +54,7 @@ def compute_OWZ_from_files(
     v_file,
     vo_file=None,
     owz_file=None,
-    level=850,
+    level=[850,500],
     u_name="u",
     v_name="v",
     vo_name="vo",
@@ -120,7 +120,7 @@ def compute_OWZ_from_files(
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
     if owz_file != None:
-        OWZ.to_netcdf(owz_file, format="NETCDF4_CLASSIC")
+        OWZ.to_dataset(name="owz").to_netcdf(owz_file, format="NETCDF4_CLASSIC")
     return OWZ
 
 def compute_vort(u, v, lat, lon):
