@@ -169,6 +169,7 @@ def _clean_ibtracs(
             "basin",
             "season",
             "sshs",
+            "nature",
             "slp",
             "wind10",
             "year",

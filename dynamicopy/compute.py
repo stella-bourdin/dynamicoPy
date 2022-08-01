@@ -5,6 +5,7 @@
 import numpy as np
 import xarray as xr
 from .utils_geo import get_south, get_north, apply_mask_axis
+from .utils_geo import get_south, get_north, apply_mask_axis
 
 
 ### ==================================== ###
@@ -36,6 +37,91 @@ def omega2w(omega, p, T):
     w = -omega / (rho * g)
     return w
 
+def get_dx_dy(lon, lat):
+    dlon = lon[1] - lon[0]  # resolution in longitude in deg
+    dlat = lat[1] - lat[0]  # resolution in latitude in deg
+    R = 6371000  # Earth radius
+    dy = R * dlat * np.pi / 180  # Vertical size of a cell
+    # Horizontal size of a cell depending on latitude
+    lat_rad = lat * np.pi / 180  # Latitudes in rad
+    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
+    dx = r * dlon * np.pi / 180
+    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
+    return dx, dy
+
+def compute_OWZ_from_files(
+    u_file,
+    v_file,
+    vo_file=None,
+    owz_file=None,
+    level=[850,500],
+    u_name="u",
+    v_name="v",
+    vo_name="vo",
+    lon_name="longitude",
+    lat_name="latitude",
+    p_name="level",
+):
+    """
+
+    Parameters
+    ----------
+    u_file, v_file : str
+        Paths to the respective files containing zonal and meridional wind field
+    vo_file : str
+        Path to the file containing the vorticity field. To be implemented : If None, compute vorticity from u and v.
+    OWZ_file : str
+        Path to which the OWZ field will be written. If None, not saved.
+    owz_name : str
+        Name of the owz to be written i the file if applicable.
+    u_name, v_name, vo_name, lon_name, lat_name : str
+        Names of zonal wind, meridional wind, vorticity, longitude, latitude respectively in the files.
+
+    Returns
+    -------
+    OWZ : xr.Dataset
+        OWZ field
+    """
+    if level != None:
+        u = xr.open_dataset(u_file)[u_name].rename({p_name:"level"}).sel(level=level)#.squeeze()
+        v = xr.open_dataset(v_file)[v_name].rename({p_name:"level"}).sel(level=level)#.squeeze()
+        if vo_file != None :
+            vo = xr.open_dataset(vo_file)[vo_name].rename({p_name:"level"}).sel(level=level)#.squeeze()
+    else :
+        u = xr.open_dataset(u_file).rename({p_name:"level"})#.squeeze()
+        v = xr.open_dataset(v_file).rename({p_name:"level"})#.squeeze()
+        if vo_file != None :
+            vo = xr.open_dataset(vo_file).rename({p_name:"level"})#.squeeze()
+
+    OWZ = []
+    for i,t in enumerate(u.time) :
+        OWZ.append([])
+        for p in level :
+            lon, lat, E, F = compute_E_F(u.sel(time = t).sel(level=p).values,
+                                         v.sel(time = t).sel(level=p).values,
+                                         u[lat_name].values, u[lon_name].values)
+            E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
+            E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
+            F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
+            F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
+
+            if vo_file == None :
+                lon, lat, vo_t = compute_vort(u.sel(time = t).sel(level=p).values,
+                                              v.sel(time = t).sel(level=p).values,
+                                              u[lat_name].values, u[lon_name].values)
+                vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
+                vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
+            else :
+                vo_t = vo.isel(time = i).sel(level=p)
+
+            OWZ[-1].append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
+
+    OWZ = xr.DataArray(OWZ, coords = [u.time, u.level, u[lat_name], u[lon_name]], dims = ["time", p_name, lat_name, lon_name])
+    OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
+
+    if owz_file != None:
+        OWZ.to_dataset(name="owz").to_netcdf(owz_file, format="NETCDF4_CLASSIC")
+    return OWZ
 
 def compute_vort(u, v, lat, lon):
     """Compute vorticity from the horizontal velocity fields
@@ -78,261 +164,7 @@ def compute_vort(u, v, lat, lon):
 
     return lon_vort, lat_vort, W
 
-
-def get_dx_dy(lon, lat):
-    dlon = lon[1] - lon[0]  # resolution in longitude in deg
-    dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000  # Earth radius
-    dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi / 180  # Latitudes in rad
-    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
-    return dx, dy
-
-
-def compute_vort_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"):
-    """Compute vorticity from the horizontal velocity fields
-
-    Parameters
-    ----------
-    xarray : xr.Dataset
-        Dataset containing zonal and meridional wind in m/s
-    u_name, v_name, lon_name, lat_name : str
-        Names of variables in xarray, respectively zonal wind, meridional wind, longitude and latitude
-
-    Returns
-    -------
-    vo : xr.Dataset
-        Vorticity in s-1
-    """
-
-    xarray = xarray.rename(
-        {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
-    ).squeeze()
-
-    lon, lat = xarray.lon.values, xarray.lat.values
-    dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
-
-    u = xarray.u
-    v = xarray.v
-
-    vo = (
-        v.sel(lat=lat[:-1], lon=lon[1:]).values
-        - v.sel(lat=lat[:-1], lon=lon[:-1]).values
-    ) * 1 / dx[:] - (
-        u.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])
-    ) * 1 / dy
-    vo = xr.DataArray(vo).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
-    vo.attrs["units"] = "s-1"
-    vo = vo.rename({"lat": lat_name, "lon": lon_name})
-    vo = vo.to_dataset(name="vo")
-    return vo
-
-
-def compute_stretching_xr(
-    xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"
-):
-    """Compute stretching deformation (E) from the horizontal velocity fields
-
-    Parameters
-    ----------
-    xarray : xr.Dataset
-        Dataset containing zonal and meridional wind in m/s
-    u_name, v_name, lon_name, lat_name : str
-        Names of variables in xarray, respectively zonal wind, meridional wind, longitude and latitude
-
-    Returns
-    -------
-    E : xr.Dataset
-        Stretching deformation in s-1
-    """
-
-    xarray = xarray.rename(
-        {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
-    ).squeeze()
-
-    lon, lat = xarray.lon.values, xarray.lat.values
-    dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
-
-    u = xarray.u
-    v = xarray.v
-    E = (
-        u.sel(lat=lat[:-1], lon=lon[1:]).values
-        - u.sel(lat=lat[:-1], lon=lon[:-1]).values
-    ) * 1 / dx[:] - (
-        v.sel(lat=lat[1:], lon=lon[:-1]).values - v.sel(lat=lat[:-1], lon=lon[:-1])
-    ) * 1 / dy
-    E = xr.DataArray(E).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
-    E.attrs["units"] = "s-1"
-    E = E.rename({"lat": lat_name, "lon": lon_name})
-    return E
-
-
-def compute_shearing_xr(xarray, u_name="u", v_name="v", lon_name="lon", lat_name="lat"):
-    """Compute shearing deformation (F) from the horizontal velocity fields
-
-    Parameters
-    ----------
-    xarray : xr.Dataset
-        Dataset containing zonal and meridional wind in m/s
-    u_name, v_name, lon_name, lat_name : str
-        Names of variables in xarray, respectively zonal wind, meridional wind, longitude and latitude
-
-    Returns
-    -------
-    F : xr.Dataset
-        Shearing deformation in s-1
-    """
-
-    xarray = xarray.rename(
-        {lat_name: "lat", lon_name: "lon", u_name: "u", v_name: "v"}
-    ).squeeze()
-
-    lon, lat = xarray.lon.values, xarray.lat.values
-    dx, dy = get_dx_dy(xarray.lon.values, xarray.lat.values)
-
-    u = xarray.u
-    v = xarray.v
-    F = (
-        v.sel(lat=lat[:-1], lon=lon[1:]).values
-        - u.sel(lat=lat[:-1], lon=lon[:-1]).values
-    ) * 1 / dx[:] - (
-        u.sel(lat=lat[1:], lon=lon[:-1]).values - u.sel(lat=lat[:-1], lon=lon[:-1])
-    ) * 1 / dy
-    F = xr.DataArray(F).interp_like(xarray, kwargs={"fill_value": "extrapolate"})
-    F.attrs["units"] = "s-1"
-    F = F.rename({"lat": lat_name, "lon": lon_name})
-    return F
-
-
-def compute_ObukoWeiss_xr(vort, E, F):
-    """Compute the normalized Obuko-Weiss Parameter
-
-    Parameters
-    ----------
-    vort : xr.Dataset
-        Vorticity field
-    E : xr.Dataset
-        Stretching deformation field
-    F : xr.Dataset
-        Shearing deformation field
-
-    Returns
-    -------
-    xr.Dataset
-        Obuko_Weiss parameter field
-    """
-    OW = ((vort * 3600) ** 2) - ((E * 3600) ** 2 + (F * 3600) ** 2)
-    OW.attrs["units"] = "1"
-    OW = OW.rename({"vo": "ow"})
-    return OW
-
-
-def compute_ObukoWeiss_norm_xr(vort, E, F):
-    """Compute the normalized Obuko-Weiss Parameter
-
-    Parameters
-    ----------
-    vort : xr.Dataset
-        Vorticity field
-    E : xr.Dataset
-        Stretching deformation field
-    F : xr.Dataset
-        Shearing deformation field
-
-    Returns
-    -------
-    xr.Dataset
-        Normalized Obuko_Weiss parameter field
-    """
-    OW_n = 1 - ((E * 3600) ** 2 + (F * 3600) ** 2) / ((vort * 3600) ** 2)
-    OW_n.attrs["units"] = "1"
-    return OW_n
-
-
-def compute_OWZ_xr(vort, E, F, lat_name="lat"):
-    """Compute the Obuko-Weiss-Zeta Parameter (See Tory et al. 2013)
-
-    Parameters
-    ----------
-    vort : xr.Dataset
-        Vorticity field
-    E : xr.Dataset
-        Stretching deformation field
-    F : xr.Dataset
-        Shearing deformation field
-
-    Returns
-    -------
-    xr.Dataset
-        OWZ field
-    """
-    OW_n = compute_ObukoWeiss_norm_xr(vort, E, F)
-    f = compute_Coriolis_param(OW_n[lat_name])
-    zeros = xr.zeros_like(OW_n)
-    OWZ = xr.ufuncs.maximum(OW_n, zeros) * xr.ufuncs.sign(f) * (vort + f)
-    OWZ.attrs["units"] = "s-1"
-    OWZ = OWZ.rename({"vo": "owz"})
-    return OWZ
-
-
-def compute_OWZ_from_files(
-    u_file,
-    v_file,
-    vo_file=None,
-    owz_file=None,
-    owz_name="owz",
-    u_name="u",
-    v_name="v",
-    vo_name="vo",
-    lon_name="longitude",
-    lat_name="latitude",
-):
-    """
-
-    Parameters
-    ----------
-    u_file, v_file : str
-        Paths to the respective files containing zonal and meridional wind field
-    vo_file : str
-        Path to the file containing the vorticity field. To be implemented : If None, compute vorticity from u and v.
-    OWZ_file : str
-        Path to which the OWZ field will be written. If None, not saved.
-    owz_name : str
-        Name of the owz to be written i the file if applicable.
-    u_name, v_name, vo_name, lon_name, lat_name : str
-        Names of zonal wind, meridional wind, vorticity, longitude, latitude respectively in the files.
-
-    Returns
-    -------
-    OWZ : xr.Dataset
-        OWZ field
-    """
-    u = xr.open_dataset(u_file).squeeze()
-    v = xr.open_dataset(v_file).squeeze()
-    wind = xr.merge([u, v])
-    wind = wind.rename({u_name: "u", v_name: "v", lon_name: "lon", lat_name: "lat"})
-    if vo_file == None:
-        vo = compute_vort_xr(wind)
-    else:
-        vo = xr.open_dataset(vo_file).squeeze()
-        vo = vo.rename({vo_name: "vo", lon_name: "lon", lat_name: "lat"})
-
-    E = compute_stretching_xr(wind)
-    F = compute_shearing_xr(wind)
-
-    OWZ = compute_OWZ_xr(vo, E, F)
-    OWZ = OWZ.rename({"lat": lat_name, "lon": lon_name, "owz": owz_name})
-    for n in OWZ.data_vars:
-        OWZ[n] = OWZ[n].astype(np.float32)
-    if owz_file != None:
-        OWZ.to_netcdf(owz_file, format="NETCDF4_CLASSIC")
-    return OWZ
-
-
-def compute_stretching(u, v, lat, lon):
+def compute_E_F(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
 
     ! So far, handles only 2D fields.
@@ -350,14 +182,10 @@ def compute_stretching(u, v, lat, lon):
 
     Returns
     -------
-    3 np.ndarrays
-        longitude, latitude and stretching field
+    4 np.ndarrays
+        longitude, latitude and E & F field
     """
 
-    if type(lon) != np.ndarray:
-        lon = lon.values
-    if type(lat) != np.ndarray:
-        lat = lat.values
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
     R = 6371000  # Earth radius
@@ -372,57 +200,10 @@ def compute_stretching(u, v, lat, lon):
     lat_E = (lat[:-1] + lat[1:]) / 2
     lon_E = (lon[:-1] + lon[1:]) / 2
 
-    # E = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
-    if type(u) != np.ndarray:
-        u = u.values
-    if type(v) != np.ndarray:
-        v = v.values
     E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy
-
-    return lon_E, lat_E, E
-
-
-def compute_shearing(u, v, lat, lon):
-    """Compute shearing deformation (F) from the horizontal velocity fields
-
-    ! So far, handles only 2D fields.
-
-    Parameters
-    ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
-
-    Returns
-    -------
-    3 np.ndarrays
-        longitude, latitude and shearing field
-    """
-
-    dlon = lon[1] - lon[0]  # resolution in longitude in deg
-    dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000  # Earth radius
-    dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi / 180  # Latitudes in rad
-    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
-
-    # Compute lat and lon corresponding to the F matrix
-    lat_F = (lat[:-1] + lat[1:]) / 2
-    lon_F = (lon[:-1] + lon[1:]) / 2
-
-    F = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
     F = (v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] + (u[1:, :-1] - u[:-1, :-1]) * 1 / dy
 
-    return lon_F, lat_F, F
-
+    return lon_E, lat_E, E, F
 
 def compute_ObukoWeiss(vort, E, F):
     """Compute the Obuko-Weiss Parameter
@@ -442,7 +223,6 @@ def compute_ObukoWeiss(vort, E, F):
         The Obuko-Weiss (OW) parameter field
     """
     return vort ** 2 - (E ** 2 + F ** 2)
-
 
 def compute_ObukoWeiss_norm(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
@@ -464,7 +244,6 @@ def compute_ObukoWeiss_norm(vort, E, F):
     OW = compute_ObukoWeiss(vort, E, F)
     return OW / vort ** 2
 
-
 def compute_Coriolis_param(lat):
     """Compute the coriolis parameter for a given latitude (array)
 
@@ -482,14 +261,12 @@ def compute_Coriolis_param(lat):
     phi = lat * np.pi / 180
     return 2 * W * np.sin(phi)
 
-
 def compute_OWZ(vort, E, F, lat):
     OW_n = compute_ObukoWeiss_norm(vort, E, F)
     f = compute_Coriolis_param(lat)
-    shape = np.shape(vort)
-    f = np.transpose(np.array(list(f) * shape[1]).reshape([shape[1], shape[0]]))
-    return np.sign(f) * (vort + f) * np.maximum(OW_n, np.zeros(np.shape(OW_n)))
-
+    return np.transpose(
+        np.sign(f) * (np.transpose(vort)+f) * np.transpose(np.maximum(OW_n, np.zeros(np.shape(OW_n))))
+    )
 
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
@@ -530,7 +307,6 @@ def compute_grad(T, lat, lon):
     lon_G = np.array([(lon[i + 1] + lon[i]) / 2 for i in range(len(lon) - 1)])
 
     return lon_G, lat_G, np.array(Gx), np.array(Gy)
-
 
 def compute_EKE(u, v):  # Probably deserves optimization if useful later.
     """Compute Eddy Kinetic Energy from u and v fields.
