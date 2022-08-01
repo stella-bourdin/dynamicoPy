@@ -4,9 +4,7 @@
 
 import numpy as np
 import xarray as xr
-from .utils_geo import get_south, get_north, apply_mask_axis
-from .utils_geo import get_south, get_north, apply_mask_axis
-
+#from .utils_geo import get_south, get_north, apply_mask_axis
 
 ### ==================================== ###
 ###         Derivated variables          ###
@@ -94,29 +92,50 @@ def compute_OWZ_from_files(
             vo = xr.open_dataset(vo_file).rename({p_name:"level"})#.squeeze()
 
     OWZ = []
-    for i,t in enumerate(u.time) :
-        OWZ.append([])
-        for p in level :
-            lon, lat, E, F = compute_E_F(u.sel(time = t).sel(level=p).values,
-                                         v.sel(time = t).sel(level=p).values,
+    if "time" in u.dims :
+        for i,t in enumerate(u.time) :
+            OWZ.append([])
+            for p in level :
+                lon, lat, E, F = compute_E_F(u.sel(time = t).sel(level=p).values,
+                                             v.sel(time = t).sel(level=p).values,
+                                             u[lat_name].values, u[lon_name].values)
+                E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
+                E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
+                F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
+                F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
+
+                if vo_file == None :
+                    lon, lat, vo_t = compute_vort(u.sel(time = t).sel(level=p).values,
+                                                  v.sel(time = t).sel(level=p).values,
+                                                  u[lat_name].values, u[lon_name].values)
+                    vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
+                    vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
+                else :
+                    vo_t = vo.isel(time = i).sel(level=p)
+
+                OWZ[-1].append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
+                del E, F, vo_t
+    else :
+        for p in level:
+            lon, lat, E, F = compute_E_F(u.sel(level=p).values,
+                                         v.sel(level=p).values,
                                          u[lat_name].values, u[lon_name].values)
             E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
             E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
             F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
             F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
-            if vo_file == None :
-                lon, lat, vo_t = compute_vort(u.sel(time = t).sel(level=p).values,
-                                              v.sel(time = t).sel(level=p).values,
+            if vo_file == None:
+                lon, lat, vo_t = compute_vort(u.sel(level=p).values,
+                                              v.sel(level=p).values,
                                               u[lat_name].values, u[lon_name].values)
                 vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
                 vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
-            else :
-                vo_t = vo.isel(time = i).sel(level=p)
+            else:
+                vo_t = vo.sel(level=p)
+            OWZ.append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
 
-            OWZ[-1].append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
-
-    OWZ = xr.DataArray(OWZ, coords = [u.time, u.level, u[lat_name], u[lon_name]], dims = ["time", p_name, lat_name, lon_name])
+    OWZ = xr.DataArray(OWZ, coords = u.coords, dims = u.dims)
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
     if owz_file != None:
@@ -389,4 +408,6 @@ def hemispheric_mean(var, lat, axis=-1, neg=False):
 hemisphericMean = hemispheric_mean
 
 if __name__ == "__main__":
-    pass
+    u_file="tests/u.1ts.nc"
+    v_file = "tests/v.1ts.nc"
+    OWZ = compute_OWZ_from_files(u_file,v_file,)
