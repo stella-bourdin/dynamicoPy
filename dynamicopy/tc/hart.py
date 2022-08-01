@@ -129,7 +129,7 @@ def area_weights(field) :
     w = (field.r +δ) ** 2 - (field.r - δ) ** 2
     return w
 
-def B(th, geopt, SH = False, names=["snap_z900", "snap_z600"]):
+def B(th, geopt, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
