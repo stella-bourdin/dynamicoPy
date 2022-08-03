@@ -10,12 +10,10 @@ try:
     import cartopy.crs as ccrs
     from .cartoplot import *
 except ImportError:
-    print(
-        "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
-    Please install cartopy if you wish to use it."
-    )
+    pass
 import numpy as np
 import matplotlib.ticker as mticker
+from osgeo import ogr
 
 NATL = Polygon(((260, 90), (360, 90), (360, 0), (295, 0), (260, 20)))
 ENP = Polygon(((180, 90), (260, 90), (260, 20), (295, 0), (180, 0)))
@@ -34,6 +32,33 @@ SH = {"SI": SI, "SP": SP, "SA": SA}
 
 basins = dict(SH, **NH)
 
+def _save_basins_shapefile():
+    """
+    Code from Stackoverflow :
+    https://gis.stackexchange.com/questions/52705/how-to-write-shapely-geometries-to-shapefiles
+    """
+    # Now convert it to a shapefile with OGR
+    driver = ogr.GetDriverByName('Esri Shapefile')
+    ds = driver.CreateDataSource('dynamicopy/_data/basins.shp')
+    layer = ds.CreateLayer('', None, ogr.wkbPolygon)
+    # Add one attribute
+    layer.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    defn = layer.GetLayerDefn()
+
+    for b in basins:
+        # Create a new feature (attribute and geometry)
+        feat = ogr.Feature(defn)
+        feat.SetField('id', 123)
+
+        # Make a geometry, from Shapely object
+        geom = ogr.CreateGeometryFromWkb(basins[b].wkb)
+        feat.SetGeometry(geom)
+
+        layer.CreateFeature(feat)
+        feat = geom = None  # destroy these
+
+    # Save and close everything
+    ds = layer = feat = geom = None
 
 def plot_basins(show=True, save=None):
     """

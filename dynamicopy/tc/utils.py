@@ -2,6 +2,8 @@ import numpy as np
 from ._basins import *
 from shapely.geometry import Point
 import pandas as pd
+import pickle as pkl
+import geopandas as gpd
 
 def add_season(tracks):
     """
@@ -68,6 +70,31 @@ def get_time(year, month, day, hour):
 
 # TODO : Optimiser cette fonction
 
+def get_basin_gpd(tracks):
+    """
+    Get the basins corresponding to given lon and lat
+
+    Parameters
+    ----------
+    lon (np.array or pd.Series)
+    lat (np.array or pd.Series)
+
+    Returns
+    -------
+    list
+        basins list
+    """
+    with open("dynamicopy/_data/basins_geopandas.pkl", "rb") as handle:
+        gdf = pkl.load(handle)
+
+    df = tracks[["lon", "lat"]]
+    df = df.assign(coords = list(zip(df['lon'], df['lat'])))
+    df['coords'] = df['coords'].apply(Point)
+    points = gpd.GeoDataFrame(df, geometry='coords', crs=gdf.crs)
+    pointInPolys = gpd.tools.sjoin(points, gdf, how='left')
+
+    return pointInPolys.basin
+
 def get_basin(lon, lat):
     """
     Get the basins corresponding to given lon and lat
@@ -99,7 +126,8 @@ def get_basin(lon, lat):
             elif 100 < x <= 180:
                 basin.append("WNP")
             else :
-                if NH["ENP"].contains(Point(x, y)) :
+                #if NH["ENP"].contains(Point(x, y)) :
+                if Point(x,y).within(NH["ENP"]):
                     basin.append("ENP")
                 else :
                     basin.append("NATL")
