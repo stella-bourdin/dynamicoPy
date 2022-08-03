@@ -17,8 +17,8 @@ str         np.datetime64[ns]   float   float   str         str     str     int 
 
 def load_TEtracks(
     file="tests/tracks_ERA5.csv",
-    NH_seasons=[1980, 2019],
-    SH_seasons=[1981, 2019],
+    NH_seasons=None,
+    SH_seasons=None,
     surf_wind_col="wind10",
     slp_col="slp",
     get_basins=True,
@@ -55,14 +55,15 @@ def load_TEtracks(
         tracks["basin"] = np.nan
     if get_seasons:
         tracks = add_season(tracks)
-        tracks = tracks[
-            ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
-            | (tracks.hemisphere == "S")
-            ]
-        tracks = tracks[
-            ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
-            | (tracks.hemisphere == "N")
-            ]
+        if (NH_seasons == None) & (SH_seasons == None) :
+            tracks = tracks[
+                ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
+                | (tracks.hemisphere == "S")
+                ]
+            tracks = tracks[
+                ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
+                | (tracks.hemisphere == "N")
+                ]
     else :
         tracks["season"] = np.nan
 
