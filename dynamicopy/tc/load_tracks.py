@@ -3,6 +3,8 @@ import numpy as np
 from .utils import *
 import pandas as pd
 import pickle as pkl
+import xarray as xr
+import numpy as np
 
 """
 Format for loading the tracks data : 
@@ -420,3 +422,29 @@ def load_CNRMtracks(
         ]
     ]
 
+def apply_lsm_filter(tracks, lsm_file="tests/lsm1979.nc", lsm_threshold=0.5, min_ts=4):
+    """
+    Apply lsm filter to a tracks dataset : Any track that has less than min_ts time steps with an lsm value above lsm_threshold will be discarded.
+
+    Parameters
+    ----------
+    tracks: tracks dataset as loaded by load_TEtracks
+    lsm_file: path to the file with the reference land_sea_mask
+    lsm_threshold: threshold to define the binary limit between ocean and land in the land-sea mask
+    min_ts: minimum number of timesteps that a tracks must have over ocean
+
+    Returns
+    -------
+
+    """
+
+    lsm = xr.open_dataset(lsm_file)
+    for row in tracks.itertuples():
+        tracks.loc[row.Index, "lsm"] = \
+        lsm.sel(longitude=row.lon, method="nearest").sel(latitude=row.lat, method="nearest").lsm.values[0]
+    t_ocean = tracks[tracks.lsm < 0.65]
+    t_filt = tracks[tracks.track_id.isin(
+        t_ocean.groupby("track_id").time.count()[t_ocean.groupby("track_id").time.count() > 4].index)]
+    t_out = tracks[~tracks.track_id.isin(
+        t_ocean.groupby("track_id").time.count()[t_ocean.groupby("track_id").time.count() > 4].index)]
+    return t_filt, t_out
