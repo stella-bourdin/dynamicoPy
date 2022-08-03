@@ -67,6 +67,7 @@ def get_time(year, month, day, hour):
 
 
 # TODO : Optimiser cette fonction
+
 def get_basin(lon, lat):
     """
     Get the basins corresponding to given lon and lat
@@ -83,21 +84,25 @@ def get_basin(lon, lat):
     """
     basin = []
     for x, y in zip(lon, lat):
-        ok = False
-        if y >= 0:
-            for b in NH:
-                if NH[b].contains(Point(x, y)):
-                    basin.append(b)
-                    ok = True
-                    break
-        else:
-            for b in SH:
-                if SH[b].contains(Point(x, y)):
-                    basin.append(b)
-                    ok = True
-                    break
-        if ok == False:
-            basin.append(np.nan)
+        if y < 0 :
+            if 20 < x <= 135 :
+                basin.append("SI")
+            elif 135 < x <= 295 :
+                basin.append("SP")
+            else :
+                basin.append("SA")
+        else :
+            if 0 < x <= 30:
+                basin.append("MED")
+            elif 30 < x <= 100:
+                basin.append("NI")
+            elif 100 < x <= 180:
+                basin.append("WNP")
+            else :
+                if NH["ENP"].contains(Point(x, y)) :
+                    basin.append("ENP")
+                else :
+                    basin.append("NATL")
     return basin
 
 _Simpson_pres_thresholds=[990, 980, 970, 965, 945, 920]
@@ -128,7 +133,6 @@ def sshs_from_pres(p, classification = "Klotzbach"):
     sshs = np.where((sshs == None) & (~np.isnan(p)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
-
 
 def sshs_from_wind(wind):
     """
