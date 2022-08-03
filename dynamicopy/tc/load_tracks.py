@@ -55,7 +55,7 @@ def load_TEtracks(
         tracks["basin"] = np.nan
     if get_seasons:
         tracks = add_season(tracks)
-        if (NH_seasons == None) & (SH_seasons == None) :
+        if ! ( (NH_seasons == None) & (SH_seasons == None) ) :
             tracks = tracks[
                 ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
                 | (tracks.hemisphere == "S")
