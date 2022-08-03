@@ -129,6 +129,8 @@ def get_basin(lon, lat):
                 basin.append("ENP")
             elif 290 < x <= 360:
                 basin.append("NATL")
+            elif y>=20:
+                basin.append("NATL")
             else :
                 if Point(x,y).within(NH["ENP"]):
                     basin.append("ENP")
