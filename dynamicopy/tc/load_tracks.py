@@ -438,6 +438,7 @@ def apply_lsm_filter(tracks, lsm_file="tests/lsm1979.nc", lsm_threshold=0.5, min
     -------
 
     """
+    # Take example on identify_ET to improve, with target_lon et sel
 
     lsm = xr.open_dataset(lsm_file).squeeze().lsm
     lat_idx = (360 - 4 * tracks.lat).astype(int)
