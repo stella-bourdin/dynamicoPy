@@ -72,7 +72,7 @@ def get_time(year, month, day, hour):
 
 def get_basin_gpd(tracks):
     """
-    Get the basins corresponding to given lon and lat
+    Get the basins corresponding to given lon and lat (More elegant but less fast than get_basin)
 
     Parameters
     ----------
@@ -119,14 +119,17 @@ def get_basin(lon, lat):
             else :
                 basin.append("SA")
         else :
-            if 0 < x <= 30:
+            if 0 <= x <= 30:
                 basin.append("MED")
             elif 30 < x <= 100:
                 basin.append("NI")
             elif 100 < x <= 180:
                 basin.append("WNP")
+            elif 180 < x <= 260:
+                basin.append("ENP")
+            elif 290 < x <= 360:
+                basin.append("NATL")
             else :
-                #if NH["ENP"].contains(Point(x, y)) :
                 if Point(x,y).within(NH["ENP"]):
                     basin.append("ENP")
                 else :
