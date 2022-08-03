@@ -18,12 +18,13 @@ def add_season(tracks):
     """
     if "season" in tracks.columns:
         tracks = tracks.drop(columns="season")
+
     group = (
         tracks.groupby(["track_id"])[["year", "month"]]
         .mean()
         .astype(int)
         .join(
-            tracks.groupby("track_id")[["hemisphere"]].agg(pd.Series.mode),
+            tracks.groupby("track_id")[["hemisphere"]].last(), #.agg(pd.Series.mode), Assumption: last point of the track is in the right hemisphere
             on="track_id",
         )
     )
