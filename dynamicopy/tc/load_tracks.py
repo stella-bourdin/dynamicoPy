@@ -439,10 +439,11 @@ def apply_lsm_filter(tracks, lsm_file="tests/lsm1979.nc", lsm_threshold=0.5, min
 
     """
 
-    lsm = xr.open_dataset(lsm_file)
-    for row in tracks.itertuples():
-        tracks.loc[row.Index, "lsm"] = \
-        lsm.sel(longitude=row.lon, method="nearest").sel(latitude=row.lat, method="nearest").lsm.values[0]
+    lsm = xr.open_dataset(lsm_file).squeeze().lsm
+    lat_idx = (360 - 4 * tracks.lat).astype(int)
+    lon_idx = (tracks.lon * 4).astype(int)
+    L = np.take(lsm.values, np.ravel_multi_index((lat_idx, lon_idx), lsm.values.shape))
+    tracks["lsm"] = L
     t_ocean = tracks[tracks.lsm < 0.65]
     t_filt = tracks[tracks.track_id.isin(
         t_ocean.groupby("track_id").time.count()[t_ocean.groupby("track_id").time.count() > 4].index)]
