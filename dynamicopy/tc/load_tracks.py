@@ -41,18 +41,22 @@ def load_TEtracks(
         Columns as described in the module header
     """
 
+    ## Read file
     tracks = pd.read_csv(file)
     if tracks.columns.str[0][1] == " ":
         tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
     tracks = tracks.rename(columns={surf_wind_col: "wind10", slp_col: "slp"})
 
-    tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
+    ## Geographical attributes
     tracks.loc[tracks.lon < 0, "lon"] += 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     if get_basins:
         tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
     else :
         tracks["basin"] = np.nan
+
+    ## Temporal attributes
+    tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     if get_seasons:
         tracks = add_season(tracks)
         if not ( (NH_seasons == None) & (SH_seasons == None) ) :
@@ -67,59 +71,14 @@ def load_TEtracks(
     else :
         tracks["season"] = np.nan
 
-
-    if tracks[slp_col].mean() > 10000 :
-        tracks[slp_col] /= 100
+    ## Intensity attributes
     if slp_col != None:
+        if tracks[slp_col].mean() > 10000:
+            tracks[slp_col] /= 100
         tracks["sshs"] = sshs_from_pres(tracks.slp.values)
     else:
         tracks["sshs"] = np.nan
-    if "ET" not in tracks.columns :
-        tracks["ET"] = np.nan
-    if "B" not in tracks.columns:
-        tracks["B"] = np.nan
-    if "VTU" in tracks.columns:
-        return tracks[
-            [
-                "track_id",
-                "time",
-                "lon",
-                "lat",
-                "hemisphere",
-                "basin",
-                "season",
-                "sshs",
-                "slp",
-                "wind10",
-                "year",
-                "month",
-                "day",
-                "hour",
-                "ET",
-                "B",
-                "VTL",
-                "VTU",
-            ]
-        ]
-    return tracks[
-        [
-            "track_id",
-            "time",
-            "lon",
-            "lat",
-            "hemisphere",
-            "basin",
-            "season",
-            "sshs",
-            "slp",
-            "wind10",
-            "year",
-            "month",
-            "day",
-            "hour",
-            "ET",
-        ]
-    ]
+    return tracks
 
 
 _HRMIP_TRACK_data_vars = [
