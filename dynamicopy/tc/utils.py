@@ -132,10 +132,15 @@ def get_basin(lon, lat):
             elif y>=20:
                 basin.append("NATL")
             else :
-                if Point(x,y).within(NH["ENP"]):
-                    basin.append("ENP")
-                else :
+                if y >= 20/35*(295-x):
                     basin.append("NATL")
+                else:
+                    basin.append("ENP")
+
+                #if Point(x,y).within(NH["ENP"]):
+                #    basin.append("ENP")
+                #else :
+                #    basin.append("NATL")
     return basin
 
 _Simpson_pres_thresholds=[990, 980, 970, 965, 945, 920]
