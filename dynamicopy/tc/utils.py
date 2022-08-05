@@ -20,7 +20,6 @@ def add_season(tracks):
     """
     if "season" in tracks.columns:
         tracks = tracks.drop(columns="season")
-
     group = (
         tracks.groupby(["track_id"])[["year", "month"]]
         .mean()

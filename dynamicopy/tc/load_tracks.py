@@ -190,7 +190,6 @@ def read_TRACKfiles(
             c += 1
             if season == None:
                 season = line.split()[-1][:-6]
-            track_id = season + "-" + str(c)
             time_step = []
             lon = []
             lat = []
