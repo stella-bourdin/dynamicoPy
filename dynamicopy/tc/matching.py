@@ -3,7 +3,7 @@ import numpy as np
 from haversine import haversine_vector, Unit
 
 
-def match_tracks(tracks1, tracks2, name1="algo", name2="ib"):
+def match_tracks(tracks1, tracks2, name1="algo", name2="ib", max_dist = 300, min_overlap=0):
     """
 
     Parameters
@@ -30,7 +30,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib"):
     X = np.concatenate([[merged.lat_x], [merged.lon_x]]).T
     Y = np.concatenate([[merged.lat_y], [merged.lon_y]]).T
     merged["dist"] = haversine_vector(X, Y, unit=Unit.KILOMETERS)
-    merged = merged[merged.dist <= 300]
+    merged = merged[merged.dist <= max_dist]
     # Compute temporal overlap
     temp = (
         merged.groupby(["track_id_x", "track_id_y"])[["dist"]]
@@ -43,6 +43,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib"):
         .drop_duplicates()
         .join(temp, on=["track_id_x", "track_id_y"])
     )
+    matches = matches[matches.temp >= min_overlap]
     # For each track of the first set, only keep the track of the second set with the longest overlap
     maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
     matches = maxs.merge(matches)[["track_id_x", "track_id_y", "temp"]]
@@ -59,7 +60,8 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib"):
     )
     return matches
 
-def merge_duplicates(tracks1, tracks2, matches = None):
+
+def merge_duplicates(tracks1, tracks2, matches=None):
     """
     Function to manage cases where tracks from tracks2 match with several tracks in tracks1,
     by merging the duplicates into one track.
@@ -85,12 +87,15 @@ def merge_duplicates(tracks1, tracks2, matches = None):
     print("Handled " + str(len(duplicates)) + " duplicates")
     for i in duplicates:
         merge = matches[matches[c2] == i][c1].values
-        new_id = '+'.join(merge.astype(str))
-        tracks1["track_id"] = tracks1.track_id.replace({old_id: new_id for old_id in merge})
+        new_id = "+".join(merge.astype(str))
+        tracks1["track_id"] = tracks1.track_id.replace(
+            {old_id: new_id for old_id in merge}
+        )
     matches = match_tracks(tracks1, tracks2, c1[3:], c2[3:])
     return matches
 
-def overlap(tracks1, tracks2, matches = None):
+
+def overlap(tracks1, tracks2, matches=None):
     """
     Function computing the overlap between matched tracks.
 
@@ -109,15 +114,40 @@ def overlap(tracks1, tracks2, matches = None):
     if type(matches) == type(None):
         matches = match_tracks(tracks1, tracks2)
     c1, c2 = matches.columns[:2].str.slice(3)
-    matches = matches.join(tracks1.groupby("track_id")[["time"]].min().rename(columns={"time":"tmin_"+c1}), on = 'id_'+c1
-                      ).join(tracks1.groupby("track_id")[["time"]].max().rename(columns={"time":"tmax_"+c1}), on = 'id_'+c1
-                      ).join(tracks2.groupby("track_id")[["time"]].min().rename(columns={"time":"tmin_"+c2}), on = 'id_'+c2
-                      ).join(tracks2.groupby("track_id")[["time"]].max().rename(columns={"time":"tmax_"+c2}), on = 'id_'+c2
-                      )
+    matches = (
+        matches.join(
+            tracks1.groupby("track_id")[["time"]]
+            .min()
+            .rename(columns={"time": "tmin_" + c1}),
+            on="id_" + c1,
+        )
+        .join(
+            tracks1.groupby("track_id")[["time"]]
+            .max()
+            .rename(columns={"time": "tmax_" + c1}),
+            on="id_" + c1,
+        )
+        .join(
+            tracks2.groupby("track_id")[["time"]]
+            .min()
+            .rename(columns={"time": "tmin_" + c2}),
+            on="id_" + c2,
+        )
+        .join(
+            tracks2.groupby("track_id")[["time"]]
+            .max()
+            .rename(columns={"time": "tmax_" + c2}),
+            on="id_" + c2,
+        )
+    )
 
-    matches["delta_start"] = matches["tmin_"+c2] - matches["tmin_"+c1]
-    matches["delta_end"] = matches["tmax_"+c2] - matches["tmax_"+c1]
-    matches["delta_end"] = (matches.delta_end.dt.days + matches.delta_end.dt.seconds / 86400)
-    matches["delta_start"] = (matches.delta_start.dt.days + matches.delta_start.dt.seconds / 86400)
+    matches["delta_start"] = matches["tmin_" + c2] - matches["tmin_" + c1]
+    matches["delta_end"] = matches["tmax_" + c2] - matches["tmax_" + c1]
+    matches["delta_end"] = (
+        matches.delta_end.dt.days + matches.delta_end.dt.seconds / 86400
+    )
+    matches["delta_start"] = (
+        matches.delta_start.dt.days + matches.delta_start.dt.seconds / 86400
+    )
 
-    return matches[['id_'+c1, 'id_'+c2, 'temp', 'dist', 'delta_start', 'delta_end']]
+    return matches[["id_" + c1, "id_" + c2, "temp", "dist", "delta_start", "delta_end"]]
