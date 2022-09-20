@@ -47,6 +47,7 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", max_dist = 300, min
         .join(temp, on=["track_id_x", "track_id_y"])
     )
     matches = matches[matches.temp >= min_overlap]
+    matches = matches.merge(merged.set_index(["track_id_x", "track_id_y"])["dist"])
     if ref :
         # For each track of the first set, only keep the track of the second set with the longest overlap
         maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
