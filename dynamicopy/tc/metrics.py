@@ -49,22 +49,38 @@ def tc_count(tracks):
         .reindex(["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"])
     )
 
-def get_freq(tracks): # TODO : A optimiser
+
+def get_freq(tracks):  # TODO : A optimiser
     tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
         lambda x: x.value_counts().index[0]
     )
-    basins = storms.reset_index().groupby(["season", "basin"])["track_id"].count().reset_index().pivot_table(index=["basin"], columns="season", fill_value=0).mean(axis=1)
-    hemi = storms.reset_index().groupby(["season", "hemisphere"])["track_id"].count().reset_index().pivot_table(index=["hemisphere"], columns="season", fill_value=0).mean(axis=1)
+    basins = (
+        storms.reset_index()
+        .groupby(["season", "basin"])["track_id"]
+        .count()
+        .reset_index()
+        .pivot_table(index=["basin"], columns="season", fill_value=0)
+        .mean(axis=1)
+    )
+    hemi = (
+        storms.reset_index()
+        .groupby(["season", "hemisphere"])["track_id"]
+        .count()
+        .reset_index()
+        .pivot_table(index=["hemisphere"], columns="season", fill_value=0)
+        .mean(axis=1)
+    )
     freq = hemi.append(basins)
     freq.loc["global"] = 0
-    if "S" in freq.index :
+    if "S" in freq.index:
         freq.loc["global"] += freq.loc["S"]
-    if "N" in freq.index :
+    if "N" in freq.index:
         freq.loc["global"] += freq.loc["N"]
     return freq.reindex(
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
+
 
 """ # Version qui avait des erreurs dans les sommes, à revoir si besoin de la distinction en SSHS
 def get_freq(tracks):
@@ -123,7 +139,8 @@ def get_freq(tracks):
     )
 """
 
-def prop_intense(freq, sshs_min = 4):
+
+def prop_intense(freq, sshs_min=4):
     """
     Retrieve the proportion of intense tc among all
 
@@ -159,10 +176,11 @@ def storm_stats(tracks):
     tracks["wind10"] = tracks.wind10.round(2)
     tracks.loc[tracks.ET.isna(), "ET"] = False
     storms = (
-        tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]]
-        .agg(lambda x: x.value_counts().index[0])
-            #TODO : line responsible for the slow behavior / remplacer par pd.Series.mode : https://stackoverflow.com/questions/15222754/groupby-pandas-dataframe-and-select-most-common-value
-            #Teste, améliore de 34s -> 21s, mais pb dans le cas limite ou même nb de points dans 2 bassins, a gerer
+        tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]].agg(
+            lambda x: x.value_counts().index[0]
+        )
+        # TODO : line responsible for the slow behavior / remplacer par pd.Series.mode : https://stackoverflow.com/questions/15222754/groupby-pandas-dataframe-and-select-most-common-value
+        # Teste, améliore de 34s -> 21s, mais pb dans le cas limite ou même nb de points dans 2 bassins, a gerer
         .reset_index()
     )
     storms = storms.merge(
@@ -175,16 +193,17 @@ def storm_stats(tracks):
     )
     storms = storms.merge(tracks.groupby(["track_id"])[["slp"]].min().reset_index())
 
-    storms = storms.merge(   # Wind lat
+    storms = storms.merge(  # Wind lat
         storms[["track_id", "wind10"]]
         .merge(tracks[["track_id", "wind10", "lat", "time"]])
         .groupby("track_id")
         .agg(lambda t: t.mean())
         .reset_index()
-        .rename(columns={"lat": "lat_wind", "time": "time_wind"}).round(2),
+        .rename(columns={"lat": "lat_wind", "time": "time_wind"})
+        .round(2),
         how="outer",
     )
-    storms = storms.merge(    # slp lat
+    storms = storms.merge(  # slp lat
         storms[["track_id", "slp"]]
         .merge(tracks[["track_id", "slp", "lat", "time"]])
         .groupby("track_id")
@@ -195,7 +214,8 @@ def storm_stats(tracks):
     )
     return storms
 
-def propagation_speeds(tracks):
+
+def propagation_speeds(tracks): # TODO : Probleme quand un point traverse le méridien de greenwhich
     """
     Return the propagation speed of each track
 

@@ -52,23 +52,23 @@ def load_TEtracks(
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
     if get_basins:
         tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
-    else :
+    else:
         tracks["basin"] = np.nan
 
     ## Temporal attributes
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
     if get_seasons:
         tracks = add_season(tracks)
-        if not ( (NH_seasons == None) & (SH_seasons == None) ) :
+        if not ((NH_seasons == None) & (SH_seasons == None)):
             tracks = tracks[
                 ((tracks.season >= NH_seasons[0]) & (tracks.season <= NH_seasons[1]))
                 | (tracks.hemisphere == "S")
-                ]
+            ]
             tracks = tracks[
                 ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
                 | (tracks.hemisphere == "N")
-                ]
-    else :
+            ]
+    else:
         tracks["season"] = np.nan
 
     ## Intensity attributes
@@ -190,6 +190,7 @@ def read_TRACKfiles(
             c += 1
             if season == None:
                 season = line.split()[-1][:-6]
+            track_id = str(season) + "-" + str(c)
             time_step = []
             lon = []
             lat = []
@@ -207,11 +208,11 @@ def read_TRACKfiles(
     f.close()
 
     SH = tracks.lat.mean() < 0
-    if SH :
-        tracks["track_id"] = 'S'+tracks.track_id
+    if SH:
+        tracks["track_id"] = "S" + tracks.track_id
         start = start = np.datetime64(str(int(season) - 1) + "-07-01 00:00:00")
-    else :
-        tracks["track_id"] = 'N'+tracks.track_id
+    else:
+        tracks["track_id"] = "N" + tracks.track_id
         start = np.datetime64(season + "-01-01 00:00:00")
     if time_format == "calendar":
         tracks["year"] = season
@@ -307,7 +308,7 @@ def open_TRACKpkl(
         ((tracks.season >= SH_seasons[0]) & (tracks.season <= SH_seasons[1]))
         | (tracks.hemisphere == "N")
     ]
-    if "ET" not in tracks.columns :
+    if "ET" not in tracks.columns:
         tracks["ET"] = np.nan
     return tracks
 
@@ -359,7 +360,7 @@ def load_CNRMtracks(
         | (tracks.hemisphere == "N")
     ]
     tracks["sshs"] = sshs_from_pres(tracks.slp)
-    if "ET" not in tracks.columns :
+    if "ET" not in tracks.columns:
         tracks["ET"] = np.nan
     return tracks[
         [
@@ -380,6 +381,7 @@ def load_CNRMtracks(
             "ET",
         ]
     ]
+
 
 def apply_lsm_filter(tracks, lsm_file="tests/lsm1979.nc", lsm_threshold=0.5, min_ts=4):
     """
@@ -404,8 +406,18 @@ def apply_lsm_filter(tracks, lsm_file="tests/lsm1979.nc", lsm_threshold=0.5, min
     L = np.take(lsm.values, np.ravel_multi_index((lat_idx, lon_idx), lsm.values.shape))
     tracks["lsm"] = L
     t_ocean = tracks[tracks.lsm < 0.65]
-    t_filt = tracks[tracks.track_id.isin(
-        t_ocean.groupby("track_id").time.count()[t_ocean.groupby("track_id").time.count() > 4].index)]
-    t_out = tracks[~tracks.track_id.isin(
-        t_ocean.groupby("track_id").time.count()[t_ocean.groupby("track_id").time.count() > 4].index)]
+    t_filt = tracks[
+        tracks.track_id.isin(
+            t_ocean.groupby("track_id")
+            .time.count()[t_ocean.groupby("track_id").time.count() > 4]
+            .index
+        )
+    ]
+    t_out = tracks[
+        ~tracks.track_id.isin(
+            t_ocean.groupby("track_id")
+            .time.count()[t_ocean.groupby("track_id").time.count() > 4]
+            .index
+        )
+    ]
     return t_filt, t_out

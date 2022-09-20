@@ -8,9 +8,6 @@ In all functions, tracks represent a dataset of TC points as issued by the load_
 """
 
 
-
-
-
 def genesis_points(tracks):
     return (
         tracks.sort_values("time")

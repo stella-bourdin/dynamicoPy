@@ -10,8 +10,8 @@ def _clean_ibtracs(
     raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
     csv_output="dynamicopy/_data/ibtracs.since1980.cleaned.csv",
     pkl_output="dynamicopy/_data/ibtracs.pkl",
-    six_hourly = True,
-    threshold_wind = True,
+    six_hourly=True,
+    threshold_wind=True,
 ):
     """
     Function used to post-treat ibtracs _data into a lighter file
@@ -139,20 +139,23 @@ def _clean_ibtracs(
 
     ## Filter 6-hourly
     origin = datetime.datetime(1800, 1, 1, 0, 0, 0)
-    if six_hourly : ib = ib[(ib.time - origin).dt.total_seconds() % (6*60*60) == 0];
+    if six_hourly:
+        ib = ib[(ib.time - origin).dt.total_seconds() % (6 * 60 * 60) == 0]
 
     ## Filter tracks not reaching 16 m/s
     if threshold_wind:
         tcs = (
-            ib.groupby("track_id")["wind10"].max()[ib.groupby("track_id")["wind10"].max() >= 16].index
+            ib.groupby("track_id")["wind10"]
+            .max()[ib.groupby("track_id")["wind10"].max() >= 16]
+            .index
         )
         ib = ib[ib.track_id.isin(tcs)]
 
     ## Filter tracks lasting for at least 4 time steps
     tcs = (
         ib.groupby("track_id")["time"]
-            .count()[ib.groupby("track_id")["time"].count() >= 4]
-            .index
+        .count()[ib.groupby("track_id")["time"].count() >= 4]
+        .index
     )
     ib = ib[ib.track_id.isin(tcs)]
 

@@ -6,6 +6,7 @@ Oceanic basins as defined by Knutson et al. 2020 appendix.
 
 from shapely.geometry import Polygon, MultiPolygon
 import matplotlib.pyplot as plt
+
 try:
     import cartopy.crs as ccrs
     from .cartoplot import *
@@ -32,23 +33,24 @@ SH = {"SI": SI, "SP": SP, "SA": SA}
 
 basins = dict(SH, **NH)
 
+
 def _save_basins_shapefile():
     """
     Code from Stackoverflow :
     https://gis.stackexchange.com/questions/52705/how-to-write-shapely-geometries-to-shapefiles
     """
     # Now convert it to a shapefile with OGR
-    driver = ogr.GetDriverByName('Esri Shapefile')
-    ds = driver.CreateDataSource('dynamicopy/_data/basins.shp')
-    layer = ds.CreateLayer('', None, ogr.wkbPolygon)
+    driver = ogr.GetDriverByName("Esri Shapefile")
+    ds = driver.CreateDataSource("dynamicopy/_data/basins.shp")
+    layer = ds.CreateLayer("", None, ogr.wkbPolygon)
     # Add one attribute
-    layer.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    layer.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
     defn = layer.GetLayerDefn()
 
     for b in basins:
         # Create a new feature (attribute and geometry)
         feat = ogr.Feature(defn)
-        feat.SetField('id', 123)
+        feat.SetField("id", 123)
 
         # Make a geometry, from Shapely object
         geom = ogr.CreateGeometryFromWkb(basins[b].wkb)
@@ -59,6 +61,7 @@ def _save_basins_shapefile():
 
     # Save and close everything
     ds = layer = feat = geom = None
+
 
 def plot_basins(show=True, save=None):
     """

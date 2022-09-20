@@ -4,7 +4,8 @@
 
 import numpy as np
 import xarray as xr
-#from .utils_geo import get_south, get_north, apply_mask_axis
+
+# from .utils_geo import get_south, get_north, apply_mask_axis
 
 ### ==================================== ###
 ###         Derivated variables          ###
@@ -35,6 +36,7 @@ def omega2w(omega, p, T):
     w = -omega / (rho * g)
     return w
 
+
 def get_dx_dy(lon, lat):
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
@@ -47,12 +49,13 @@ def get_dx_dy(lon, lat):
     dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
     return dx, dy
 
+
 def compute_OWZ_from_files(
     u_file,
     v_file,
     vo_file=None,
     owz_file=None,
-    level=[850,500],
+    level=[850, 500],
     u_name="u",
     v_name="v",
     vo_name="vo",
@@ -81,66 +84,91 @@ def compute_OWZ_from_files(
         OWZ field
     """
     if level != None:
-        u = xr.open_dataset(u_file)[u_name].rename({p_name:"level"}).sel(level=level)#.squeeze()
-        v = xr.open_dataset(v_file)[v_name].rename({p_name:"level"}).sel(level=level)#.squeeze()
-        if vo_file != None :
-            vo = xr.open_dataset(vo_file)[vo_name].rename({p_name:"level"}).sel(level=level)#.squeeze()
-    else :
-        u = xr.open_dataset(u_file).rename({p_name:"level"})#.squeeze()
-        v = xr.open_dataset(v_file).rename({p_name:"level"})#.squeeze()
-        if vo_file != None :
-            vo = xr.open_dataset(vo_file).rename({p_name:"level"})#.squeeze()
+        u = (
+            xr.open_dataset(u_file)[u_name].rename({p_name: "level"}).sel(level=level)
+        )  # .squeeze()
+        v = (
+            xr.open_dataset(v_file)[v_name].rename({p_name: "level"}).sel(level=level)
+        )  # .squeeze()
+        if vo_file != None:
+            vo = (
+                xr.open_dataset(vo_file)[vo_name]
+                .rename({p_name: "level"})
+                .sel(level=level)
+            )  # .squeeze()
+    else:
+        u = xr.open_dataset(u_file).rename({p_name: "level"})  # .squeeze()
+        v = xr.open_dataset(v_file).rename({p_name: "level"})  # .squeeze()
+        if vo_file != None:
+            vo = xr.open_dataset(vo_file).rename({p_name: "level"})  # .squeeze()
 
     OWZ = []
-    if "time" in u.dims :
-        for i,t in enumerate(u.time) :
+    if "time" in u.dims:
+        for i, t in enumerate(u.time):
             OWZ.append([])
-            for p in level :
-                lon, lat, E, F = compute_E_F(u.sel(time = t).sel(level=p).values,
-                                             v.sel(time = t).sel(level=p).values,
-                                             u[lat_name].values, u[lon_name].values)
+            for p in level:
+                lon, lat, E, F = compute_E_F(
+                    u.sel(time=t).sel(level=p).values,
+                    v.sel(time=t).sel(level=p).values,
+                    u[lat_name].values,
+                    u[lon_name].values,
+                )
                 E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
                 E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
                 F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
                 F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
-                if vo_file == None :
-                    lon, lat, vo_t = compute_vort(u.sel(time = t).sel(level=p).values,
-                                                  v.sel(time = t).sel(level=p).values,
-                                                  u[lat_name].values, u[lon_name].values)
-                    vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
+                if vo_file == None:
+                    lon, lat, vo_t = compute_vort(
+                        u.sel(time=t).sel(level=p).values,
+                        v.sel(time=t).sel(level=p).values,
+                        u[lat_name].values,
+                        u[lon_name].values,
+                    )
+                    vo_t = xr.DataArray(
+                        vo_t, coords=[lat, lon], dims=[lat_name, lon_name]
+                    )
                     vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
-                else :
-                    vo_t = vo.isel(time = i).sel(level=p)
+                else:
+                    vo_t = vo.isel(time=i).sel(level=p)
 
-                OWZ[-1].append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
+                OWZ[-1].append(
+                    compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values)
+                )
                 del E, F, vo_t
-    else :
+    else:
         for p in level:
-            lon, lat, E, F = compute_E_F(u.sel(level=p).values,
-                                         v.sel(level=p).values,
-                                         u[lat_name].values, u[lon_name].values)
+            lon, lat, E, F = compute_E_F(
+                u.sel(level=p).values,
+                v.sel(level=p).values,
+                u[lat_name].values,
+                u[lon_name].values,
+            )
             E = xr.DataArray(E, coords=[lat, lon], dims=[lat_name, lon_name])
             E = E.interp_like(u, kwargs={"fill_value": "extrapolate"})
             F = xr.DataArray(F, coords=[lat, lon], dims=[lat_name, lon_name])
             F = F.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
             if vo_file == None:
-                lon, lat, vo_t = compute_vort(u.sel(level=p).values,
-                                              v.sel(level=p).values,
-                                              u[lat_name].values, u[lon_name].values)
+                lon, lat, vo_t = compute_vort(
+                    u.sel(level=p).values,
+                    v.sel(level=p).values,
+                    u[lat_name].values,
+                    u[lon_name].values,
+                )
                 vo_t = xr.DataArray(vo_t, coords=[lat, lon], dims=[lat_name, lon_name])
                 vo_t = vo_t.interp_like(u, kwargs={"fill_value": "extrapolate"})
             else:
                 vo_t = vo.sel(level=p)
             OWZ.append(compute_OWZ(vo_t.values, E.values, F.values, F[lat_name].values))
 
-    OWZ = xr.DataArray(OWZ, coords = u.coords, dims = u.dims)
+    OWZ = xr.DataArray(OWZ, coords=u.coords, dims=u.dims)
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
     if owz_file != None:
         OWZ.to_dataset(name="owz").to_netcdf(owz_file, format="NETCDF4_CLASSIC")
     return OWZ
+
 
 def compute_vort(u, v, lat, lon):
     """Compute vorticity from the horizontal velocity fields
@@ -183,6 +211,7 @@ def compute_vort(u, v, lat, lon):
 
     return lon_vort, lat_vort, W
 
+
 def compute_E_F(u, v, lat, lon):
     """Compute stretching deformation (E) from the horizontal velocity fields
 
@@ -224,6 +253,7 @@ def compute_E_F(u, v, lat, lon):
 
     return lon_E, lat_E, E, F
 
+
 def compute_ObukoWeiss(vort, E, F):
     """Compute the Obuko-Weiss Parameter
 
@@ -242,6 +272,7 @@ def compute_ObukoWeiss(vort, E, F):
         The Obuko-Weiss (OW) parameter field
     """
     return vort ** 2 - (E ** 2 + F ** 2)
+
 
 def compute_ObukoWeiss_norm(vort, E, F):
     """Compute the normalized Obuko-Weiss Parameter
@@ -263,6 +294,7 @@ def compute_ObukoWeiss_norm(vort, E, F):
     OW = compute_ObukoWeiss(vort, E, F)
     return OW / vort ** 2
 
+
 def compute_Coriolis_param(lat):
     """Compute the coriolis parameter for a given latitude (array)
 
@@ -280,12 +312,16 @@ def compute_Coriolis_param(lat):
     phi = lat * np.pi / 180
     return 2 * W * np.sin(phi)
 
+
 def compute_OWZ(vort, E, F, lat):
     OW_n = compute_ObukoWeiss_norm(vort, E, F)
     f = compute_Coriolis_param(lat)
     return np.transpose(
-        np.sign(f) * (np.transpose(vort)+f) * np.transpose(np.maximum(OW_n, np.zeros(np.shape(OW_n))))
+        np.sign(f)
+        * (np.transpose(vort) + f)
+        * np.transpose(np.maximum(OW_n, np.zeros(np.shape(OW_n))))
     )
+
 
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
@@ -326,6 +362,7 @@ def compute_grad(T, lat, lon):
     lon_G = np.array([(lon[i + 1] + lon[i]) / 2 for i in range(len(lon) - 1)])
 
     return lon_G, lat_G, np.array(Gx), np.array(Gy)
+
 
 def compute_EKE(u, v):  # Probably deserves optimization if useful later.
     """Compute Eddy Kinetic Energy from u and v fields.
@@ -408,6 +445,9 @@ def hemispheric_mean(var, lat, axis=-1, neg=False):
 hemisphericMean = hemispheric_mean
 
 if __name__ == "__main__":
-    u_file="tests/u.1ts.nc"
+    u_file = "tests/u.1ts.nc"
     v_file = "tests/v.1ts.nc"
-    OWZ = compute_OWZ_from_files(u_file,v_file,)
+    OWZ = compute_OWZ_from_files(
+        u_file,
+        v_file,
+    )

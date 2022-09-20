@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 try:
     import cartopy.crs as ccrs
     from .cartoplot import *
@@ -85,11 +86,12 @@ def plot_tracks(
     h, l = g.get_legend_handles_labels()
     plt.legend(h[:-6], l[:-6])
 
-    #plt.show()
+    # plt.show()
     return fig, ax
 
+
 def plot_polar(da):
-    if np.max(da.az)>2*np.pi:
-        da["az"] = da.az *np.pi / 180
+    if np.max(da.az) > 2 * np.pi:
+        da["az"] = da.az * np.pi / 180
     da.plot.pcolormesh("az", "r", subplot_kws=dict(projection="polar"))
     plt.show()

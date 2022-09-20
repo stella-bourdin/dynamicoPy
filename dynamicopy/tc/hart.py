@@ -1,8 +1,10 @@
 import numpy as np
-#import xarray as xr
+
+# import xarray as xr
 import pandas as pd
 
-def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
+
+def theta(x0=120, x1=130, y0=12, y1=10):  # TODO : Gérer différemment SH ?
     """
     Computes the angular direction between to points.
     0° corresponds to eastward, 90° northward, 180° westward and 270° southward.
@@ -18,17 +20,20 @@ def theta(x0=120,x1=130,y0=12,y1=10): # TODO : Gérer différemment SH ?
     -------
     The directional angle between the current and the next point.
     """
-    u = [1,0]
-    v = [x1-x0,y1-y0]
-    if np.linalg.norm(v) != 0 :
-        cos = (x1-x0) / (np.linalg.norm(u) * np.linalg.norm(v)) # Simplification due to u's coordinates
-        if cos == -1 :
+    u = [1, 0]
+    v = [x1 - x0, y1 - y0]
+    if np.linalg.norm(v) != 0:
+        cos = (x1 - x0) / (
+            np.linalg.norm(u) * np.linalg.norm(v)
+        )  # Simplification due to u's coordinates
+        if cos == -1:
             th = 180
         else:
-            th = np.sign(y1-y0) * np.arccos(cos) * 180 / np.pi
-    else :
+            th = np.sign(y1 - y0) * np.arccos(cos) * 180 / np.pi
+    else:
         th = np.nan
-    return np.where(th <0, th + 360, th)
+    return np.where(th < 0, th + 360, th)
+
 
 def theta_track(lon, lat):
     """
@@ -47,15 +52,23 @@ def theta_track(lon, lat):
     th = []
     assert len(lon) == len(lat), "The two vector do not have the same length"
     n = len(lon)
-    for i in range(n-1):  # Computing the direction between each point and the following
-        th.append(theta(lon[i], lon[i+1], lat[i], lat[i+1]))
-        if np.isnan(th[-1]) & (i != 0):  # If two successive points are superimposed, we take the previous direction
+    for i in range(
+        n - 1
+    ):  # Computing the direction between each point and the following
+        th.append(theta(lon[i], lon[i + 1], lat[i], lat[i + 1]))
+        if np.isnan(th[-1]) & (
+            i != 0
+        ):  # If two successive points are superimposed, we take the previous direction
             th[-1] = th[-2]
-    if n > 1 : th.append(th[-1]); # The direction for the last point is considered the same as the point before
-    else : th = [np.nan]
+    if n > 1:
+        th.append(th[-1])
+        # The direction for the last point is considered the same as the point before
+    else:
+        th = [np.nan]
     return th
 
-def theta_multitrack(tracks) :
+
+def theta_multitrack(tracks):
     """
     Compute the angular direction for every tracks in a dataset
 
@@ -74,6 +87,7 @@ def theta_multitrack(tracks) :
         thetas.append(th)
     return np.concatenate(thetas)
 
+
 def right_left(field, th):
     """
     Separate geopotential field into left and right of the th line.
@@ -87,10 +101,15 @@ def right_left(field, th):
     -------
     left, right (2 xr.DataArray): The left and right side of the geopt. field.
     """
-    if th <= 180 :
-        return field.where((field.az<=th) | (field.az>180+th)), field.where((field.az>th) & (field.az<=180+th))
-    else :
-        return field.where((field.az<=th) & (field.az>th-180)), field.where((field.az>th) | (field.az<=th-180))
+    if th <= 180:
+        return field.where((field.az <= th) | (field.az > 180 + th)), field.where(
+            (field.az > th) & (field.az <= 180 + th)
+        )
+    else:
+        return field.where((field.az <= th) & (field.az > th - 180)), field.where(
+            (field.az > th) | (field.az <= th - 180)
+        )
+
 
 def right_left_vector(z, th):
     """
@@ -106,14 +125,19 @@ def right_left_vector(z, th):
     left, right (2 xr.DataArray): The left and right side of the z. field.
     """
 
-    A = pd.DataFrame([list(z.az.values)] * len(z.snapshot)) # matrix of az x snapshot
-    mask = np.array(A.lt(pd.Series(th % 180), 0) | A.ge((pd.Series(th % 180) + 180), 0)) #Mask in 2D (az, snapshot)
-    mask = np.array([mask] * len(z.r)) # Mask in 3D (r, az, snapshot)
-    mask = np.swapaxes(mask, 0, 1) # Mask in 3D (az, r, snapshot)
-    R, L = z.where(mask), z.where(~mask) # We don't really care if left and right are the wrong way because we only differentiate them afterwards
+    A = pd.DataFrame([list(z.az.values)] * len(z.snapshot))  # matrix of az x snapshot
+    mask = np.array(
+        A.lt(pd.Series(th % 180), 0) | A.ge((pd.Series(th % 180) + 180), 0)
+    )  # Mask in 2D (az, snapshot)
+    mask = np.array([mask] * len(z.r))  # Mask in 3D (r, az, snapshot)
+    mask = np.swapaxes(mask, 0, 1)  # Mask in 3D (az, r, snapshot)
+    R, L = z.where(mask), z.where(
+        ~mask
+    )  # We don't really care if left and right are the wrong way because we only differentiate them afterwards
     return R, L
 
-def area_weights(field) :
+
+def area_weights(field):
     """
     Computes the weights needed for the weighted mean of polar field.
 
@@ -125,11 +149,12 @@ def area_weights(field) :
     -------
     w (xr.DataArray): The weights corresponding to the area wrt the radius.
     """
-    δ=(field.r[1] - field.r[0])/2
-    w = (field.r +δ) ** 2 - (field.r - δ) ** 2
+    δ = (field.r[1] - field.r[0]) / 2
+    w = (field.r + δ) ** 2 - (field.r - δ) ** 2
     return w
 
-def B(th, geopt, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectoriser
+
+def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):  # TODO : Vectoriser
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
@@ -150,9 +175,15 @@ def B(th, geopt, SH = False, names=["snap_z900", "snap_z600"]): # TODO : Vectori
     z600_R, z600_L = right_left(z600, th)
     ΔZ_R = z900_R - z600_R
     ΔZ_L = z900_L - z600_L
-    if SH : h = -1;
-    else : h=1;
-    return  h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean() - ΔZ_L.weighted(area_weights(ΔZ_L)).mean())
+    if SH:
+        h = -1
+    else:
+        h = 1
+    return h * (
+        ΔZ_R.weighted(area_weights(ΔZ_R)).mean()
+        - ΔZ_L.weighted(area_weights(ΔZ_L)).mean()
+    )
+
 
 def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     """
@@ -176,7 +207,11 @@ def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     ΔZ_R = z900_R - z600_R
     ΔZ_L = z900_L - z600_L
     h = np.where(lat < 0, -1, 1)
-    return h * (ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"]) - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["az", "r"]))
+    return h * (
+        ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"])
+        - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["az", "r"])
+    )
+
 
 def VT(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     """
@@ -201,7 +236,10 @@ def VT(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     VTU = 450 * (δz600 - δz300) / (600 - 300)
     return VTL, VTU
 
-def compute_Hart_parameters(tracks, geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
+
+def compute_Hart_parameters( ## TODO : Calculer avec les gradients
+    tracks, geopt, names=["snap_z900", "snap_z600", "snap_z300"]
+):
     """
     Computes the three (+ theta) Hart parameters for all the points in tracks.
 
@@ -216,8 +254,10 @@ def compute_Hart_parameters(tracks, geopt, names=["snap_z900", "snap_z600", "sna
     """
 
     tracks = tracks.assign(theta=theta_multitrack(tracks))
-    tracks = tracks.assign(B=B_vector(tracks.theta.values, geopt, tracks.lat.values, names=names[:-1]))
-    VTL, VTU = VT(geopt, names = names)
-    tracks = tracks.assign(VTL=VTL, VTU = VTU)
+    tracks = tracks.assign(
+        B=B_vector(tracks.theta.values, geopt, tracks.lat.values, names=names[:-1])
+    )
+    VTL, VTU = VT(geopt, names=names)
+    tracks = tracks.assign(VTL=VTL, VTU=VTU)
 
     return tracks

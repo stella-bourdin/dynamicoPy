@@ -5,6 +5,7 @@ import pandas as pd
 import pickle as pkl
 import geopandas as gpd
 
+
 def add_season(tracks):
     """
     Add (or changes) the season columns in a track dataframe.
@@ -25,7 +26,9 @@ def add_season(tracks):
         .mean()
         .astype(int)
         .join(
-            tracks.groupby("track_id")[["hemisphere"]].last(), #.agg(pd.Series.mode), Assumption: last point of the track is in the right hemisphere
+            tracks.groupby("track_id")[
+                ["hemisphere"]
+            ].last(),  # .agg(pd.Series.mode), Assumption: last point of the track is in the right hemisphere
             on="track_id",
         )
     )
@@ -69,6 +72,7 @@ def get_time(year, month, day, hour):
 
 # TODO : Optimiser cette fonction
 
+
 def get_basin_gpd(tracks):
     """
     Get the basins corresponding to given lon and lat (More elegant but less fast than get_basin)
@@ -87,12 +91,13 @@ def get_basin_gpd(tracks):
         gdf = pkl.load(handle)
 
     df = tracks[["lon", "lat"]]
-    df = df.assign(coords = list(zip(df['lon'], df['lat'])))
-    df['coords'] = df['coords'].apply(Point)
-    points = gpd.GeoDataFrame(df, geometry='coords', crs=gdf.crs)
-    pointInPolys = gpd.tools.sjoin(points, gdf, how='left')
+    df = df.assign(coords=list(zip(df["lon"], df["lat"])))
+    df["coords"] = df["coords"].apply(Point)
+    points = gpd.GeoDataFrame(df, geometry="coords", crs=gdf.crs)
+    pointInPolys = gpd.tools.sjoin(points, gdf, how="left")
 
     return pointInPolys.basin
+
 
 def get_basin(lon, lat):
     """
@@ -110,14 +115,14 @@ def get_basin(lon, lat):
     """
     basin = []
     for x, y in zip(lon, lat):
-        if y < 0 :
-            if 20 < x <= 135 :
+        if y < 0:
+            if 20 < x <= 135:
                 basin.append("SI")
-            elif 135 < x <= 295 :
+            elif 135 < x <= 295:
                 basin.append("SP")
-            else :
+            else:
                 basin.append("SA")
-        else :
+        else:
             if 0 <= x <= 30:
                 basin.append("MED")
             elif 30 < x <= 100:
@@ -128,23 +133,26 @@ def get_basin(lon, lat):
                 basin.append("ENP")
             elif 290 < x <= 360:
                 basin.append("NATL")
-            elif y>=20:
+            elif y >= 20:
                 basin.append("NATL")
-            else :
-                if y >= 20/35*(295-x):
+            else:
+                if y >= 20 / 35 * (295 - x):
                     basin.append("NATL")
                 else:
                     basin.append("ENP")
 
-                #if Point(x,y).within(NH["ENP"]):
+                # if Point(x,y).within(NH["ENP"]):
                 #    basin.append("ENP")
-                #else :
+                # else :
                 #    basin.append("NATL")
     return basin
 
-_Simpson_pres_thresholds=[990, 980, 970, 965, 945, 920]
-_Klotzbach_pres_thresholds=[1005, 990, 975, 960, 945, 925]
-def sshs_from_pres(p, classification = "Klotzbach"):
+
+_Simpson_pres_thresholds = [990, 980, 970, 965, 945, 920]
+_Klotzbach_pres_thresholds = [1005, 990, 975, 960, 945, 925]
+
+
+def sshs_from_pres(p, classification="Klotzbach"):
     """
     Get the SSHS corresponding to the pressure
 
@@ -157,9 +165,9 @@ def sshs_from_pres(p, classification = "Klotzbach"):
     float or np.array
         SSHS category
     """
-    if classification == "Klotzbach" :
+    if classification == "Klotzbach":
         p0, p1, p2, p3, p4, p5 = _Klotzbach_pres_thresholds
-    else :
+    else:
         p0, p1, p2, p3, p4, p5 = _Simpson_pres_thresholds
     sshs = np.where(p > p0, -1, None)
     sshs = np.where((sshs == None) & (p >= p1), 0, sshs)
@@ -170,6 +178,7 @@ def sshs_from_pres(p, classification = "Klotzbach"):
     sshs = np.where((sshs == None) & (~np.isnan(p)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
+
 
 def sshs_from_wind(wind):
     """
