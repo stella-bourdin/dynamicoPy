@@ -3,7 +3,7 @@ import numpy as np
 from haversine import haversine_vector, Unit
 
 
-def match_tracks(tracks1, tracks2, name1="algo", name2="ib", max_dist = 300, min_overlap=0):
+def match_tracks(tracks1, tracks2, name1="algo", name2="ib", max_dist = 300, min_overlap=0, ref = True):
     """
 
     Parameters
@@ -12,6 +12,9 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", max_dist = 300, min
     tracks2 (pd.DataFrame): the second track dataframe to match
     name1 (str): Suffix for the first dataframe
     name2 (str): Suffix for the second dataframe
+    max_dist (float) : Threshold for maximum distance between two tracks
+    min_overlap (int) : Minimum number of overlapping time steps for matching
+    ref (bool) : If True, tracks2 is considered a reference.
 
     Returns
     -------
@@ -44,16 +47,17 @@ def match_tracks(tracks1, tracks2, name1="algo", name2="ib", max_dist = 300, min
         .join(temp, on=["track_id_x", "track_id_y"])
     )
     matches = matches[matches.temp >= min_overlap]
-    # For each track of the first set, only keep the track of the second set with the longest overlap
-    maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
-    matches = maxs.merge(matches)[["track_id_x", "track_id_y", "temp"]]
-    # In case there remains duplicates:
-    # For one track of the first set two tracks of the second correspond with the same overlap
-    # We keep the closest one
-    dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
-    matches = matches.join(dist, on=["track_id_x", "track_id_y"])
-    mins = matches.groupby("track_id_x")[["dist"]].min().reset_index()
-    matches = mins.merge(matches)[["track_id_x", "track_id_y", "temp", "dist"]]
+    if ref :
+        # For each track of the first set, only keep the track of the second set with the longest overlap
+        maxs = matches.groupby("track_id_x")[["temp"]].max().reset_index()
+        matches = maxs.merge(matches)[["track_id_x", "track_id_y", "temp"]]
+        # In case there remains duplicates:
+        # For one track of the first set two tracks of the second correspond with the same overlap
+        # We keep the closest one
+        dist = merged.groupby(["track_id_x", "track_id_y"])[["dist"]].mean()
+        matches = matches.join(dist, on=["track_id_x", "track_id_y"])
+        mins = matches.groupby("track_id_x")[["dist"]].min().reset_index()
+        matches = mins.merge(matches)[["track_id_x", "track_id_y", "temp", "dist"]]
     # Rename columns before output
     matches = matches.rename(
         columns={"track_id_x": "id_" + name1, "track_id_y": "id_" + name2}
