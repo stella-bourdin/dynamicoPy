@@ -170,138 +170,7 @@ def compute_OWZ_from_files(
     return OWZ
 
 
-def compute_vort(u, v, lat, lon):
-    """Compute vorticity from the horizontal velocity fields
-
-    ! So far, handles only 2D fields.
-
-    Parameters
-    ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
-
-    Returns
-    -------
-    3 np.ndarrays
-        longitude, latitude and vorticity field
-    """
-
-    dlon = lon[1] - lon[0]  # resolution in longitude in deg
-    dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000  # Earth radius
-    dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi / 180  # Latitudes in rad
-    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
-
-    # Compute lat and lon corresponding to the vort matrix
-    lat_vort = (lat[:-1] + lat[1:]) / 2
-    lon_vort = (lon[:-1] + lon[1:]) / 2
-
-    W = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
-    W = (v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] - (u[1:, :-1] - u[:-1, :-1]) * 1 / dy
-
-    return lon_vort, lat_vort, W
-
-def compute_vort_fix_sphere(u, v, lat, lon):
-    """Compute vorticity from the horizontal velocity fields
-
-    ! So far, handles only 2D fields.
-
-    Parameters
-    ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
-
-    Returns
-    -------
-    3 np.ndarrays
-        longitude, latitude and vorticity field
-    """
-
-    dlon = np.abs(lon[1] - lon[0])  # resolution in longitude in deg
-    dlon = dlon * np.pi / 180.
-    dlat = np.abs(lat[1] - lat[0])  # resolution in latitude in deg
-    dlat = dlat * np.pi / 180.
-    R = 6371000  # Earth  in m
-    #dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi / 180  # Latitudes in rad
-    #r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    #dx = r * dlon * np.pi / 180
-    #dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
-
-    # Compute lat and lon corresponding to the vort matrix
-    lat_vort = (lat[:-1] + lat[1:]) / 2
-    lat_vort_rad = lat_vort * np.pi / 180.
-    lon_vort = (lon[:-1] + lon[1:]) / 2
-
-    W = np.zeros([len(lat) - 1, len(lon) - 1])  # Initialization of the matrix
-
-    ucosphi = np.transpose(np.cos(lat_rad) * np.transpose(u))
-    W = ((v[:-1, 1:] - v[:-1, :-1]) * 1 / dlon - (ucosphi[1:, :-1] - ucosphi[:-1, :-1]) * 1 / dlat)
-    D = R * np.cos(lat_vort_rad) # Denominateur
-    W = np.transpose(np.transpose(W) / D) # Manip de multiplication matricielle
-    return lon_vort, lat_vort, W
-
-def compute_vort_fix_coloc(u, v, lat, lon):
-    """Compute vorticity from the horizontal velocity fields
-
-    ! So far, handles only 2D fields.
-
-    Parameters
-    ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
-
-    Returns
-    -------
-    3 np.ndarrays
-        longitude, latitude and vorticity field
-    """
-
-    dlon = lon[1] - lon[0]  # resolution in longitude in deg
-    dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000  # Earth radius
-    dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi / 180  # Latitudes in rad
-    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    dx = r * dlon * np.pi / 180
-    #dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
-
-    # Compute lat and lon corresponding to the vort matrix
-    lat_vort = lat[1:-1]
-    lon_vort = lon[1:-1]
-
-    W = np.zeros([len(lat) - 2, len(lon) - 2])  # Initialization of the matrix
-    A1 = np.transpose(np.transpose(v[1:-1, 2:] - v[1:-1, :-2]) * 1 / dx[1:-1])
-    A2 = (u[2:, 1:-1] - u[:-2, 1:-1]) * 1 / dy
-    W =  A1 - A2
-
-    return lon_vort, lat_vort, W
-
-def compute_vort_fix_both(u,v,lat,lon):
+def compute_vort(u,v,lat,lon):
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlon = dlon * np.pi / 180.
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
@@ -325,86 +194,38 @@ def compute_vort_fix_both(u,v,lat,lon):
 
 
 def compute_E_F(u, v, lat, lon):
-    """Compute stretching deformation (E) from the horizontal velocity fields
-
-    ! So far, handles only 2D fields.
-
-    Parameters
-    ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
-
-    Returns
-    -------
-    4 np.ndarrays
-        longitude, latitude and E & F field
-    """
-
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
+    dlon = dlon * np.pi / 180.
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000  # Earth radius
-    dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
+    dlat = dlat * np.pi / 180.
+    R = 6371000  # Earth  in m
     lat_rad = lat * np.pi / 180  # Latitudes in rad
-    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
 
-    # Compute lat and lon corresponding to the E matrix
-    lat_E = (lat[:-1] + lat[1:]) / 2
-    lon_E = (lon[:-1] + lon[1:]) / 2
+    # Compute lat and lon corresponding to the vort matrix
+    lat_vort = lat[1:-1]
+    lat_vort_rad = lat_vort * np.pi / 180.
+    lon_vort = lon[1:-1]
 
-    E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy
-    F = (v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] + (u[1:, :-1] - u[:-1, :-1]) * 1 / dy
+    usinphi = np.transpose(np.sin(lat_rad) * np.transpose(u))
+    vsinphi = np.transpose(np.sin(lat_rad) * np.transpose(v))
+    ucosphi = np.transpose(np.cos(lat_rad) * np.transpose(u))
+    vcosphi = np.transpose(np.cos(lat_rad) * np.transpose(v))
 
-    return lon_E, lat_E, E, F
+    E1 = (u[1:-1, 2:] - u[1:-1, :-2]) * 1 / (2 * dlon)
+    E2 = (vcosphi[2:, 1:-1] - vcosphi[:-2, 1:-1]) * 1 / (2 * dlat)
 
-def compute_E_F_fix_sphere(u, v, lat, lon):
-    """Compute stretching deformation (E) from the horizontal velocity fields
+    F1 = (v[1:-1, 2:] - v[1:-1, :-2]) * 1 / (2 * dlon)
+    F2 = (ucosphi[2:, 1:-1] - ucosphi[:-2, 1:-1]) * 1 / (2 * dlat)
 
-    ! So far, handles only 2D fields.
+    N = E1 - E2 - vsinphi[1:-1, 1:-1]  # Numerateur
+    D = R * np.cos(lat_vort_rad)  # Denominateur
+    E = np.transpose(np.transpose(N) / D)  # Manip de multiplication matricielle
 
-    Parameters
-    ----------
-    u : np.ndarray
-        zonal wind field
-    v : np.ndarrays
-        meridional wind field
-    lat : 1D np.ndarray
-        latitude coordinate of the fields
-    lon : 1D np.ndarray
-        longitude coordinate of the field
+    N = F1 + F2 + usinphi[1:-1, 1:-1]
+    D = R * np.cos(lat_vort_rad)  # Denominateur
+    F = np.transpose(np.transpose(N) / D)  # Manip de multiplication matricielle
 
-    Returns
-    -------
-    4 np.ndarrays
-        longitude, latitude and E & F field
-    """
-
-    dlon = lon[1] - lon[0]  # resolution in longitude in deg
-    dlat = lat[1] - lat[0]  # resolution in latitude in deg
-    R = 6371000  # Earth radius
-    dy = R * dlat * np.pi / 180  # Vertical size of a cell
-    # Horizontal size of a cell depending on latitude
-    lat_rad = lat * np.pi / 180  # Latitudes in rad
-    r = np.sin(np.pi / 2 - abs(lat_rad)) * R
-    dx = r * dlon * np.pi / 180
-    dx = np.transpose([(dx[1:] + dx[:-1]) / 2] * (len(lon) - 1))
-
-    # Compute lat and lon corresponding to the E matrix
-    lat_E = (lat[:-1] + lat[1:]) / 2
-    lon_E = (lon[:-1] + lon[1:]) / 2
-
-    E = (u[:-1, 1:] - u[:-1, :-1]) * 1 / dx[:] - (v[1:, :-1] - v[:-1, :-1]) * 1 / dy - v/R*
-    F = (v[:-1, 1:] - v[:-1, :-1]) * 1 / dx[:] + (u[1:, :-1] - u[:-1, :-1]) * 1 / dy
-
-    return lon_E, lat_E, E, F
+    return lon_vort, lat_vort, E, F
 
 def compute_ObukoWeiss(vort, E, F):
     """Compute the Obuko-Weiss Parameter
