@@ -14,7 +14,6 @@ except ImportError:
     pass
 import numpy as np
 import matplotlib.ticker as mticker
-from osgeo import ogr
 
 NATL = Polygon(((260, 90), (360, 90), (360, 0), (295, 0), (260, 20)))
 ENP = Polygon(((180, 90), (260, 90), (260, 20), (295, 0), (180, 0)))
@@ -39,6 +38,7 @@ def _save_basins_shapefile():
     Code from Stackoverflow :
     https://gis.stackexchange.com/questions/52705/how-to-write-shapely-geometries-to-shapefiles
     """
+    from osgeo import ogr
     # Now convert it to a shapefile with OGR
     driver = ogr.GetDriverByName("Esri Shapefile")
     ds = driver.CreateDataSource("dynamicopy/_data/basins.shp")
