@@ -3,7 +3,6 @@ from ._basins import *
 from shapely.geometry import Point
 import pandas as pd
 import pickle as pkl
-import geopandas as gpd
 
 
 def add_season(tracks):
@@ -87,6 +86,8 @@ def get_basin_gpd(tracks):
     list
         basins list
     """
+
+    import geopandas as gpd
     with open("dynamicopy/_data/basins_geopandas.pkl", "rb") as handle:
         gdf = pkl.load(handle)
 
