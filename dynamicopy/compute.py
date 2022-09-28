@@ -166,9 +166,9 @@ def compute_OWZ_from_files(
     OWZ = OWZ.interp_like(u, kwargs={"fill_value": "extrapolate"})
 
     if owz_file != None:
+        # TODO : Gestion des unites
         OWZ.to_dataset(name="owz").to_netcdf(owz_file, format="NETCDF4_CLASSIC")
     return OWZ
-
 
 def compute_vort(u,v,lat,lon):
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
@@ -191,7 +191,6 @@ def compute_vort(u,v,lat,lon):
     D = R * np.cos(lat_vort_rad)  # Denominateur
     W = np.transpose(np.transpose(W) / D)  # Manip de multiplication matricielle
     return lon_vort, lat_vort, W
-
 
 def compute_E_F(u, v, lat, lon):
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
@@ -295,6 +294,23 @@ def compute_OWZ(vort, E, F, lat):
         * np.transpose(np.maximum(OW_n, np.zeros(np.shape(OW_n))))
     )
 
+def compute_OWZ_ncl(vort, E, F):
+    OW_n = compute_ObukoWeiss_norm(vort, E, F)
+    OW_n_pos = OW_n.where(OW_n > 0).fillna(0)
+    f = compute_Coriolis_param(vort.latitude.values)
+    f = np.transpose([list(f)]*len(vort.longitude))
+    vort_abs = vort + f
+    A = vort_abs * OW_n_pos # Intermediary value
+    return xr.where(A.latitude > 0, A, -A)
+
+def compute_OWZ_from_files_ncl(vo_file, E_file, F_file, owz_file= None):
+    vo = xr.open_dataset(vo_file).vo
+    E = xr.open_dataset(E_file).E
+    F = xr.open_dataset(F_file).F
+    OWZ = compute_OWZ_ncl(vo, E, F).rename("owz")
+    if owz_file != None:
+        OWZ.to_dataset(name="owz").to_netcdf(owz_file, format="NETCDF4_CLASSIC")
+    return OWZ
 
 def compute_grad(T, lat, lon):
     """Compute the gradient of a 2D field.
@@ -418,9 +434,22 @@ def hemispheric_mean(var, lat, axis=-1, neg=False):
 hemisphericMean = hemispheric_mean
 
 if __name__ == "__main__":
-    u_file = "tests/u.1ts.nc"
-    v_file = "tests/v.1ts.nc"
-    OWZ = compute_OWZ_from_files(
+    u_file = "tests/u.nc"
+    v_file = "tests/v.nc"
+    vo_file = "tests/vo_ncl.nc"
+    E_file = "tests/E_ncl.nc"
+    F_file = "tests/F_ncl.nc"
+    OWZ_before = compute_OWZ_from_files(
         u_file,
         v_file,
+        level = [850,850],
+    )
+    print("before ok")
+    OWZ_after = compute_OWZ_from_files_new(
+        u_file,
+        v_file,
+        vo_file,
+        E_file,
+        F_file,
+        level=[850]
     )
