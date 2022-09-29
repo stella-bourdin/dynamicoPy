@@ -284,7 +284,6 @@ def compute_Hart_parameters( ## TODO : Calculer avec les gradients
     if method == "simple":
         VTL, VTU = VT_simple(z900, z600, z300)
     elif method == "gradient":
-        print(type(names))
         assert (type(names) == str), "If using gradient method, you must provid str for names"
         VTL, VTU = VT_gradient(geopt)
 
