@@ -2,7 +2,8 @@ import numpy as np
 
 # import xarray as xr
 import pandas as pd
-from scipy.stats import linregress
+#from scipy.stats import linregress
+from sklearn.linear_model import LinearRegression
 
 
 def theta(x0=120, x1=130, y0=12, y1=10):  # TODO : Gérer différemment SH ?
@@ -235,18 +236,22 @@ def VT_simple(z900, z600,z300):
     VTU = 450 * (δz600 - δz300) / (600 - 300)
     return VTL, VTU
 
-def VT_gradient(geopt, name = "snap_zg") :
+def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
     Z_max = geopt[name].max(["az", "r"])
     Z_min = geopt[name].min(["az", "r"])
     ΔZ = Z_max - Z_min  # Fonction de snapshot & plev
     ΔZ_bottom = ΔZ.sel(plev=slice(950e2, 600e2))
     ΔZ_top = ΔZ.sel(plev=slice(600e2, 250e2))
-    VTL = [linregress(np.log(ΔZ_bottom.plev), y)[0] for y in ΔZ_bottom.values]
-    VTU = [linregress(np.log(ΔZ_top.plev), y)[0] for y in ΔZ_top.values]
+    X = np.log(ΔZ_bottom.plev).values.reshape(-1, 1)
+    VTL = [LinearRegression().fit(X, y).coef_[0] for y in ΔZ_bottom.values]
+    X = np.log(ΔZ_top.plev).values.reshape(-1, 1)
+    VTU = [LinearRegression().fit(X, y).coef_[0] for y in ΔZ_top.values]
+    #VTL = [linregress(np.log(ΔZ_bottom.plev), y)[0] for y in ΔZ_bottom.values]
+    #VTU = [linregress(np.log(ΔZ_top.plev), y)[0] for y in ΔZ_top.values]
     return VTL, VTU
 
 
-def compute_Hart_parameters( ## TODO : Calculer avec les gradients
+def compute_Hart_parameters(
     tracks, geopt, method = "simple", names=["snap_z900", "snap_z600", "snap_z300"]
 ):
     """
