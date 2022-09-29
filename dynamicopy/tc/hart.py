@@ -185,7 +185,8 @@ def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):  # TODO : Vectoris
     )
 
 
-def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
+
+def B_vector(th_vec, z900, z600, lat):
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
@@ -200,8 +201,8 @@ def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     -------
     B, the Hart phase space parameter for symetry.
     """
-    z900 = geopt[names[0]]
-    z600 = geopt[names[1]]
+    #z900 = geopt[names[0]]
+    #z600 = geopt[names[1]]
     z900_R, z900_L = right_left_vector(z900, th_vec)
     z600_R, z600_L = right_left_vector(z600, th_vec)
     ΔZ_R = z900_R - z600_R
@@ -213,7 +214,7 @@ def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     )
 
 
-def VT_simple(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
+def VT_simple(z900, z600,z300):
     """
     Computes V_T^U and V_T^L parameters for the given snapshot of geopt at 300, 600 and 900 hPa
 
@@ -226,9 +227,6 @@ def VT_simple(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     -------
     VTL, VTU
     """
-    z900 = geopt[names[0]]
-    z600 = geopt[names[1]]
-    z300 = geopt[names[2]]
     δz300 = np.abs(z300.max(["r", "az"]) - z300.min(["r", "az"]))
     δz600 = np.abs(z600.max(["r", "az"]) - z600.min(["r", "az"]))
     δz900 = np.abs(z900.max(["r", "az"]) - z900.min(["r", "az"]))
@@ -240,7 +238,7 @@ def VT_gradient(geopt, name = "snap_zg") :
     Z_max = geopt[name].max(["az", "r"])
     Z_min = geopt[name].min(["az", "r"])
     ΔZ = Z_max - Z_min  # Fonction de snapshot & plev
-    ΔZ_bottom = ΔZ.sel(plev=slice(925e2, 600e2))
+    ΔZ_bottom = ΔZ.sel(plev=slice(950e2, 600e2))
     ΔZ_top = ΔZ.sel(plev=slice(600e2, 250e2))
     VTL = [linregress(np.log(ΔZ_bottom.plev), y)[0] for y in ΔZ_bottom.values]
     VTU = [linregress(np.log(ΔZ_top.plev), y)[0] for y in ΔZ_top.values]
@@ -248,7 +246,7 @@ def VT_gradient(geopt, name = "snap_zg") :
 
 
 def compute_Hart_parameters( ## TODO : Calculer avec les gradients
-    tracks, geopt, names=["snap_z900", "snap_z600", "snap_z300"]
+    tracks, geopt, method = "simple", names=["snap_z900", "snap_z600", "snap_z300"]
 ):
     """
     Computes the three (+ theta) Hart parameters for all the points in tracks.
@@ -257,6 +255,9 @@ def compute_Hart_parameters( ## TODO : Calculer avec les gradients
     ----------
     tracks (pd.DataFrame): The set of TC points
     geopt (xr.DataSet): The geopotential snapshots associated with the tracks
+    method (str) : Choose between "simple" and "gradient"
+    names (str or list of str) : Provide the name of the 3D (plev, r, az) geopt snapshots variables as a string,
+        or the names of the three 2D (r, az) variables correspoding to single levels 900, 600 and 300hPa in this order
 
     Returns
     -------
@@ -264,10 +265,28 @@ def compute_Hart_parameters( ## TODO : Calculer avec les gradients
     """
 
     tracks = tracks.assign(theta=theta_multitrack(tracks))
+    if type(names) == str :
+        z900 = geopt[names].sel(plev = 900e2, method = "nearest")
+        print("Level "+str(z900.plev.values)+" is taken for 900hPa")
+        z600 = geopt[names].sel(plev = 600e2, method = "nearest")
+        print("Level "+str(z600.plev.values)+" is taken for 600hPa")
+        z300 = geopt[names].sel(plev = 300e2, method = "nearest")
+        print("Level "+str(z300.plev.values)+" is taken for 300hPa (if simple method)")
+    else :
+        z900 = geopt[names[0]]
+        z600 = geopt[names[1]]
+        z300 = geopt[names[2]]
+
     tracks = tracks.assign(
-        B=B_vector(tracks.theta.values, geopt, tracks.lat.values, names=names[:-1])
+        B=B_vector(tracks.theta.values, z900, z600, tracks.lat.values)
     )
-    VTL, VTU = VT(geopt, names=names)
+    if method == "simple":
+        VTL, VTU = VT_simple(z900, z600, z300)
+    elif method == "gradient":
+        print(type(names))
+        assert (type(names) == str), "If using gradient method, you must provid str for names"
+        VTL, VTU = VT_gradient(geopt)
+
     tracks = tracks.assign(VTL=VTL, VTU=VTU)
 
     return tracks
