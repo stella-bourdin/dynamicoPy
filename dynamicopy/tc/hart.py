@@ -213,7 +213,7 @@ def B_vector(th_vec, geopt, lat, names=["snap_z900", "snap_z600"]):
     )
 
 
-def VT(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
+def VT_simple(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     """
     Computes V_T^U and V_T^L parameters for the given snapshot of geopt at 300, 600 and 900 hPa
 
@@ -234,6 +234,16 @@ def VT(geopt, names=["snap_z900", "snap_z600", "snap_z300"]):
     δz900 = np.abs(z900.max(["r", "az"]) - z900.min(["r", "az"]))
     VTL = 750 * (δz900 - δz600) / (900 - 600)
     VTU = 450 * (δz600 - δz300) / (600 - 300)
+    return VTL, VTU
+
+def VT_gradient(geopt, name = "snap_zg") :
+    Z_max = geopt[name].max(["az", "r"])
+    Z_min = geopt[name].min(["az", "r"])
+    ΔZ = Z_max - Z_min  # Fonction de snapshot & plev
+    ΔZ_bottom = ΔZ.sel(plev=slice(925e2, 600e2))
+    ΔZ_top = ΔZ.sel(plev=slice(600e2, 250e2))
+    VTL = [linregress(np.log(ΔZ_bottom.plev), y)[0] for y in ΔZ_bottom.values]
+    VTU = [linregress(np.log(ΔZ_top.plev), y)[0] for y in ΔZ_top.values]
     return VTL, VTU
 
 
