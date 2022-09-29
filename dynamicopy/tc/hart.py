@@ -3,7 +3,6 @@ import numpy as np
 # import xarray as xr
 import pandas as pd
 from scipy.stats import linregress
-np.seterr(divide='ignore', invalid='ignore')
 
 
 def theta(x0=120, x1=130, y0=12, y1=10):  # TODO : Gérer différemment SH ?
@@ -266,6 +265,7 @@ def compute_Hart_parameters( ## TODO : Calculer avec les gradients
     tracks (pd.DataFrame): The set of TC points with four new columns corresponding to the parameters
     """
 
+    old_settings = np.seterr(divide='ignore', invalid='ignore')
     tracks = tracks.assign(theta=theta_multitrack(tracks))
     if type(names) == str :
         z900 = geopt[names].sel(plev = 900e2, method = "nearest")
@@ -289,5 +289,5 @@ def compute_Hart_parameters( ## TODO : Calculer avec les gradients
         VTL, VTU = VT_gradient(geopt)
 
     tracks = tracks.assign(VTL=VTL, VTU=VTU)
-
+    np.seterr(**old_settings)
     return tracks
