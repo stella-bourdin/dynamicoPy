@@ -2,6 +2,7 @@ import numpy as np
 
 # import xarray as xr
 import pandas as pd
+from scipy.stats import linregress
 
 
 def theta(x0=120, x1=130, y0=12, y1=10):  # TODO : Gérer différemment SH ?
