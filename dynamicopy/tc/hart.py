@@ -156,7 +156,7 @@ def area_weights(field):
     return w
 
 
-def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):  # TODO : Vectoriser
+def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):
     """
     Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
@@ -187,17 +187,16 @@ def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):  # TODO : Vectoris
     )
 
 
-
 def B_vector(th_vec, z900, z600, lat):
     """
-    Computes the B parameter for a point, with the corresponding snapshot of geopt at 600hPa and 900hPa
+    Computes the B parameter for a vector of points, with the corresponding snapshot of geopt at 600hPa and 900hPa
 
     Parameters
     ----------
-    th: The direction (in degrees)
-    geopt (xr.DataSet): The snapshots at both levels
-    SH (bool): Set to True if the point is in the southern hemisphere
-    names: names of the 900hPa and 600hPa geopt. variables in geopt.
+    th_vec : The theta parameter for each point
+    z900 : The z900 field for each point
+    z600 : The z600 field for each point
+    lat : The latitude of each point
 
     Returns
     -------
@@ -222,12 +221,13 @@ def VT_simple(z900, z600,z300):
 
     Parameters
     ----------
-    geopt (xr.DataSet): The snapshots at both levels
-    names: names of the 900hPa and 600hPa geopt. variables in geopt.
+    z900 : The geopotential at 900 hPa
+    z600 : The geopotential at 600 hPa
+    z300 : The geopotential at 300 hPa
 
     Returns
     -------
-    VTL, VTU
+    VTL, VTU : The Hart Phase Space parameters for upper and lower thremal wind respectively.
     """
     δz300 = np.abs(z300.max(["r", "az"]) - z300.min(["r", "az"]))
     δz600 = np.abs(z600.max(["r", "az"]) - z600.min(["r", "az"]))
@@ -237,6 +237,16 @@ def VT_simple(z900, z600,z300):
     return VTL, VTU
 
 def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
+    """
+    Parameters
+    ----------
+    geopt (xr.DataArray) : The Geopotential snapshots DataArray
+    name (str) : Name of the geopotential snapshots variable.
+
+    Returns
+    -------
+    VTL, VTU : The Hart Phase Space parameters for upper and lower thremal wind respectively.
+    """
     Z_max = geopt[name].max(["az", "r"])
     Z_min = geopt[name].min(["az", "r"])
     ΔZ = Z_max - Z_min  # Fonction de snapshot & plev

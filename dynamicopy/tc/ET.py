@@ -4,12 +4,14 @@ import xarray as xr
 
 def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True, fill=True):
     """
-
     Parameters
     ----------
-    tracks (pd.Dataframe)
-    NH_lim (xr.DataArray)
-    SH_lim (xr.DataArray)
+    tracks (pd.Dataframe) : The dataframe containing the tracks data
+    NH_lim (xr.DataArray) : The xarray DataArray with the latitude of the NH STJ as a function of lon and time
+    SH_lim (xr.DataArray) : The xarray DataArray with the latitude of the SH STJ as a function of lon and time
+    lon_name (str) : The name of the longitude coordinate in the NH_lim and SH_lim objects
+    minus_3h (bool) : Set to True if you need to offset the NH_lim and SH_lim objects by 3 hours
+    fill (bool) : When set to True, all point in a track after the detection of one ET point are considered ET.
 
     -------
     pd.Dataframe
@@ -63,88 +65,17 @@ def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True, fil
 
     return tracks
 
-
-def identify_ET_new(tracks, NH_lim, SH_lim, lon_name="longitude", fill=True):
-    """
-
-    Parameters
-    ----------
-    tracks (pd.Dataframe)
-    NH_lim (xr.DataArray)
-    SH_lim (xr.DataArray)
-
-    -------
-    pd.Dataframe
-        tracks with the ET column
-    """
-
-    # Pre-treat latitude limits
-    ## Fill NAs in the latitude limits with linear interpolation
-    NH_lim = NH_lim.interpolate_na(dim=lon_name)
-    SH_lim = SH_lim.interpolate_na(dim=lon_name)
-    NH_lim = NH_lim.rename({lon_name: "longitude"})
-    SH_lim = SH_lim.rename({lon_name: "longitude"})
-
-    # Pre-treat tracks
-    tracks = tracks.reset_index(drop=True)
-    tracks["lon"] = np.where(tracks.lon > 180, tracks.lon - 360, tracks.lon)
-
-    # Detect ET points
-    ##Target longitudes indices
-    n_lon = len(NH_lim.longitude)
-    m = n_lon / 2 - 1
-    a = (n_lon - 1 - m) / 180
-    idx_lon = (m + a * tracks.lon).astype(int)
-    ## Target time
-    T = tracks.time.dt.date
-    # T = np.where(T < np.datetime64("1950-01-16"), np.datetime64("1950-01-16"), T)
-    # T = np.where(T > np.datetime64("2014-12-17"), np.datetime64("2014-12-17"), T)
-    # target_lon = xr.DataArray(tracks.lon, dims="points")
-    # target_time = xr.DataArray(tracks.time, dims="points")
-    ##TODO: Unsatisying method
-    target_time = [
-        np.datetime64(t)
-        if np.datetime64(t) in NH_lim.time.values
-        else np.datetime64("1950-01-16")
-        for t in tracks.time.dt.date.astype(str).values
-    ]
-    target_time = xr.DataArray(target_time, dims="points")
-    tracks["lat_STJ_NH"] = NH_lim.sel(time=target_time, longitude=target_lon)
-    tracks["lat_STJ_SH"] = SH_lim.sel(time=target_time, longitude=target_lon)
-    tracks["ET"] = (tracks.lat > tracks.lat_STJ_NH) | (tracks.lat < tracks.lat_STJ_SH)
-
-    if fill:
-        # Fill trajectories once one point is ET
-        tracks_ET = (
-            tracks.groupby("track_id")["ET"]
-            .max()
-            .index[tracks.groupby("track_id")["ET"].max()]
-        )
-        dic = {t: False for t in tracks_ET}
-        for row in (
-            tracks[tracks.track_id.isin(tracks_ET)].sort_values("time").itertuples()
-        ):
-            if row.ET == True:
-                dic[row.track_id] = True
-            if dic[row.track_id] == True:
-                tracks.loc[row.Index, "ET"] = True
-            else:
-                tracks.loc[row.Index, "ET"] = False
-
-    return tracks
-
-
 def remove_ET(tracks, trop_pts=1):
     """
-
     Parameters
     ----------
-    tracks
-    trop_pts (int): Number of trop points
+    tracks (pd.Dataframe) : The dataframe containing the tracks data
+    trop_pts (int): Maximum number of tropical points in an ET track
 
     Returns
     -------
-
+    tracks_trop (pd.DataFrame) : The tropical trajectories
+    tracks_ET (pd.DataFrame) : The ET trajectories
     """
     tracks["trop"] = 1 - tracks.ET
     ET_track_ids = (
