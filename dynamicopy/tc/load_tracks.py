@@ -210,7 +210,7 @@ def read_TRACKfiles(
     SH = tracks.lat.mean() < 0
     if SH:
         tracks["track_id"] = "S" + tracks.track_id
-        start = start = np.datetime64(str(int(season) - 1) + "-07-01 00:00:00")
+        start = np.datetime64(str(int(season) - 1) + "-07-01 00:00:00")
     else:
         tracks["track_id"] = "N" + tracks.track_id
         start = np.datetime64(season + "-01-01 00:00:00")
