@@ -117,5 +117,6 @@ def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True, fil
         t_ET = t_ET.merge(first_times, on="track_id")
         t_ET["ET"] = t_ET.time_x >= t_ET.time_y
         t_ET = t_ET.rename(columns={"time_x": "time"}).drop(columns="time_y")
+        tracks = pd.concat([t_ET, t_noET])
 
     return tracks
