@@ -7,6 +7,7 @@ from .utils import *
 from .ET import *
 from .CPS import *
 from .grid import *
+from .STJ import *
 
 pal_algo = {"UZ":sns.color_palette("colorblind")[0],
           "OWZ":sns.color_palette("colorblind")[1],
