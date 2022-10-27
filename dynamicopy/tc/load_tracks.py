@@ -154,12 +154,16 @@ def read_TRACKfiles(
     pd.DataFrame
         Columns as described in the module header
     """
+
+    # Define parameters according to the file origin
     if origin == "ERA5":
         data_vars = _TRACK_data_vars
         time_format = "calendar"
     else:
         data_vars = _HRMIP_TRACK_data_vars
         time_format = "time_step"
+
+    # Read the TRACK output file
     f = open(file)
     tracks = pd.DataFrame()
     line0 = f.readline()
@@ -207,6 +211,7 @@ def read_TRACKfiles(
             data.append(np.array(rest)[~mask])
     f.close()
 
+    # Format the data
     SH = tracks.lat.mean() < 0
     if SH:
         tracks["track_id"] = "S" + tracks.track_id
