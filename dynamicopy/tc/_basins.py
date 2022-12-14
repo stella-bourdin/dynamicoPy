@@ -63,7 +63,7 @@ def _save_basins_shapefile():
     ds = layer = feat = geom = None
 
 
-def plot_basins(show=True, save=None):
+def plot_basins(show=True, save=None, fig_ax = None):
     """
     Plot the basins according to the Knutson definition
 
@@ -77,9 +77,12 @@ def plot_basins(show=True, save=None):
     A plot.
     """
 
-    fig, ax = plt.subplots(
-        subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
-    )
+    if fig_ax == None :
+        fig, ax = plt.subplots(
+            subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
+        )
+    else :
+        fig, ax = fig_ax
     ax.coastlines()
     ax.set_global()
     gl = ax.gridlines(draw_labels=True)
