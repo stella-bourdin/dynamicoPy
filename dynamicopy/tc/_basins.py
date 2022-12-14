@@ -81,28 +81,28 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True):
         fig, ax = plt.subplots(
             subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
         )
+        ax.coastlines()
+        ax.set_global()
+        gl = ax.gridlines(draw_labels=True)
+        gl.xlocator = mticker.FixedLocator([20, 30, 100, 135, 180, -100, -65])
+        gl.ylocator = mticker.FixedLocator([-90, 0, 20, 90])
+        gl.xlines = False
+        gl.ylines = False
     else :
         fig, ax = fig_ax
-    ax.coastlines()
-    ax.set_global()
-    gl = ax.gridlines(draw_labels=True)
-    gl.xlocator = mticker.FixedLocator([20, 30, 100, 135, 180, -100, -65])
-    gl.ylocator = mticker.FixedLocator([-90, 0, 20, 90])
-    gl.xlines = False
-    gl.ylines = False
 
     for basin, name in zip(
         [NATL, ENP, WNP, NI, MED, SI, SP, SA_plot],
         ["NATL", "ENP", "WNP", "NI", "MED", "SI", "SP", "SATL"],
     ):
-        plt.plot(
+        ax.plot(
             basin.exterior.xy[0],
             basin.exterior.xy[1],
             transform=ccrs.PlateCarree(),
             color="k",
         )
         if text :
-            plt.text(
+            ax.text(
                 basin.centroid.x - 10,
                 np.sign(basin.centroid.y) * 25,
                 name,
