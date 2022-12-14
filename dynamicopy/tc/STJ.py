@@ -44,6 +44,7 @@ def compute_STJ_latmin(file_ws, file_u, outfile):
     NH_lim = NH_lim.where(NH_lim > 0)
     NH_lim["lon"] = np.where(NH_lim.lon > 180, NH_lim.lon - 360, NH_lim.lon)
     NH_lim = NH_lim.sortby("lon")
+    NH_lim = NH_lim.interpolate_na(dim=lon_name).interpolate_na(dim="time")
 
     NH_lim.to_netcdf(outfile + "_NH.nc", "w")
 
@@ -54,12 +55,13 @@ def compute_STJ_latmin(file_ws, file_u, outfile):
     SH_lim = SH_lim.where(SH_lim < 0)
     SH_lim["lon"] = np.where(SH_lim.lon > 180, SH_lim.lon - 360, SH_lim.lon)
     SH_lim = SH_lim.sortby("lon")
+    SH_lim = SH_lim.interpolate_na(dim=lon_name).interpolate_na(dim="time")
 
     SH_lim.to_netcdf(outfile + "_SH.nc", "w")
 
     return NH_lim, SH_lim
 
-def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True, fill=True):
+def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", fill=True):
     """
     Parameters
     ----------
@@ -79,10 +81,6 @@ def identify_ET(tracks, NH_lim, SH_lim, lon_name="longitude", minus_3h=True, fil
     ## Fill NAs in the latitude limits with linear interpolation
     NH_lim = NH_lim.interpolate_na(dim=lon_name).interpolate_na(dim="time")
     SH_lim = SH_lim.interpolate_na(dim=lon_name).interpolate_na(dim="time")
-    ## Change time to -3h to fit with tracks
-    if minus_3h:
-        NH_lim["time"] = NH_lim.time - np.timedelta64(3, "h")
-        SH_lim["time"] = SH_lim.time - np.timedelta64(3, "h")
     NH_lim = NH_lim.rename({lon_name: "longitude"})
     SH_lim = SH_lim.rename({lon_name: "longitude"})
 
