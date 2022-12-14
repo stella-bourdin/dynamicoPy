@@ -63,7 +63,7 @@ def _save_basins_shapefile():
     ds = layer = feat = geom = None
 
 
-def plot_basins(show=True, save=None, fig_ax = None):
+def plot_basins(show=True, save=None, fig_ax = None, text = True):
     """
     Plot the basins according to the Knutson definition
 
@@ -101,13 +101,14 @@ def plot_basins(show=True, save=None, fig_ax = None):
             transform=ccrs.PlateCarree(),
             color="k",
         )
-        plt.text(
-            basin.centroid.x - 10,
-            np.sign(basin.centroid.y) * 25,
-            name,
-            transform=ccrs.PlateCarree(),
-            fontweight="bold",
-        )
+        if text :
+            plt.text(
+                basin.centroid.x - 10,
+                np.sign(basin.centroid.y) * 25,
+                name,
+                transform=ccrs.PlateCarree(),
+                fontweight="bold",
+            )
     if show:
         plt.show()
     if save != None:
