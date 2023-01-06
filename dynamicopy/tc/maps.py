@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 
 try:
     import cartopy.crs as ccrs
-    from .cartoplot import *
 except ImportError:
     print(
         "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
