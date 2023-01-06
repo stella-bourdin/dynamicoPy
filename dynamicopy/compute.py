@@ -171,6 +171,20 @@ def compute_OWZ_from_files(
     return OWZ
 
 def compute_vort(u,v,lat,lon):
+    """
+    Function to compute vorticity from the u and v fields
+
+    Parameters
+    ----------
+    u : Zonal wind (2D field: lon x lat), np.array (Select values from xarray if necessary)
+    v : Meridional wind (2D field: lon x lat), np.array (Select values from xarray if necessary)
+    lat : latitude
+    lon : longitude
+
+    Returns
+    -------
+    lon,lat,vort
+    """
     dlon = lon[1] - lon[0]  # resolution in longitude in deg
     dlon = dlon * np.pi / 180.
     dlat = lat[1] - lat[0]  # resolution in latitude in deg
