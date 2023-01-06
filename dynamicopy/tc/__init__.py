@@ -1,6 +1,6 @@
 from .ibtracs import load_ibtracs
 from .load_tracks import *
-from .maps import *
+from .maps import plot_tracks, plot_polar
 from .matching import *
 from .metrics import *
 from .utils import *
