@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 
 try:
     import cartopy.crs as ccrs
-    from .cartoplot import *
 except ImportError:
     pass
 import numpy as np
