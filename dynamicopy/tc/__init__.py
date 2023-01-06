@@ -10,6 +10,11 @@ from .grid import *
 from .STJ import *
 from .lifecycle import *
 
+import numpy as np
+import matplotlib.pyplot as plt
+import xarray as xr
+import seaborn as sns
+
 pal_algo = {"UZ":sns.color_palette("colorblind")[0],
           "OWZ":sns.color_palette("colorblind")[1],
           "TRACK":sns.color_palette("colorblind")[2],
