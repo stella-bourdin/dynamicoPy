@@ -7,7 +7,7 @@ from .utils import *
 
 
 def _clean_ibtracs(
-    raw_file="tests/ibtracs.since1980.list.v04r00_05092021.csv",
+    raw_file="tests/ibtracs.since1980.list.v04r00_8Jan23.csv",
     csv_output="dynamicopy/_data/ibtracs.since1980.cleaned.csv",
     pkl_output="dynamicopy/_data/ibtracs.pkl",
     six_hourly=True,
@@ -62,6 +62,9 @@ def _clean_ibtracs(
             "BOM_PRES",
             "NADI_PRES",
             "WELLINGTON_PRES",
+            "USA_RMW",
+            "BOM_RMW",
+            "REUNION_RMW",
         ],
         converters={
             "SID": str,
@@ -77,7 +80,7 @@ def _clean_ibtracs(
     ib = ib[~ib.TRACK_TYPE.str.startswith("spur")]
 
     # Season selection
-    ib = ib[ib.SEASON < 2020]
+    ib = ib[ib.SEASON < 2022]
     ib = ib[(ib.SEASON > 1980) | (ib.LAT > 0)]
 
     # All about wind
@@ -179,6 +182,7 @@ def _clean_ibtracs(
             "month",
             "day",
             "hour",
+            "usa_rmw"
         ]
     ]
 
