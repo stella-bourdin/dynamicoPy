@@ -119,6 +119,9 @@ def _clean_ibtracs(
         ].mean(axis=1, skipna=True),
     )
 
+    # Convert RMW from nmiles to km
+    ib["USA_RMW"] *= 1.852
+
     # Rename columns
     ib = ib.rename(columns={col: col.lower() for col in ib.columns}).rename(
         columns={
