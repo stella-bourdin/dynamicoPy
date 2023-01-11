@@ -85,19 +85,27 @@ def _clean_ibtracs(
 
     # All about wind
     ## Select from the data & convert
+    ### WMO wind if available, with conversion in the basins where it is necessary
+    ib["WIND10"] = ib.WMO_WIND
+    ib["WIND10"] = np.where(ib.BASIN.isin(["ENP", "NATL"]), ib.WIND10 / 1.12, ib.WIND10)
+    ib["WIND10"] = np.where(ib.BASIN.isin(["NI"]), ib.WIND10 / 1.08, ib.WIND10)
+    ### Wind from a WMO center reporting 10-minutes averaged wind speed if available
     ib["WIND10"] = np.where(
-        ~ib.WMO_WIND.isna(),
-        ib.WMO_WIND,
+        ib.WIND10.isna(),
         ib[
             ["TOKYO_WIND", "REUNION_WIND", "BOM_WIND", "NADI_WIND", "WELLINGTON_WIND"]
         ].mean(axis=1, skipna=True),
+        ib.WIND10,
     )
+    ### Otherwise USA wind if available
     ib["WIND10"] = np.where(
         ib.WIND10.isna(), ib.USA_WIND / 1.12, ib.WIND10
     )  # Conversion rate in the IBTrACS doc
+    ### Otherwise CMA wind if available
     ib["WIND10"] = np.where(
         ib.WIND10.isna(), ib.CMA_WIND / 1.08, ib.WIND10
     )  # Conversion rate determined through a linear regression
+
     ib["WIND10"] *= 0.514  # Conversion noeuds en m/s
 
     # Select pressure

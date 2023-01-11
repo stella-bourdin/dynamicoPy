@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 
 
 def theta(x0=120, x1=130, y0=12, y1=10):  # TODO : Gérer différemment SH ?
@@ -244,6 +243,7 @@ def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
     -------
     VTL, VTU : The Hart Phase Space parameters for upper and lower thremal wind respectively.
     """
+    from sklearn.linear_model import LinearRegression
     Z_max = geopt[name].max(["az", "r"])
     Z_min = geopt[name].min(["az", "r"])
     ΔZ = Z_max - Z_min  # Fonction de snapshot & plev
