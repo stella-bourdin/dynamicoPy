@@ -87,7 +87,7 @@ def _clean_ibtracs(
     ## Select from the data & convert
     ### WMO wind if available, with conversion in the basins where it is necessary
     ib["WIND10"] = ib.WMO_WIND
-    ib["WIND10"] = np.where(ib.BASIN.isin(["ENP", "NATL"]), ib.WIND10 / 1.12, ib.WIND10)
+    ib["WIND10"] = np.where(ib.BASIN.isin(["EP", "NA"]), ib.WMO_WIND / 1.12, ib.WIND10)
     ib["WIND10"] = np.where(ib.BASIN.isin(["NI"]), ib.WIND10 / 1.08, ib.WIND10)
     ### Wind from a WMO center reporting 10-minutes averaged wind speed if available
     ib["WIND10"] = np.where(
