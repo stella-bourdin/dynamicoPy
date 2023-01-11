@@ -181,7 +181,8 @@ def read_TRACKfiles(
             data = pd.DataFrame(
                 np.array(data), columns=data_vars[: np.shape(np.array(data))[1]]
             )
-            tracks = tracks.append(
+            tracks = pd.concat([
+                tracks,
                 pd.DataFrame(
                     {
                         "track_id": [track_id] * len(time_step),
@@ -189,7 +190,7 @@ def read_TRACKfiles(
                         "lon": lon,
                         "lat": lat,
                     }
-                ).join(data)
+                ).join(data)]
             )
             c += 1
             if season == None:
