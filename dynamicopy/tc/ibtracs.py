@@ -81,7 +81,7 @@ def _clean_ibtracs(
 
     # Season selection
     ib = ib[ib.SEASON < 2022]
-    ib = ib[(ib.SEASON > 1980) | (ib.LAT > 0)]
+    ib = ib[ib.SEASON > 1980]
 
     # All about wind
     ## Select from the data & convert
