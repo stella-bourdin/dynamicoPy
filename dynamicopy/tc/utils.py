@@ -130,7 +130,9 @@ def get_basin(lon, lat):
                 basin.append("NI")
             elif 100 < x <= 180:
                 basin.append("WNP")
-            elif 180 < x <= 260:
+            elif 180 <= x <= 220 :
+                basin.append("CP")
+            elif 220 < x <= 260:
                 basin.append("ENP")
             elif 290 < x <= 360:
                 basin.append("NATL")
