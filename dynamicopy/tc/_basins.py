@@ -22,13 +22,14 @@ NI = Polygon(((30, 0), (30, 90), (100, 90), (100, 0)))
 MED = Polygon(((0, 0), (0, 90), (30, 90), (30, 0)))
 NH = {"NATL": NATL, "ENP": ENP, "CP":CP, "WNP": WNP, "NI": NI, "MED": MED}
 
-SI = Polygon(((20, -90), (20, 0), (135, 0), (135, -90)))
-SP = Polygon(((135, 0), (135, -90), (295, -90), (295, 0)))
+SI = Polygon(((20, -90), (20, 0), (90, 0), (90, -90)))
+AUS = Polygon(((90, -90), (90, 0), (160, 0), (160, -90)))
+SP = Polygon(((160, 0), (160, -90), (295, -90), (295, 0)))
 SA1 = Polygon(((295, -90), (295, 0), (360, 0), (360, -90)))
 SA2 = Polygon(((20, -90), (20, 0), (0, 0), (0, -90)))
 SA = MultiPolygon([SA1, SA2])
 SA_plot = Polygon(((295, -90), (295, 0), (380, 0), (380, -90)))
-SH = {"SI": SI, "SP": SP, "SA": SA}
+SH = {"SI": SI, "AUS" : AUS, "SP": SP, "SA": SA}
 
 basins = dict(SH, **NH)
 
@@ -92,8 +93,8 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True):
         fig, ax = fig_ax
 
     for basin, name in zip(
-        [NATL, ENP, CP, WNP, NI, MED, SI, SP, SA_plot],
-        ["NATL", "ENP", "CP", "WNP", "NI", "MED", "SI", "SP", "SATL"],
+        [NATL, ENP, CP, WNP, NI, MED, SI, AUS, SP, SA_plot],
+        ["NATL", "ENP", "CP", "WNP", "NI", "MED", "SI", "AUS", "SP", "SATL"],
     ):
         ax.plot(
             basin.exterior.xy[0],

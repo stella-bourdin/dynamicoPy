@@ -117,9 +117,11 @@ def get_basin(lon, lat):
     basin = []
     for x, y in zip(lon, lat):
         if y < 0:
-            if 20 < x <= 135:
+            if 20 < x <= 90:
                 basin.append("SI")
-            elif 135 < x <= 295:
+            elif 90 < x <= 160:
+                basin.append("AUS")
+            elif 160 < x <= 295:
                 basin.append("SP")
             else:
                 basin.append("SA")
