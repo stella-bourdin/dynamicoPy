@@ -172,46 +172,26 @@ def storm_stats(tracks):
     pd.Dataframe
         Grouped dataframe of the initial one
     """
+
+    # Prepare tracks dataset
     tracks = tracks.copy()
     tracks["wind10"] = tracks.wind10.round(2)
     tracks.loc[tracks.ET.isna(), "ET"] = False
-    storms = (
-        tracks.groupby(["track_id"])[["hemisphere", "basin", "season", "month"]].agg(
-            lambda x: x.value_counts().index[0]
-        )
-        # TODO : line responsible for the slow behavior / remplacer par pd.Series.mode : https://stackoverflow.com/questions/15222754/groupby-pandas-dataframe-and-select-most-common-value
-        # Teste, améliore de 34s -> 21s, mais pb dans le cas limite ou même nb de points dans 2 bassins, a gerer
-        .reset_index()
-    )
-    storms = storms.merge(
-        (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
-    )
-    # Intensity stats : Only on tropical part
-    tracks = tracks[(1 - tracks.ET) == 1]
-    storms = storms.merge(
-        tracks.groupby(["track_id"])[["sshs", "wind10"]].max().reset_index()
-    )
-    storms = storms.merge(tracks.groupby(["track_id"])[["slp"]].min().reset_index())
 
-    storms = storms.merge(  # Wind lat
-        storms[["track_id", "wind10"]]
-        .merge(tracks[["track_id", "wind10", "lat", "time"]])
-        .groupby("track_id")
-        .agg(lambda t: t.min())
-        .reset_index()
-        .rename(columns={"lat": "lat_wind", "time": "time_wind"})
-        .round(2),
-        how="outer",
-    )
-    storms = storms.merge(  # slp lat
-        storms[["track_id", "slp"]]
-        .merge(tracks[["track_id", "slp", "lat", "time"]])
-        .groupby("track_id")
-        .agg(lambda t: t.min())
-        .reset_index()
-        .rename(columns={"lat": "lat_slp", "time": "time_slp"}),
-        how="outer",
-    )
+    # Compute track length
+    storms = (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
+
+    # Intensity stats : Only on tropical part
+    tracks = tracks[~tracks.ET]
+
+    # Retrieve the line of max wind and min slp for each track
+    tracks_wind_climax = tracks.sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time"]]
+    tracks_slp_climax = tracks.sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time", "hemisphere", "season", "month", "basin", "sshs"]]
+
+    # Merge all together
+    storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind")).rename(columns = {"lat":"lat_wind"})
+    storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"))
+
     return storms
 
 

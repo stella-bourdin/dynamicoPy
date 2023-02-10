@@ -64,7 +64,7 @@ def _save_basins_shapefile():
     ds = layer = feat = geom = None
 
 
-def plot_basins(show=True, save=None, fig_ax = None, text = True):
+def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "grey", ):
     """
     Plot the basins according to the Knutson definition
 
@@ -82,10 +82,10 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True):
         fig, ax = plt.subplots(
             subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
         )
-        ax.coastlines()
+        ax.coastlines(color = coastcolor)
         ax.set_global()
         gl = ax.gridlines(draw_labels=True)
-        gl.xlocator = mticker.FixedLocator([20, 30, 100, 135, 180, -100, -65])
+        gl.xlocator = mticker.FixedLocator([20, 30, 100, 180, -160, -100, -65])
         gl.ylocator = mticker.FixedLocator([-90, 0, 20, 90])
         gl.xlines = False
         gl.ylines = False
@@ -93,8 +93,8 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True):
         fig, ax = fig_ax
 
     for basin, name in zip(
-        [NATL, ENP, CP, WNP, NI, MED, SI, AUS, SP, SA_plot],
-        ["NATL", "ENP", "CP", "WNP", "NI", "MED", "SI", "AUS", "SP", "SATL"],
+        [NATL, ENP, CP, WNP, NI , SI, AUS, SP, SA_plot],
+        ["NATL", "ENP", "CP", "WNP", "NI", "SI", "AUS", "SP", "SATL"],
     ):
         ax.plot(
             basin.exterior.xy[0],
@@ -113,6 +113,8 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True):
     if show:
         plt.show()
     if save != None:
+        print("Saving in "+save)
+        plt.show()
         plt.savefig(save)
 
 
