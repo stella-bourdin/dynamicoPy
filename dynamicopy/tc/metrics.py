@@ -188,9 +188,14 @@ def storm_stats(tracks):
     tracks_wind_climax = tracks.sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time"]]
     tracks_slp_climax = tracks.sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time", "hemisphere", "season", "month", "basin", "sshs"]]
 
+    # Retrieve the line of genesis for each track
+    gen = tracks.sort_values("time").groupby("track_id").first().reset_index()[
+        ["track_id", "lat", "time", "basin",]]
+
     # Merge all together
     storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind")).rename(columns = {"lat":"lat_wind"})
     storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"))
+    storms = storms.merge(gen, on="track_id", suffixes=("", "_gen"))
 
     return storms
 
