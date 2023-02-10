@@ -182,7 +182,7 @@ def storm_stats(tracks):
     storms = (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
 
     # Intensity stats : Only on tropical part
-    tracks = tracks[~tracks.ET]
+    tracks = tracks[tracks.ET.astype(int) == 0]
 
     # Retrieve the line of max wind and min slp for each track
     tracks_wind_climax = tracks.sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time"]]
