@@ -226,5 +226,5 @@ def load_ibtracs():
         dtype={"slp": float, "wind10": float, "season": str},
         parse_dates=["time"],
     )
-
+    ib = identify_lifecycle(ib)
     return ib
