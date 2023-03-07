@@ -1,7 +1,7 @@
 from .metrics import storm_stats
 
 def identify_lifecycle(tracks, ss = None,):
-    if ss == None :
+    if type(ss) == None :
         ss = storm_stats(tracks)
     t_interm = tracks.merge(ss[["track_id", "time_slp", "time_wind"]], on = "track_id")
     tracks = tracks.assign(lag_climax_slp = (t_interm.time - t_interm.time_slp).astype('timedelta64[h]').values)

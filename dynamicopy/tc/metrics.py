@@ -185,8 +185,8 @@ def storm_stats(tracks):
     tracks = tracks[tracks.ET.astype(int) == 0]
 
     # Retrieve the line of max wind and min slp for each track
-    tracks_wind_climax = tracks.sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time"]]
-    tracks_slp_climax = tracks.sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time", "hemisphere", "season", "month", "basin", "sshs"]]
+    tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time"]]
+    tracks_slp_climax = tracks[~tracks.slp.isna()].sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time", "hemisphere", "season", "month", "basin", "sshs"]]
 
     # Retrieve the line of genesis for each track
     gen = tracks.sort_values("time").groupby("track_id").first().reset_index()[
