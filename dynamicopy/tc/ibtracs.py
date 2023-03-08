@@ -4,6 +4,7 @@ import pkg_resources
 import datetime
 import numpy as np
 from .utils import *
+from .lifecycle import identify_lifecycle
 
 
 def _clean_ibtracs(
