@@ -13,6 +13,7 @@ def _clean_ibtracs(
     pkl_output="dynamicopy/_data/ibtracs.pkl",
     six_hourly=True,
     threshold_wind=True,
+    max_season=2022,
 ):
     """
     Function used to post-treat ibtracs _data into a lighter file
@@ -81,7 +82,7 @@ def _clean_ibtracs(
     ib = ib[~ib.TRACK_TYPE.str.startswith("spur")]
 
     # Season selection
-    ib = ib[ib.SEASON < 2022]
+    ib = ib[ib.SEASON < max_season]
     ib = ib[ib.SEASON > 1980]
 
     # All about wind
