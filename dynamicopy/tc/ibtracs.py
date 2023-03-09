@@ -201,6 +201,8 @@ def _clean_ibtracs(
 
     ib["ET"] = False
 
+    ib = identify_lifecycle(ib)
+
     # Save
     ib.to_csv(csv_output)
     with open(pkl_output, "wb") as handle:
@@ -228,5 +230,4 @@ def load_ibtracs():
         dtype={"slp": float, "wind10": float, "season": str},
         parse_dates=["time"],
     )
-    ib = identify_lifecycle(ib)
     return ib
