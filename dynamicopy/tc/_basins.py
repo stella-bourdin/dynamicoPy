@@ -4,8 +4,10 @@
 Oceanic basins as defined by Knutson et al. 2020 appendix.
 """
 
+import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon
 import matplotlib.pyplot as plt
+import pkg_resources
 
 try:
     import cartopy.crs as ccrs
@@ -119,3 +121,14 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
 
 
 # TODO (?) : Définir aussi les régions WMO
+
+def list_in_med(lon, lat):
+    stream = pkg_resources.resource_stream(
+        __name__, "../_data/iho.shp"
+    )
+    shp = gpd.read_file(stream)
+    return [point_in_med(lon[i], lat[i], shp) for i in range(len(lon))]
+
+def point_in_med(lon, lat, shp):
+    p = Point(lon, lat)
+    return np.sum([shp.geometry.values[i].contains(Point(p)) for i in range(len(shp))]) > 0
