@@ -5,7 +5,7 @@ Oceanic basins as defined by Knutson et al. 2020 appendix.
 """
 
 import geopandas as gpd
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import Polygon, MultiPolygon, Point
 import matplotlib.pyplot as plt
 import pkg_resources
 import dynamicopy
