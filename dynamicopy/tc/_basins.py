@@ -8,6 +8,7 @@ import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon
 import matplotlib.pyplot as plt
 import pkg_resources
+import dynamicopy
 
 try:
     import cartopy.crs as ccrs
