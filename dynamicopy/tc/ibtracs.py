@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 from .utils import *
 from .lifecycle import identify_lifecycle
-
+import dynamicopy
 
 def _clean_ibtracs(
     raw_file="tests/ibtracs.since1980.list.v04r00_8Jan23.csv",
