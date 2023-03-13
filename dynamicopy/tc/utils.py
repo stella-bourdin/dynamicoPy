@@ -39,6 +39,22 @@ def add_season(tracks):
     tracks = tracks.join(group[["season"]], on="track_id")
     return tracks
 
+def season_med(tracks):
+    """
+    compute the season for mediterranean cyclones.
+
+    Parameters
+    ----------
+    tracks (pd.DataFrame): The track dataframe
+
+    Returns
+    -------
+    pd.DataFrame
+        The column of season
+    """
+    season = np.where(tracks.month >= 8, tracks.year, None)
+    season = np.where(tracks.month <= 7, tracks.year - 1, season)
+    return season
 
 def get_time(year, month, day, hour):
     """
