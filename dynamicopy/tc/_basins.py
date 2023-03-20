@@ -4,7 +4,6 @@
 Oceanic basins as defined by Knutson et al. 2020 appendix.
 """
 
-import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon, Point
 import matplotlib.pyplot as plt
 import pkg_resources
@@ -12,6 +11,7 @@ import dynamicopy
 
 try:
     import cartopy.crs as ccrs
+    import geopandas as gpd
 except ImportError:
     pass
 import numpy as np
