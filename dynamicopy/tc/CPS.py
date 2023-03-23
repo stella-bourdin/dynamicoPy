@@ -299,7 +299,7 @@ def compute_Hart_parameters(
         VTL, VTU = VT_simple(z900, z600, z300)
     elif method == "gradient":
         assert (type(names) == str), "If using gradient method, you must provide str for names"
-        geopt = geopt.sortby(plev, ascending = False)
+        geopt = geopt.sortby("plev", ascending = False)
         VTL, VTU = VT_gradient(geopt, name = names)
 
     tracks = tracks.assign(VTL=VTL, VTU=VTU)
