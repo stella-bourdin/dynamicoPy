@@ -236,7 +236,8 @@ def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
     """
     Parameters
     ----------
-    geopt (xr.DataArray) : The Geopotential snapshots DataArray
+    geopt (xr.DataArray) : The Geopotential snapshots DataArray.
+        plev must be decreasing
     name (str) : Name of the geopotential snapshots variable.
 
     Returns
@@ -244,11 +245,11 @@ def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
     VTL, VTU : The Hart Phase Space parameters for upper and lower thremal wind respectively.
     """
     from sklearn.linear_model import LinearRegression
-    Z_max = geopt[name].max(["az", "r"])
-    Z_min = geopt[name].min(["az", "r"])
-    ΔZ = Z_max - Z_min  # Fonction de snapshot & plev
-    ΔZ_bottom = ΔZ.sel(plev=slice(950e2, 600e2))
-    ΔZ_top = ΔZ.sel(plev=slice(600e2, 250e2))
+    Z_max = geopt[name].max(["az", "r"]) # Maximum of Z at each level for each snapshot
+    Z_min = geopt[name].min(["az", "r"]) # Minimum of ...
+    ΔZ = Z_max - Z_min  # Fonction of snapshot & plev
+    ΔZ_bottom = ΔZ.sel(plev=slice(950e2, 600e2)) # Lower troposphere
+    ΔZ_top = ΔZ.sel(plev=slice(600e2, 250e2))    # Upper tropo
     X = np.log(ΔZ_bottom.plev).values.reshape(-1, 1)
     VTL = [LinearRegression().fit(X, y).coef_[0] for y in ΔZ_bottom.values]
     X = np.log(ΔZ_top.plev).values.reshape(-1, 1)
@@ -297,7 +298,8 @@ def compute_Hart_parameters(
     if method == "simple":
         VTL, VTU = VT_simple(z900, z600, z300)
     elif method == "gradient":
-        assert (type(names) == str), "If using gradient method, you must provid str for names"
+        assert (type(names) == str), "If using gradient method, you must provide str for names"
+        geopt = geopt.sortby(plev, ascending = False)
         VTL, VTU = VT_gradient(geopt, name = names)
 
     tracks = tracks.assign(VTL=VTL, VTU=VTU)
