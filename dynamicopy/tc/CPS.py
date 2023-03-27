@@ -167,19 +167,24 @@ def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):
     -------
     B, the Hart phase space parameter for symetry.
     """
-    z900 = geopt[names[0]]
-    z600 = geopt[names[1]]
-    z900_R, z900_L = right_left(z900, th)
-    z600_R, z600_L = right_left(z600, th)
-    ΔZ_R = z900_R - z600_R
-    ΔZ_L = z900_L - z600_L
+    if type(names) == str:
+        z900 = geopt[names].sel(plev=900e2, method="nearest")
+        print("Level " + str(z900.plev.values) + " is taken for 900hPa")
+        z600 = geopt[names].sel(plev=600e2, method="nearest")
+        print("Level " + str(z600.plev.values) + " is taken for 600hPa")
+    else:
+        z900 = geopt[names[0]]
+        z600 = geopt[names[1]]
+
+    ΔZ = z600 - z900
+    ΔZ_R, ΔZ_L = right_left(ΔZ, th)
     if SH:
         h = -1
     else:
         h = 1
     return h * (
-        ΔZ_R.weighted(area_weights(ΔZ_R)).mean()
-        - ΔZ_L.weighted(area_weights(ΔZ_L)).mean()
+            ΔZ_R.weighted(area_weights(ΔZ_R)).mean()
+            - ΔZ_L.weighted(area_weights(ΔZ_L)).mean()
     )
 
 
@@ -198,12 +203,8 @@ def B_vector(th_vec, z900, z600, lat):
     -------
     B, the Hart phase space parameter for symetry.
     """
-    #z900 = geopt[names[0]]
-    #z600 = geopt[names[1]]
-    z900_R, z900_L = right_left_vector(z900, th_vec)
-    z600_R, z600_L = right_left_vector(z600, th_vec)
-    ΔZ_R = z900_R - z600_R
-    ΔZ_L = z900_L - z600_L
+    ΔZ = z600 - z900
+    ΔZ_R, ΔZ_L = right_left_vector(ΔZ, th_vec)
     h = np.where(lat < 0, -1, 1)
     return h * (
         ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["az", "r"])
