@@ -222,8 +222,8 @@ def storm_stats_med(tracks, time_step = 1):
     # Prepare tracks dataset
     tracks = tracks.copy()
     tracks["wind10"] = tracks.wind10.round(2)
-    if "in_med" not in tracks.columns :
-        tracks["in_med"] = list_in_med(tracks.lon, tracks.lat)
+    #if "in_med" not in tracks.columns :
+        #tracks["in_med"] = list_in_med(tracks.lon, tracks.lat)
     if "theta" not in tracks.columns :
         tracks["theta"] = theta_multitrack(tracks)
 
@@ -231,10 +231,10 @@ def storm_stats_med(tracks, time_step = 1):
     ## Storm length
     time = tracks.groupby(["track_id"]).time.count() / (24/time_step)
     ## Number & proportion of points in med
-    N_med = tracks.groupby("track_id").in_med.sum()
-    prop_med = N_med / time
+    #N_med = tracks.groupby("track_id").in_med.sum()
+    #prop_med = N_med / time
     ## Merge
-    storms = pd.DataFrame(time).join(N_med.rename("N_med")).join(prop_med.rename("prop_med"))
+    storms = pd.DataFrame(time)#.join(N_med.rename("N_med")).join(prop_med.rename("prop_med"))
 
     # Retrieve the line of max wind and min slp for each track
     tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time", "hemisphere", "season", "month", "basin",]]
