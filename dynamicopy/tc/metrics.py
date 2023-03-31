@@ -159,7 +159,7 @@ def prop_intense(freq, sshs_min=4):
     return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
 
 
-def storm_stats(tracks):
+def storm_stats(tracks, time_step = 6):
     """
     Statistics about each track
 
@@ -182,7 +182,7 @@ def storm_stats(tracks):
         tracks["ET"] = False
 
     # Compute track length
-    storms = (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
+    storms = (tracks.groupby(["track_id"])[["time"]].count() / (24/time_step)).reset_index()
 
     # Intensity stats : Only on tropical part
     tracks = tracks[tracks.ET.astype(int) == 0]
