@@ -176,7 +176,10 @@ def storm_stats(tracks):
     # Prepare tracks dataset
     tracks = tracks.copy()
     tracks["wind10"] = tracks.wind10.round(2)
-    tracks.loc[tracks.ET.isna(), "ET"] = False
+    if ET in tracks.columns :
+        tracks.loc[tracks.ET.isna(), "ET"] = False
+    else :
+        tracks["ET"] = False
 
     # Compute track length
     storms = (tracks.groupby(["track_id"])[["time"]].count() / 4).reset_index()
