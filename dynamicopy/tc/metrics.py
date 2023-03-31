@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from haversine import haversine
 
 
 def tc_count(tracks):
@@ -202,6 +203,60 @@ def storm_stats(tracks, time_step = 6):
 
     return storms
 
+def storm_stats_med(tracks, time_step = 6):
+    """
+    Statistics about each track
+
+    Parameters
+    ----------
+    tracks (pd.Dataframe): The track dataframe
+
+    Returns
+    -------
+    pd.Dataframe
+        Grouped dataframe of the initial one
+    """
+
+    # Prepare tracks dataset
+    tracks = tracks.copy()
+    tracks["wind10"] = tracks.wind10.round(2)
+    if ET in tracks.columns :
+        tracks.loc[tracks.ET.isna(), "ET"] = False
+    else :
+        tracks["ET"] = False
+    if in_med not in tracks.columns :
+        tracks["in_med"] = list_in_med(tracks.lon, tracks.lat)
+
+    # Retrieved grouped data
+    ## Storm length
+    time = tracks.groupby(["track_id"])[["time"]].count() / (24/time_step)
+    ## Number & proportion of points in med
+    N_med = tracks.groupby("track_id").in_med.sum()
+    prop_med = N_med / time
+    ##
+
+    # Intensity stats : Only on tropical part
+    tracks = tracks[tracks.ET.astype(int) == 0]
+
+    # Retrieve the line of max wind and min slp for each track
+    tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time", "hemisphere", "season", "month", "basin",]]
+    tracks_slp_climax = tracks[~tracks.slp.isna()].sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time", "sshs"]]
+
+    # Retrieve the line of genesis for each track
+    gen = tracks.sort_values("time").groupby("track_id").first().reset_index()[
+        ["track_id", "lat", "lon", "time",]]
+    dissip = tracks.sort_values("time").groupby("track_id").last().reset_index()[
+        ["track_id", "lat", "lon", "time",]]
+
+    # Compute distance between first and last point
+    start_end_dist = haversine((gen.lat,gen.lon), (dissip.lat, dissip.lat))
+
+    # Merge all together
+    storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind"), how = "outer").rename(columns = {"lat":"lat_wind"})
+    storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"), how = "outer")
+    storms = storms.merge(gen, on="track_id", suffixes=("", "_gen"))
+
+    return storms
 
 def propagation_speeds(tracks): # TODO : Probleme quand un point traverse le méridien de greenwhich
     """

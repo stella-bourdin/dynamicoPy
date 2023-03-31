@@ -123,10 +123,10 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
 
 # TODO (?) : Définir aussi les régions WMO
 
-def list_in_med(lon, lat, path = dynamicopy.__file__[:-11] + "_data/iho.shp"):
+def list_in_med(lon, lat, path = dynamicopy.__file__[:-11] + "_data/med.shp"):
     shp = gpd.read_file(path)
     return [point_in_med(lon[i], lat[i], shp) for i in range(len(lon))]
 
 def point_in_med(lon, lat, shp):
     p = Point(lon, lat)
-    return np.sum([shp.geometry.values[i].contains(Point(p)) for i in range(len(shp))]) > 0
+    return shp.geometry.values[0].contains(Point(p))
