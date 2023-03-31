@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from haversine import haversine
+from .CPS import theta_multitrack
+from ._basins import list_in_med
 
 
 def tc_count(tracks):
@@ -203,7 +205,7 @@ def storm_stats(tracks, time_step = 6):
 
     return storms
 
-def storm_stats_med(tracks, time_step = 6):
+def storm_stats_med(tracks, time_step = 1):
     """
     Statistics about each track
 
@@ -220,23 +222,19 @@ def storm_stats_med(tracks, time_step = 6):
     # Prepare tracks dataset
     tracks = tracks.copy()
     tracks["wind10"] = tracks.wind10.round(2)
-    if ET in tracks.columns :
-        tracks.loc[tracks.ET.isna(), "ET"] = False
-    else :
-        tracks["ET"] = False
-    if in_med not in tracks.columns :
+    if "in_med" not in tracks.columns :
         tracks["in_med"] = list_in_med(tracks.lon, tracks.lat)
+    if "theta" not in tracks.columns :
+        tracks["theta"] = theta_multitrack(tracks)
 
     # Retrieved grouped data
     ## Storm length
-    time = tracks.groupby(["track_id"])[["time"]].count() / (24/time_step)
+    time = tracks.groupby(["track_id"]).time.count() / (24/time_step)
     ## Number & proportion of points in med
     N_med = tracks.groupby("track_id").in_med.sum()
     prop_med = N_med / time
-    ##
-
-    # Intensity stats : Only on tropical part
-    tracks = tracks[tracks.ET.astype(int) == 0]
+    ## Merge
+    storms = pd.DataFrame(time).join(N_med.rename("N_med")).join(prop_med.rename("prop_med"))
 
     # Retrieve the line of max wind and min slp for each track
     tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time", "hemisphere", "season", "month", "basin",]]
@@ -249,7 +247,19 @@ def storm_stats_med(tracks, time_step = 6):
         ["track_id", "lat", "lon", "time",]]
 
     # Compute distance between first and last point
-    start_end_dist = haversine((gen.lat,gen.lon), (dissip.lat, dissip.lat))
+    storms["start_end_dist"] = [haversine((gen.iloc[i].lat,gen.iloc[i].lon), (dissip.iloc[i].lat, dissip.iloc[i].lat))
+                      for i in range(len(gen))]
+    # TODO : Make sure that order of track_ids is ok
+
+    # Retrieve data about inter-point charac.
+    for id in tracks.track_id.unique():
+        track = tracks[tracks.track_id == id]
+        storms.loc[id, "maxdist"] = np.max([haversine((track.iloc[i].lat, track.iloc[i].lon),
+                                               (track.iloc[i+1].lat, track.iloc[i+1].lon))
+                                    for i in range(len(track) - 1)])
+        dtheta = np.abs([track.iloc[i+1].theta - track.iloc[i].theta for i in range(len(track) - 1)])
+        storms.loc[id, "maxtheta"] = np.max(np.where(dtheta > 180, 380 - dtheta, dtheta))
+        storms.loc[id, "maxgap"] = np.max([track.iloc[i+1].time - track.iloc[i].time for i in range(len(track) - 1)])
 
     # Merge all together
     storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind"), how = "outer").rename(columns = {"lat":"lat_wind"})
