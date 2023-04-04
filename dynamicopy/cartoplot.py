@@ -21,13 +21,6 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 # Actuellement, pour utiliser des subplots, les créer avec plt.subplots(a, b, subplot_kw = {'projection':ccrs.Robinson()})
 
 
-def ax_med(central_lon = (38 - 7) / 2, ex = [-7, 38, 28, 44, ]):
-    ax = plt.axes(projection=ccrs.LambertAzimuthalEqualArea(central_lon))
-    ax.coastlines()
-    ax.set_extent(ex)
-    ax.gridlines()
-    return ax
-
 def lon_lat_plot_map(
     lon,
     lat,

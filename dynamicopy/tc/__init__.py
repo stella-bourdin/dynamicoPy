@@ -1,6 +1,6 @@
 from .ibtracs import load_ibtracs
 from .load_tracks import *
-from .maps import plot_tracks, plot_polar
+from .maps import plot_tracks, plot_polar, ax_med
 from .matching import *
 from .metrics import *
 from .utils import *
@@ -9,7 +9,6 @@ from .CPS import compute_Hart_parameters, theta_multitrack
 from .grid import *
 from .STJ import *
 from .lifecycle import *
-from .cartoplot import ax_med
 
 import numpy as np
 import matplotlib.pyplot as plt
