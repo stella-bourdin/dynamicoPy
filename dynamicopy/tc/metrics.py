@@ -229,7 +229,7 @@ def storm_stats_med(tracks, time_step = 1):
 
     # Retrieved grouped data
     ## Storm length
-    time = tracks.groupby(["track_id"]).time.count() / (24/time_step)
+    time = tracks.groupby(["track_id"]).time.max() - tracks.groupby(["track_id"]).time.min()
     ## Number & proportion of points in med
     #N_med = tracks.groupby("track_id").in_med.sum()
     #prop_med = N_med / time
