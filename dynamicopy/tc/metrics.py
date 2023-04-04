@@ -231,10 +231,10 @@ def storm_stats_med(tracks, time_step = 1):
     ## Storm length
     time = (tracks.groupby(["track_id"]).time.max() - tracks.groupby(["track_id"]).time.min()).astype('timedelta64[h]')
     ## Number & proportion of points in med
-    #N_med = tracks.groupby("track_id").in_med.sum()
-    #prop_med = N_med / time
+    N_med = tracks.groupby("track_id").in_med.sum()
+    prop_med = N_med / time
     ## Merge
-    storms = pd.DataFrame(time)#.join(N_med.rename("N_med")).join(prop_med.rename("prop_med"))
+    storms = pd.DataFrame(time).join(N_med.rename("N_med")).join(prop_med.rename("prop_med"))
 
     # Retrieve the line of max wind and min slp for each track
     tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time", "hemisphere", "season", "month", "basin",]]

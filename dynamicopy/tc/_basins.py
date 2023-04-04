@@ -127,9 +127,10 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
 def list_in_med(lon, lat, path = dynamicopy.__file__[:-11] + "_data/med_mask.nc"):
     mask = xr.open_dataset(path).load().lsm
 
-    idx_lon = round((lon * 2) / 5).values.astype(int)
+    idx_lon = round(lon * 4).values.astype(int)
+    idx_lon[idx_lon == 1440] = 0
     idx_lat = 360 - round(lat * 4).values.astype(int)
-    return mask.values[idx_lon, idx_lat]
+    return mask.values[idx_lat, idx_lon]
 
 def point_in_med(lon, lat, mask):
     mask_value = mask.sel(longitude = lon, latitude = lat, method = "nearest")
