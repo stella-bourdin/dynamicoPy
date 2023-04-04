@@ -22,7 +22,7 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 
 def ax_med(central_lon = (38 - 7) / 2, ex = [-7, 38, 28, 44, ]):
-    ax = plt.axes(projection=ccrs.LambertAzimuthalEqualArea(central_lon)
+    ax = plt.axes(projection=ccrs.LambertAzimuthalEqualArea(central_lon))
     ax.coastlines()
     ax.set_extent(ex)
     ax.gridlines()

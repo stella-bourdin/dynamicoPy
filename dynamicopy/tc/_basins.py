@@ -8,6 +8,7 @@ from shapely.geometry import Polygon, MultiPolygon, Point
 import matplotlib.pyplot as plt
 import pkg_resources
 import dynamicopy
+import xarray as xr
 
 try:
     import cartopy.crs as ccrs
@@ -123,10 +124,10 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
 
 # TODO (?) : Définir aussi les régions WMO
 
-def list_in_med(lon, lat, path = dynamicopy.__file__[:-11] + "_data/med.shp"):
-    shp = gpd.read_file(path)
-    return [point_in_med(lon[i], lat[i], shp) for i in range(len(lon))]
+def list_in_med(lon, lat, path = dynamicopy.__file__[:-11] + "_data/med_mask.nc"):
+    mask = xr.open_dataset(path).load().lsm
+    return [point_in_med(lon[i], lat[i], mask) for i in range(len(lon))]
 
-def point_in_med(lon, lat, shp):
-    p = Point(lon, lat)
-    return shp.geometry.values[0].contains(Point(p))
+def point_in_med(lon, lat, mask):
+    mask_value = mask.sel(longitude = lon, latitude = lat, method = "nearest")
+    return int(mask_value.values)
