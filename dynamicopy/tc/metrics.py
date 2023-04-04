@@ -229,7 +229,7 @@ def storm_stats_med(tracks, time_step = 1):
 
     # Retrieved grouped data
     ## Storm length
-    time = tracks.groupby(["track_id"]).time.max() - tracks.groupby(["track_id"]).time.min()
+    time = (tracks.groupby(["track_id"]).time.max() - tracks.groupby(["track_id"]).time.min()).astype('timedelta64[h]')
     ## Number & proportion of points in med
     #N_med = tracks.groupby("track_id").in_med.sum()
     #prop_med = N_med / time
@@ -251,15 +251,24 @@ def storm_stats_med(tracks, time_step = 1):
                       for i in range(len(gen))]
     # TODO : Make sure that order of track_ids is ok
 
-    # Retrieve data about inter-point charac.
-    for id in tracks.track_id.unique():
-        track = tracks[tracks.track_id == id]
-        storms.loc[id, "maxdist"] = np.max([haversine((track.iloc[i].lat, track.iloc[i].lon),
-                                               (track.iloc[i+1].lat, track.iloc[i+1].lon))
-                                    for i in range(len(track) - 1)])
-        dtheta = np.abs([track.iloc[i+1].theta - track.iloc[i].theta for i in range(len(track) - 1)])
-        storms.loc[id, "maxtheta"] = np.max(np.where(dtheta > 180, 380 - dtheta, dtheta))
-        storms.loc[id, "maxgap"] = np.max([track.iloc[i+1].time - track.iloc[i].time for i in range(len(track) - 1)])
+    tracks.loc[:tracks.index[-2], "lon_next"] = tracks.lon[1:].values
+    tracks.loc[:tracks.index[-2], "lat_next"] = tracks.lat[1:].values
+    tracks.loc[:tracks.index[-2], "theta_next"] = tracks.theta[1:].values
+    tracks.loc[:tracks.index[-2], "time_next"] = tracks.time[1:].values
+    tracks["tpos"] = tracks.sort_values("time", ascending=False).groupby("track_id").transform("cumcount")
+    # Maximum distance between two points
+    tracks["dist_next"] = tracks.apply(lambda x: haversine((x.lat, x.lon), (x.lat_next, x.lon_next)), axis=1)
+    tracks.loc[tracks.tpos == 0, "dist_next"] = np.nan
+    storms["maxdist"] = tracks.groupby("track_id").dist_next.max()
+    # Maximum theta between two points
+    tracks["dtheta"] = tracks.theta_next - tracks.theta
+    tracks["dtheta"] = np.where(tracks.dtheta > 180, 360 - tracks.dtheta, tracks.dtheta)
+    tracks.loc[tracks.tpos == 0, "dtheta"] = np.nan
+    storms["maxtheta"] = tracks.groupby("track_id").dtheta.max()
+    # Maximum gap between two points
+    tracks["gap_next"] = (tracks.time_next - tracks.time).astype('timedelta64[h]')
+    tracks.loc[tracks.tpos == 0, "gap_next"] = np.nan
+    storms["maxgap"] = tracks.groupby("track_id").gap_next.max()
 
     # Merge all together
     storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind"), how = "outer").rename(columns = {"lat":"lat_wind"})
