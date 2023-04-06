@@ -223,3 +223,9 @@ def sshs_from_wind(wind):
     sshs = np.where((sshs == None) & (~np.isnan(wind)), 5, sshs)
     sshs = np.where(sshs == None, np.nan, sshs)
     return sshs
+
+# mean earth radius - https://en.wikipedia.org/wiki/Earth_radius#Mean_radius
+_AVG_EARTH_RADIUS_KM = 6371.0088
+
+def GCD2km(GCD):
+    return GCD * 180 / np.pi * 1 / _AVG_EARTH_RADIUS_KM

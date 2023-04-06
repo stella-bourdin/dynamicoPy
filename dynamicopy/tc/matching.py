@@ -158,3 +158,23 @@ def overlap(tracks1, tracks2, matches=None):
     )
 
     return matches[["id_" + c1, "id_" + c2, "temp", "dist", "delta_start", "delta_end"]]
+
+
+def compare(tracks, ref):
+    m = match_tracks(tracks, ref)
+
+    miss = ref[~ref.track_id.isin(m.id_ib)]
+    N_miss = miss.track_id.nunique()
+
+    FA = tracks[~tracks.track_id.isin(m.id_algo)]
+    N_FA = FA.track_id.nunique()
+
+    hits_ref = ref[ref.track_id.isin(m.id_ib)]
+    hits_simu = tracks[tracks.track_id.isin(m.id_algo)]
+    N_hits = hits_ref.track_id.nunique()
+    if N_hits != hits_simu.track_id.nunique():
+        print("Attention doublons !")
+
+    venn2((N_miss, N_FA, N_hits), ("Ref", "ERA5"))
+
+    return m, FA, miss, hits_ref, hits_simu
