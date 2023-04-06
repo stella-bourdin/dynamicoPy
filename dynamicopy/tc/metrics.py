@@ -220,7 +220,7 @@ def storm_stats_med(tracks, time_step = 1):
     """
 
     # Prepare tracks dataset
-    tracks = tracks.copy()
+    tracks = tracks.sort_values(["track_id", "time"]).copy()
     tracks["wind10"] = tracks.wind10.round(2)
     #if "in_med" not in tracks.columns :
         #tracks["in_med"] = list_in_med(tracks.lon, tracks.lat)
@@ -255,7 +255,6 @@ def storm_stats_med(tracks, time_step = 1):
     tracks.loc[:tracks.index[-2], "lat_next"] = tracks.lat[1:].values
     tracks.loc[:tracks.index[-2], "theta_next"] = tracks.theta[1:].values
     tracks.loc[:tracks.index[-2], "time_next"] = tracks.time[1:].values
-    tracks = tracks.sort_values(["track_id", "time"])
     tracks["tpos"] = tracks.sort_values("time", ascending=False).groupby("track_id").transform("cumcount")
     # Maximum distance between two points
     tracks["dist_next"] = tracks.apply(lambda x: haversine((x.lat, x.lon), (x.lat_next, x.lon_next)), axis=1)
