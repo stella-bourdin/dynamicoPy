@@ -68,7 +68,7 @@ def _save_basins_shapefile():
     ds = layer = feat = geom = None
 
 
-def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "grey", global = False,):
+def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "grey", glob = False,):
     """
     Plot the basins according to the Knutson definition
 
