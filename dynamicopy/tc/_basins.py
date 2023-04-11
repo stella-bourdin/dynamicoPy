@@ -68,7 +68,7 @@ def _save_basins_shapefile():
     ds = layer = feat = geom = None
 
 
-def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "grey", ):
+def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "grey", global = False,):
     """
     Plot the basins according to the Knutson definition
 
@@ -87,7 +87,7 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
             subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
         )
         ax.coastlines(color = coastcolor)
-        ax.set_global()
+        if global : ax.set_global();
         gl = ax.gridlines(draw_labels=True)
         gl.xlocator = mticker.FixedLocator([20, 30, 100, 180, -160, -100, -65])
         gl.ylocator = mticker.FixedLocator([-90, 0, 20, 90])

@@ -228,4 +228,4 @@ def sshs_from_wind(wind):
 _AVG_EARTH_RADIUS_KM = 6371.0088
 
 def GCD2km(GCD):
-    return GCD * 180 / np.pi * 1 / _AVG_EARTH_RADIUS_KM
+    return GCD * np.pi / 180 * _AVG_EARTH_RADIUS_KM
