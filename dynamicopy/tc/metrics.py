@@ -179,7 +179,7 @@ def storm_stats(tracks, time_step = 6):
     # Prepare tracks dataset
     tracks = tracks.copy()
     tracks["wind10"] = tracks.wind10.round(2)
-    if ET in tracks.columns :
+    if "ET" in tracks.columns :
         tracks.loc[tracks.ET.isna(), "ET"] = False
     else :
         tracks["ET"] = False
