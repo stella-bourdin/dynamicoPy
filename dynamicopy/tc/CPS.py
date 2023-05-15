@@ -138,14 +138,12 @@ def right_left_vector(z, th):
     """
 
     A = pd.DataFrame([list(z.az.values)] * len(z.snapshot))  # matrix of az x snapshot
-    mask = np.array(
-        A.lt(pd.Series(th % 180), 0) | A.ge((pd.Series(th % 180) + 180), 0)
-    )  # Mask in 2D (az, snapshot)
+    mask = np.array((A.lt(th, 0) & A.ge(th - 180, 0)) | A.ge(th + 180, 0))  # Mask in 2D (az, snapshot)
     mask = np.array([mask] * len(z.r))  # Mask in 3D (r, az, snapshot)
     mask = np.swapaxes(mask, 0, 1)  # Mask in 3D (az, r, snapshot)
     R, L = z.where(mask), z.where(
         ~mask
-    )  # We don't really care if left and right are the wrong way because we only differentiate them afterwards
+    )
     return R, L
 
 
