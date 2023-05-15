@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 
 try:
     import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
 except ImportError:
     print(
         "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
@@ -95,6 +97,47 @@ def plot_tracks(
     # plt.show()
     return fig, ax
 
+
+def plot_tracks_med(
+        tracks,
+        intensity_col="wind10",
+        projection=ccrs.PlateCarree(central_longitude=0.0),
+        fig_ax=None,
+        figsize=[12, 8],
+        cmap='Spectral_r',
+):
+
+    # Plotting
+    if fig_ax == None:
+        fig = plt.figure(figsize=figsize)
+        ax = plt.axes(projection=projection)
+    else:
+        fig, ax = fig_ax
+
+    ax.coastlines()
+    ax.gridlines(draw_labels=True)
+    ax.add_feature(cfeature.LAND)
+    ax.add_feature(cfeature.OCEAN)
+    ax.set_extent([-20, 45, 25, 50], crs=ccrs.PlateCarree())
+
+    for id in tracks.track_id.unique():
+        track = tracks[tracks.track_id == id]
+        x = track.lon
+        y = track.lat
+        c = track[intensity_col]
+
+        points = np.array([x, y]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        norm = plt.Normalize(10, 25, c.max())
+        lc = LineCollection(segments, cmap=cmap,
+                            norm=norm, transform=ccrs.PlateCarree())
+
+        lc.set_array(c)
+        lc.set_linewidth(2.)
+        line = ax.add_collection(lc)
+
+    return fig, ax
 
 def plot_polar(da):
     if np.max(da.az) > 2 * np.pi:
