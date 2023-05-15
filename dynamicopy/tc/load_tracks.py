@@ -84,7 +84,7 @@ def load_TEtracks_med(
     file="tests/tracks_ERA5.csv",
     surf_wind_col="wind10",
     slp_col="slp",
-    get_basins=True,
+    seasons = [1951,2014]
 ):
     """
     Parameters
@@ -112,22 +112,18 @@ def load_TEtracks_med(
     ## Geographical attributes
     tracks.loc[tracks.lon > 180, "lon"] -= 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
-    if get_basins:
-        tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
-    else:
-        tracks["basin"] = np.nan
 
     ## Temporal attributes
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
-    tracks = season_med(tracks)
+    tracks["season"] = season_med(tracks)
+    if not (seasons == None):
+        tracks = tracks[tracks.season.between(seasons[0], seasons[1])]
 
     ## Intensity attributes
     if slp_col != None:
         if tracks[slp_col].mean() > 10000:
             tracks[slp_col] /= 100
-        tracks["sshs"] = sshs_from_pres(tracks.slp.values)
-    else:
-        tracks["sshs"] = np.nan
+
     return tracks
 
 _HRMIP_TRACK_data_vars = [
