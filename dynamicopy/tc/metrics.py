@@ -183,18 +183,6 @@ def storm_stats_med(tracks, time_step = 6):
 
 """
 def storm_stats_med(tracks, time_step = 1):
-    """
-    Statistics about each track
-
-    Parameters
-    ----------
-    tracks (pd.Dataframe): The track dataframe
-
-    Returns
-    -------
-    pd.Dataframe
-        Grouped dataframe of the initial one
-    """
 
     # Prepare tracks dataset
     tracks = tracks.sort_values(["track_id", "time"]).copy()
