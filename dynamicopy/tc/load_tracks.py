@@ -82,11 +82,9 @@ def load_TEtracks(
 
 def load_TEtracks_med(
     file="tests/tracks_ERA5.csv",
-    seasons=None,
     surf_wind_col="wind10",
     slp_col="slp",
     get_basins=True,
-    get_seasons=True,
 ):
     """
     Parameters
@@ -121,14 +119,7 @@ def load_TEtracks_med(
 
     ## Temporal attributes
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
-    if get_seasons:
-        tracks = season_med(tracks)
-        if not (seasons == None):
-            tracks = tracks[
-                ((tracks.season >= seasons[0]) & (tracks.season <= seasons[1]))
-            ]
-    else:
-        tracks["season"] = np.nan
+    tracks = season_med(tracks)
 
     ## Intensity attributes
     if slp_col != None:
