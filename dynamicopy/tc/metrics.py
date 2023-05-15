@@ -260,6 +260,13 @@ def genesis_points(tracks):
     )
 
 def density_map(tracks, bin_size=5, N_seasons = 64) :
+    x = np.arange(0, 360+bin_size, bin_size)
+    y = np.arange(-90, 90+bin_size, bin_size)
+    H, X, Y = np.histogram2d(tracks.lon, tracks.lat, bins = [x, y])
+    da = xr.Dataset(dict(hist2d=(["lon", "lat"], np.array(H))), coords = dict(lon=(["lon"], (X[:-1]+X[1:])/2), lat=(["lat"], (Y[:-1]+Y[1:])/2))).hist2d
+    da = da/N_seasons
+    return da.T
+def density_map_med(tracks, bin_size=5, N_seasons = 64) :
     x = np.arange(-20, 45+bin_size, bin_size)
     y = np.arange(25, 50+bin_size, bin_size)
     H, X, Y = np.histogram2d(tracks.lon, tracks.lat, bins = [x, y])
