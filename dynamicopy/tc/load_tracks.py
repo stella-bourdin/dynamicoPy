@@ -112,6 +112,7 @@ def load_TEtracks_med(
     ## Geographical attributes
     tracks.loc[tracks.lon > 180, "lon"] -= 360
     tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    tracks["basin"] = "MED"
 
     ## Temporal attributes
     tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
