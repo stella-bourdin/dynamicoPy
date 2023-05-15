@@ -52,7 +52,6 @@ def tc_count(tracks):
         .reindex(["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"])
     )
 
-
 def get_freq(tracks):  # TODO : A optimiser
     tracks = tracks[~tracks.ET].copy()
     storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
@@ -84,65 +83,6 @@ def get_freq(tracks):  # TODO : A optimiser
         ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
     )
 
-
-""" # Version qui avait des erreurs dans les sommes, à revoir si besoin de la distinction en SSHS
-def get_freq(tracks):
-    tracks = tracks[~tracks.ET].copy()
-    storms = tracks.groupby("track_id")[["season", "hemisphere", "basin"]].agg(
-        lambda x: x.value_counts().index[0]
-    )
-    storms["sshs"] = tracks.groupby("track_id")["sshs"].max()
-
-    SH = (
-        storms[storms.hemisphere == "S"]
-        .groupby(["season", "sshs"])[["basin"]]
-        .count()
-        .reset_index()
-        .pivot_table(index=["sshs"], columns="season", fill_value=0)
-        .melt(ignore_index=False)
-        .iloc[:, 2:]
-        .groupby("sshs")
-        .mean()
-        .assign(basin="S")
-        .reset_index()
-    )
-
-    NH = (
-        storms[storms.hemisphere == "N"]
-        .groupby(["season", "sshs"])[["basin"]]
-        .count()
-        .reset_index()
-        .pivot_table(index=["sshs"], columns="season", fill_value=0)
-        .melt(ignore_index=False)
-        .iloc[:, 2:]
-        .groupby("sshs")
-        .mean()
-        .assign(basin="N")
-        .reset_index()
-    )
-
-    basins = (
-        storms.groupby(["season", "sshs", "basin"])
-        .count()
-        .reset_index()
-        .pivot_table(index=["basin", "sshs"], columns="season", fill_value=0)
-        .melt(ignore_index=False)
-        .iloc[:, 2:]
-        .groupby(["sshs", "basin"])
-        .mean()
-        .reset_index()
-    )
-
-    freq = SH.append(NH).append(basins).pivot_table(index="basin", columns="sshs", fill_value=0.0, margins=True, aggfunc=np.sum).drop("All")
-
-    freq.loc["global"] = freq.loc["S"] + freq.loc["N"]
-    freq.columns = freq.columns.get_level_values(1)
-    return freq.reindex(
-        ["global", "N", "WNP", "ENP", "NI", "NATL", "S", "SP", "SI", "SA"]
-    )
-"""
-
-
 def prop_intense(freq, sshs_min=4):
     """
     Retrieve the proportion of intense tc among all
@@ -160,7 +100,6 @@ def prop_intense(freq, sshs_min=4):
     freq_45 = freq.loc[:, cat_45_cols].sum(axis=1)
     prop_45 = freq_45 / freq.loc[:, "All"]
     return freq[["All"]].assign(intense=freq_45).assign(prop=prop_45)
-
 
 def storm_stats(tracks, time_step = 6):
     """
@@ -300,7 +239,6 @@ def propagation_speeds(tracks): # TODO : Probleme quand un point traverse le mé
         speeds[t] = dist * 100 / 6
     return speeds  # Vitesses en centième de degré par heure
 
-
 def genesis_points(tracks):
     """
     Return the first point of each track
@@ -320,3 +258,11 @@ def genesis_points(tracks):
         ]
         .first()
     )
+
+def density_map(tracks, bin_size=5, N_seasons = 64) :
+    x = np.arange(-20, 45+bin_size, bin_size)
+    y = np.arange(25, 50+bin_size, bin_size)
+    H, X, Y = np.histogram2d(tracks.lon, tracks.lat, bins = [x, y])
+    da = xr.Dataset(dict(hist2d=(["lon", "lat"], np.array(H))), coords = dict(lon=(["lon"], (X[:-1]+X[1:])/2), lat=(["lat"], (Y[:-1]+Y[1:])/2))).hist2d
+    da = da/N_seasons
+    return da.T
