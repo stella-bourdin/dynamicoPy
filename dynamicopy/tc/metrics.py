@@ -144,6 +144,44 @@ def storm_stats(tracks, time_step = 6):
 
     return storms
 
+def storm_stats_med(tracks, time_step = 6):
+    """
+    Statistics about each track
+
+    Parameters
+    ----------
+    tracks (pd.Dataframe): The track dataframe
+
+    Returns
+    -------
+    pd.Dataframe
+        Grouped dataframe of the initial one
+    """
+
+    # Prepare tracks dataset
+    tracks = tracks.copy()
+    tracks["wind10"] = tracks.wind10.round(2)
+
+    # Compute track length
+    storms = (tracks.groupby(["track_id"])[["time"]].count() / (24/time_step)).reset_index()
+
+    # Retrieve the line of max wind and min slp for each track
+    tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time", "hemisphere", "season", "month",]]
+    tracks_slp_climax = tracks[~tracks.slp.isna()].sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time",]]
+
+    # Retrieve the line of genesis for each track
+    gen = tracks.sort_values("time").groupby("track_id").first().reset_index()[
+        ["track_id", "lat", "time",]]
+
+    # Merge all together
+    storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind"), how = "outer").rename(columns = {"lat":"lat_wind"})
+    storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"), how = "outer")
+    storms = storms.merge(gen, on="track_id", suffixes=("", "_gen"))
+
+    return storms
+
+
+"""
 def storm_stats_med(tracks, time_step = 1):
     """
     Statistics about each track
@@ -215,6 +253,7 @@ def storm_stats_med(tracks, time_step = 1):
     storms = storms.merge(gen, on="track_id", suffixes=("", "_gen"))
 
     return storms
+"""
 
 def propagation_speeds(tracks): # TODO : Probleme quand un point traverse le méridien de greenwhich
     """
