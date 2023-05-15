@@ -80,6 +80,64 @@ def load_TEtracks(
         tracks["sshs"] = np.nan
     return tracks
 
+def load_TEtracks_med(
+    file="tests/tracks_ERA5.csv",
+    seasons=None,
+    surf_wind_col="wind10",
+    slp_col="slp",
+    get_basins=True,
+    get_seasons=True,
+):
+    """
+    Parameters
+    ----------
+    file (str): csv file from TempestExtremes StitchNodes output
+    NH_season (list of 2 ints): first and last season in the northern hemisphere
+    SH_season (list of 2 ints): first and last season in the southern hemisphere
+    surf_wind_col (str): Name of the column with the surface wind to output.
+    slp_col (str): Name of the column with the sea-level pressure. If None, no sshs computation.
+    get_basins (bool): Set to False if you don't need to get the basins.
+    get_seasons (bool): Set to False if you don't need to the the seasons.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns as described in the module header
+    """
+
+    ## Read file
+    tracks = pd.read_csv(file)
+    if tracks.columns.str[0][1] == " ":
+        tracks = tracks.rename(columns={c: c[1:] for c in tracks.columns[1:]})
+    tracks = tracks.rename(columns={surf_wind_col: "wind10", slp_col: "slp"})
+
+    ## Geographical attributes
+    tracks.loc[tracks.lon > 180, "lon"] -= 360
+    tracks["hemisphere"] = np.where(tracks.lat > 0, "N", "S")
+    if get_basins:
+        tracks["basin"] = get_basin(tracks.lon.values, tracks.lat.values)
+    else:
+        tracks["basin"] = np.nan
+
+    ## Temporal attributes
+    tracks["time"] = get_time(tracks.year, tracks.month, tracks.day, tracks.hour)
+    if get_seasons:
+        tracks = season_med(tracks)
+        if not (seasons == None):
+            tracks = tracks[
+                ((tracks.season >= seasons[0]) & (tracks.season <= seasons[1]))
+            ]
+    else:
+        tracks["season"] = np.nan
+
+    ## Intensity attributes
+    if slp_col != None:
+        if tracks[slp_col].mean() > 10000:
+            tracks[slp_col] /= 100
+        tracks["sshs"] = sshs_from_pres(tracks.slp.values)
+    else:
+        tracks["sshs"] = np.nan
+    return tracks
 
 _HRMIP_TRACK_data_vars = [
     "vor_tracked",
