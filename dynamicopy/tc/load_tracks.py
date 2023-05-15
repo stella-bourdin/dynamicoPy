@@ -84,7 +84,7 @@ def load_TEtracks_med(
     file="tests/tracks_ERA5.csv",
     surf_wind_col="wind10",
     slp_col="slp",
-    seasons = [1951,2014]
+    seasons = [1950,2013]
 ):
     """
     Parameters
