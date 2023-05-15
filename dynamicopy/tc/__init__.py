@@ -1,6 +1,6 @@
 from .ibtracs import load_ibtracs
 from .load_tracks import *
-from .maps import plot_tracks, plot_polar, ax_med
+from .maps import plot_tracks, plot_polar, ax_med, plot_tracks_med
 from .matching import *
 from .metrics import *
 from .utils import *
