@@ -106,7 +106,6 @@ def plot_tracks_med(
         figsize=[12, 8],
         cmap='Spectral_r',
 ):
-
     # Plotting
     if fig_ax == None:
         fig = plt.figure(figsize=figsize)

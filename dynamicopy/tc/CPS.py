@@ -189,15 +189,15 @@ def B(th, geopt, SH=False, names=["snap_z900", "snap_z600"]):
         z600 = geopt[names[1]]
 
     ΔZ = z600 - z900
-    ΔZ_R, ΔZ_L = right_left(ΔZ, th)
+    ΔZ_R, ΔZ_L = right_left_vector(ΔZ, th)
     if SH:
         h = -1
     else:
         h = 1
     return h * (
-            ΔZ_R.weighted(area_weights(ΔZ_R)).mean()
-            - ΔZ_L.weighted(area_weights(ΔZ_L)).mean()
-    )
+            ΔZ_R.weighted(area_weights(ΔZ_R)).mean(["r", "az"])
+            - ΔZ_L.weighted(area_weights(ΔZ_L)).mean(["r", "az"])
+    ).values
 
 
 def B_vector(th_vec, z900, z600, lat):
@@ -255,7 +255,7 @@ def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
 
     Returns
     -------
-    VTL, VTU : The Hart Phase Space parameters for upper and lower thremal wind respectively.
+    VTL, VTU : The Hart Phase Space parameters for upper and lower thermal wind respectively.
     """
     from sklearn.linear_model import LinearRegression
     Z_max = geopt[name].max(["az", "r"]) # Maximum of Z at each level for each snapshot
@@ -264,11 +264,9 @@ def VT_gradient(geopt, name = "snap_zg") : #TODO : Accelerer en vectorisant
     ΔZ_bottom = ΔZ.sel(plev=slice(950e2, 600e2)) # Lower troposphere
     ΔZ_top = ΔZ.sel(plev=slice(600e2, 250e2))    # Upper tropo
     X = np.log(ΔZ_bottom.plev).values.reshape(-1, 1)
-    VTL = [LinearRegression().fit(X, y).coef_[0] for y in ΔZ_bottom.values]
+    VTL = [LinearRegression().fit(X, y).coef_[0] if not np.isnan(y).any() else np.nan for y in ΔZ_bottom.values]
     X = np.log(ΔZ_top.plev).values.reshape(-1, 1)
     VTU = [LinearRegression().fit(X, y).coef_[0] for y in ΔZ_top.values]
-    #VTL = [linregress(np.log(ΔZ_bottom.plev), y)[0] for y in ΔZ_bottom.values]
-    #VTU = [linregress(np.log(ΔZ_top.plev), y)[0] for y in ΔZ_top.values]
     return VTL, VTU
 
 

@@ -169,10 +169,6 @@ def storm_stats_med(tracks, time_step = 6):
     tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "time", "hemisphere", "season", "month",]]
     tracks_slp_climax = tracks[~tracks.slp.isna()].sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "time",]]
 
-    # Retrieve the line of genesis for each track
-    gen = tracks.sort_values("time").groupby("track_id").first().reset_index()[
-        ["track_id", "lat", "time",]]
-
     # Merge all together
     storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind"), how = "outer").rename(columns = {"lat":"lat_wind"})
     storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"), how = "outer")
