@@ -303,7 +303,8 @@ def compute_Hart_parameters(
         z900, z600, z300 = geopt[names[0]], geopt[names[1]], geopt[names[2]]
 
     # theta computation
-    tracks = tracks.assign(theta=theta_multitrack(tracks))
+    if "theta" not in tracks.columns :
+        tracks = tracks.assign(theta=theta_multitrack(tracks))
 
     # B computation
     tracks = tracks.assign(
