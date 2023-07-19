@@ -162,6 +162,10 @@ def storm_stats_med(tracks, time_step = 6):
     tracks = tracks.copy()
     tracks["wind10"] = tracks.wind10.round(2)
 
+    # Retrieve the line of genesis for each track
+    gen = tracks.sort_values("time").groupby("track_id").first().reset_index()[
+        ["track_id", "lat", "time", "basin",]]
+
     # Compute track length
     storms = (tracks.groupby(["track_id"])[["time"]].count() / (24/time_step)).reset_index()
 
