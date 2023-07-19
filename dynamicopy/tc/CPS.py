@@ -290,29 +290,34 @@ def compute_Hart_parameters(
     """
 
     old_settings = np.seterr(divide='ignore', invalid='ignore')
-    tracks = tracks.assign(theta=theta_multitrack(tracks))
-    if type(names) == str :
-        z900 = geopt[names].sel(plev = 900e2, method = "nearest")
-        print("Level "+str(z900.plev.values)+" is taken for 900hPa")
-        z600 = geopt[names].sel(plev = 600e2, method = "nearest")
-        print("Level "+str(z600.plev.values)+" is taken for 600hPa")
-        z300 = geopt[names].sel(plev = 300e2, method = "nearest")
-        print("Level "+str(z300.plev.values)+" is taken for 300hPa (if simple method)")
-    else :
-        z900 = geopt[names[0]]
-        z600 = geopt[names[1]]
-        z300 = geopt[names[2]]
 
+    # Handle levels
+    if type(names) == str :
+        z900, z600, z300 = geopt[names].sel(plev = 900e2, method = "nearest"), \
+                           geopt[names].sel(plev = 600e2, method = "nearest"), \
+                           geopt[names].sel(plev = 300e2, method = "nearest")
+        print("Level "+str(z900.plev.values)+" is taken for 900hPa"+"\n"+
+              "Level "+str(z600.plev.values)+" is taken for 600hPa"+"\n"+
+              "Level "+str(z300.plev.values)+" is taken for 300hPa (simple method)")
+    else :
+        z900, z600, z300 = geopt[names[0]], geopt[names[1]], geopt[names[2]]
+
+    # theta computation
+    tracks = tracks.assign(theta=theta_multitrack(tracks))
+
+    # B computation
     tracks = tracks.assign(
         B=B_vector(tracks.theta.values, z900, z600, tracks.lat.values)
     )
+
+    # VTL & VTU computation
     if method == "simple":
         VTL, VTU = VT_simple(z900, z600, z300)
     elif method == "gradient":
         assert (type(names) == str), "If using gradient method, you must provide str for names"
         geopt = geopt.sortby("plev", ascending = False)
         VTL, VTU = VT_gradient(geopt, name = names)
-
     tracks = tracks.assign(VTL=VTL, VTU=VTU)
     np.seterr(**old_settings)
+
     return tracks
