@@ -175,7 +175,7 @@ def storm_stats_med(tracks, time_step = 6):
 
     # Merge all together
     storms = storms.merge(tracks_wind_climax, on="track_id", suffixes=("", "_wind"), how = "outer").rename(columns = {"lat":"lat_wind", "lon":"lon_wind"})
-    storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"), how = "outer")
+    storms = storms.merge(tracks_slp_climax, on="track_id", suffixes=("", "_slp"), how = "outer").rename(columns = {"lat":"lat_slp", "lon":"lon_slp"})
     storms = storms.merge(gen, on="track_id", suffixes=("", "_gen"))
 
     return storms
