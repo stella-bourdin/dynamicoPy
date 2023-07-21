@@ -18,7 +18,7 @@ def plot_tracks(
     intensity_col=None,
     color=None,
     increasing_intensity=True,
-    projection=ccrs.PlateCarree(central_longitude=180.0),
+    projection=None,
     fig_ax=None,
     figsize=[12, 8],
     cmap="autumn_r",
@@ -42,7 +42,8 @@ def plot_tracks(
     A map of the tracks.
     """
     import cartopy.crs as ccrs
-
+    if projection == None:
+        projection = ccrs.PlateCarree(central_longitude=180.0),
     # Plotting
     if fig_ax == None:
         fig = plt.figure(figsize=figsize)
