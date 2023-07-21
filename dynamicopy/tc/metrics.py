@@ -1,8 +1,5 @@
 import numpy as np
 import pandas as pd
-from haversine import haversine
-from .CPS import theta_multitrack
-from ._basins import list_in_med
 import xarray as xr
 
 def tc_count(tracks):

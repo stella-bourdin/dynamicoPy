@@ -1,4 +1,3 @@
-import numpy as np
 from ._basins import *
 from shapely.geometry import Point
 import pandas as pd

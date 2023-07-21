@@ -1,5 +1,3 @@
-import numpy as np
-import xarray as xr
 
 def remove_ET(tracks, trop_pts=1):
     """
