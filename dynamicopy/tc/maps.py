@@ -42,7 +42,6 @@ def plot_tracks(
     A map of the tracks.
     """
     import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
 
     # Plotting
     if fig_ax == None:

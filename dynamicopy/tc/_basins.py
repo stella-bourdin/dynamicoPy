@@ -10,11 +10,6 @@ import pkg_resources
 import dynamicopy
 import xarray as xr
 
-try:
-    import cartopy.crs as ccrs
-    import geopandas as gpd
-except ImportError:
-    pass
 import numpy as np
 import matplotlib.ticker as mticker
 
@@ -81,7 +76,7 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
     -------
     A plot.
     """
-
+    import cartopy.crs as ccrs
     if fig_ax == None :
         fig, ax = plt.subplots(
             subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}
