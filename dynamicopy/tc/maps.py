@@ -1,14 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 
-try:
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-except ImportError:
-    print(
-        "Failure in importing the cartopy library, the dynamicopy.cartoplot will not be loaded. \
-    Please install cartopy if you wish to use it."
-    )
 import seaborn as sns
 import numpy as np
 
@@ -49,6 +41,8 @@ def plot_tracks(
     -------
     A map of the tracks.
     """
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
 
     # Plotting
     if fig_ax == None:
@@ -106,6 +100,9 @@ def plot_tracks_med(
         figsize=[12, 8],
         cmap='Spectral_r',
 ):
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+
     # Plotting
     if fig_ax == None:
         fig = plt.figure(figsize=figsize)
