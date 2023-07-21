@@ -43,7 +43,7 @@ def plot_tracks(
     """
     import cartopy.crs as ccrs
     if projection == None:
-        projection = ccrs.PlateCarree(central_longitude=180.0),
+        projection = ccrs.PlateCarree(central_longitude=180.0)
     # Plotting
     if fig_ax == None:
         fig = plt.figure(figsize=figsize)
@@ -95,14 +95,15 @@ def plot_tracks(
 def plot_tracks_med(
         tracks,
         intensity_col="wind10",
-        projection=ccrs.PlateCarree(central_longitude=0.0),
+        projection=None,
         fig_ax=None,
         figsize=[12, 8],
         cmap='Spectral_r',
 ):
     import cartopy.crs as ccrs
     import cartopy.feature as cfeature
-
+    if projection == None:
+        projection = ccrs.PlateCarree(central_longitude=0.0)
     # Plotting
     if fig_ax == None:
         fig = plt.figure(figsize=figsize)
