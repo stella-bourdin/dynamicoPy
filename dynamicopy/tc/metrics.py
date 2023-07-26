@@ -141,7 +141,7 @@ def storm_stats(tracks, time_step = 6):
 
     return storms
 
-def storm_stats_med(tracks, time_step = 6):
+def storm_stats_med(tracks, time_step = 3):
     """
     Statistics about each track
 
@@ -156,7 +156,7 @@ def storm_stats_med(tracks, time_step = 6):
     """
 
     # Prepare tracks dataset
-    tracks = tracks.copy()
+    tracks = tracks[tracks.med >= 0.1].copy()
     tracks["wind10"] = tracks.wind10.round(2)
 
     # Retrieve the line of genesis for each track
