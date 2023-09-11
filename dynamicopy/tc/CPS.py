@@ -67,6 +67,7 @@ def theta_track(lon, lat):
         th = [np.nan]
     return th
 
+
 def theta_multitrack(tracks):
     """
     Compute the angular direction for every tracks in a dataset
@@ -80,20 +81,10 @@ def theta_multitrack(tracks):
     thetas (list): The list of angle for each point in the dataset
     """
     tracks["tpos"] = tracks.sort_values("time", ascending=False).groupby("track_id").transform("cumcount")
-    n, lon, lat = len(tracks), tracks.lat.values, tracks.lon.values
 
-    th = []
-    ## Compute theta for each point
-    for i in range(
-        n - 1
-    ):  # Computing the direction between each point and the following
-        th.append(theta(lon[i], lon[i + 1], lat[i], lat[i + 1]))  ## Line resposible for slow. Tested with apply, it increased computation time
-        if np.isnan(th[-1]) & (
-            i != 0
-        ):  # If two successive points are superimposed, we take the previous direction
-            th[-1] = th[-2]
-    ## Add last point
-    th.append(th[-1])
+    n, lon, lat = len(tracks), tracks.lon.values, tracks.lat.values
+
+    th = theta_track(lon, lat)
     th = np.array(th)
     ## Manage last point of each track : Set same angle as the point before
     th[list((tracks.tpos == 0).values)] = th[list((tracks.tpos == 1).values)]
