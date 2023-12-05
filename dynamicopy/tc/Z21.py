@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import hist2d
+from dynamicopy.utils import hist2d
 
 """
 This module implements functions to compute standard metrics over tc tracks datasets (observed or detected).

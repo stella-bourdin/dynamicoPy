@@ -279,7 +279,7 @@ def remove_land(var, land_sea_mask, land_value=0.0):
 
 if __name__ == "__main__":
 
-    import dynamicopy.ncload as ncl
+    import dynamicopy.LMDZ_files_manip as ncl
 
     sp = ncl.var_load("sp", "data_tests/sp.nc")
     lat = ncl.var_load("latitude", "data_tests/sp.nc")

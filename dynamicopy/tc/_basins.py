@@ -115,9 +115,45 @@ def plot_basins(show=True, save=None, fig_ax = None, text = True, coastcolor = "
         print("Saving in "+save)
         plt.show()
         plt.savefig(save)
+    return fig, ax
 
+def plot_basins_thesis(show=True, save=None, text = True, coastcolor = "grey", ):
+    import cartopy.crs as ccrs
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": ccrs.PlateCarree(central_longitude=180)}, figsize = [10,4]
+    )
+    ax.coastlines(color = coastcolor)
+    ax.set_extent([10,359,-60,60])
 
-# TODO (?) : Définir aussi les régions WMO
+    for basin, name in zip(
+        [NATL, ENP, CP, WNP, NI , SI, AUS, SP, SA_plot],
+        ["NATL", "ENP", "CP", "WNP", "NI", "SI", "AUS", "SP", "SATL"],
+    ):
+        ax.plot(
+            basin.exterior.xy[0],
+            basin.exterior.xy[1],
+            transform=ccrs.PlateCarree(),
+            color="k",
+        )
+        if text :
+            ax.text(
+                basin.centroid.x - 10,
+                np.sign(basin.centroid.y) * 25,
+                name,
+                transform=ccrs.PlateCarree(),
+                fontweight="bold",
+            )
+
+    ax.plot([135, 135], [-90, 0], transform=ccrs.PlateCarree(), color='k', linestyle='--')
+
+    if show:
+        plt.show()
+    if save != None:
+        print("Saving in "+save)
+        plt.show()
+        plt.savefig(save)
+    return fig, ax
+
 
 def list_in_med(lon, lat, path = dynamicopy.__file__[:-11] + "_data/med_mask.nc"):
     mask = xr.open_dataset(path).load().lsm

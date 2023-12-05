@@ -5,7 +5,6 @@ from .matching import *
 from .metrics import *
 from .utils import *
 from .ET import *
-from .CPS import compute_Hart_parameters, theta_multitrack, area_weights
 from .grid import *
 from .STJ import *
 from .lifecycle import *
