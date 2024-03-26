@@ -167,7 +167,7 @@ def storm_stats_med(tracks, time_step = 3):
     storms = (tracks.groupby(["track_id"])[["time"]].count() / (24/time_step)).reset_index()
 
     # Retrieve the line of max wind and min slp for each track
-    tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "lon", "time", "hemisphere", "season", "month",]]
+    tracks_wind_climax = tracks[~tracks.wind10.isna()].sort_values("wind10").groupby("track_id").last().reset_index()[["track_id", "wind10", "lat", "lon", "time", "hemisphere", "season", "month","basin"]]
     tracks_slp_climax = tracks[~tracks.slp.isna()].sort_values("slp").groupby("track_id").first().reset_index()[["track_id", "slp", "lat", "lon", "time",]]
 
     # Merge all together

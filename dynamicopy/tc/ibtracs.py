@@ -1,8 +1,6 @@
 import pandas as pd
-import pickle as pkl
-import pkg_resources
 import datetime
-import numpy as np
+import pkg_resources
 from .utils import *
 from .lifecycle import identify_lifecycle
 

@@ -121,8 +121,8 @@ def load_TEtracks_med(
 
     ## Intensity attributes
     if slp_col != None:
-        if tracks[slp_col].mean() > 10000:
-            tracks[slp_col] /= 100
+        if tracks["slp"].mean() > 10000:
+            tracks["slp"] /= 100
 
     return tracks
 
