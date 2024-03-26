@@ -71,7 +71,7 @@ def get_time(year, month, day, hour):
     np.array or pd.Series
         The corresponding np.datetime64
     """
-    time = (
+    time = pd.to_datetime(
         year.astype(str)
         + "-"
         + month.astype(str)
@@ -80,7 +80,7 @@ def get_time(year, month, day, hour):
         + " "
         + hour.astype(str)
         + ":00"
-    ).astype(np.datetime64)
+    )
     return time
 
 
